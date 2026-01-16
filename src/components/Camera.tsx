@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera as CameraIcon, X, RotateCcw, Check, Image } from 'lucide-react';
+import { X, RotateCcw, Check, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface CameraProps {
@@ -139,11 +139,11 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
               variant="ghost"
               size="icon"
               onClick={handleClose}
-              className="text-white hover:bg-white/10"
+              className="text-white hover:bg-white/10 rounded-full"
             >
               <X className="w-6 h-6" />
             </Button>
-            <h1 className="text-white font-semibold">Take a Photo</h1>
+            <h1 className="text-white font-bold text-lg">Take a Photo</h1>
             <div className="w-10" />
           </div>
 
@@ -154,7 +154,7 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
                 <p className="text-white/80 mb-4">{error}</p>
                 <Button
                   onClick={() => fileInputRef.current?.click()}
-                  className="bg-white text-black hover:bg-white/90"
+                  className="bg-white text-black hover:bg-white/90 rounded-xl font-semibold"
                 >
                   <Image className="w-5 h-5 mr-2" />
                   Choose from Gallery
@@ -178,50 +178,49 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
           </div>
 
           {/* Controls */}
-          <div className="p-6 safe-bottom">
+          <div className="p-6 pb-10 safe-bottom">
             {capturedPhoto ? (
-              <div className="flex items-center justify-center gap-8">
+              <div className="flex items-center justify-center gap-6">
                 <Button
                   variant="ghost"
-                  size="lg"
                   onClick={retakePhoto}
-                  className="text-white hover:bg-white/10 flex-col h-auto py-3"
+                  className="text-white hover:bg-white/10 flex-col h-auto py-3 px-5 rounded-2xl"
                 >
-                  <RotateCcw className="w-8 h-8 mb-1" />
-                  <span className="text-xs">Retake</span>
+                  <RotateCcw className="w-7 h-7 mb-1" />
+                  <span className="text-xs font-medium">Retake</span>
                 </Button>
-                <Button
+                <button
                   onClick={confirmPhoto}
-                  className="w-20 h-20 rounded-full bg-primary hover:bg-primary/90"
+                  className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-primary/80 shadow-2xl shadow-primary/40 flex items-center justify-center"
                 >
-                  <Check className="w-10 h-10" />
-                </Button>
-                <div className="w-16" />
+                  <Check className="w-9 h-9 text-white" />
+                </button>
+                <div className="w-[76px]" />
               </div>
             ) : (
-              <div className="flex items-center justify-center gap-8">
+              <div className="flex items-center justify-center gap-6">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => fileInputRef.current?.click()}
-                  className="text-white hover:bg-white/10 w-12 h-12"
+                  className="text-white hover:bg-white/10 w-14 h-14 rounded-2xl"
                 >
                   <Image className="w-6 h-6" />
                 </Button>
                 <button
                   onClick={capturePhoto}
                   disabled={!stream}
-                  className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center disabled:opacity-50"
+                  className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center disabled:opacity-50 group"
                 >
-                  <div className="w-16 h-16 rounded-full bg-white" />
+                  <div className="w-16 h-16 rounded-full bg-white group-active:scale-90 transition-transform" />
                 </button>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={switchCamera}
-                  className="text-white hover:bg-white/10 w-12 h-12"
+                  className="text-white hover:bg-white/10 w-14 h-14 rounded-2xl"
                 >
-                  <CameraIcon className="w-6 h-6" />
+                  <RotateCcw className="w-6 h-6" />
                 </Button>
               </div>
             )}

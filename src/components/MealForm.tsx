@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,12 +17,22 @@ interface MealFormProps {
 
 type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
-const mealTypes: { value: MealType; label: string; emoji: string }[] = [
-  { value: 'breakfast', label: 'Breakfast', emoji: '🌅' },
-  { value: 'lunch', label: 'Lunch', emoji: '☀️' },
-  { value: 'dinner', label: 'Dinner', emoji: '🌙' },
-  { value: 'snack', label: 'Snack', emoji: '🍿' },
+const mealTypes: { value: MealType; label: string }[] = [
+  { value: 'breakfast', label: 'Breakfast' },
+  { value: 'lunch', label: 'Lunch' },
+  { value: 'dinner', label: 'Dinner' },
+  { value: 'snack', label: 'Snack' },
 ];
+
+// Get suggested meal type based on current time
+function getSuggestedMealType(): MealType {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 11) return 'breakfast';
+  if (hour >= 11 && hour < 15) return 'lunch';
+  if (hour >= 15 && hour < 18) return 'snack';
+  if (hour >= 18 && hour < 22) return 'dinner';
+  return 'snack'; // Late night
+}
 
 export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
   const { logMeal, isPro } = useApp();
@@ -33,12 +43,22 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
   const [protein, setProtein] = useState('');
   const [fiber, setFiber] = useState('');
   const [sugar, setSugar] = useState('');
-  const [mealType, setMealType] = useState<MealType>('lunch');
+  const [mealType, setMealType] = useState<MealType>(getSuggestedMealType());
   const [date, setDate] = useState(now.toISOString().split('T')[0]);
   const [time, setTime] = useState(now.toTimeString().slice(0, 5));
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Update meal type when form opens
+  useEffect(() => {
+    if (open) {
+      setMealType(getSuggestedMealType());
+      const now = new Date();
+      setDate(now.toISOString().split('T')[0]);
+      setTime(now.toTimeString().slice(0, 5));
+    }
+  }, [open]);
 
   const handleAddTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {
@@ -95,10 +115,10 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-background flex flex-col"
+            className="fixed inset-0 z-[100] bg-background flex flex-col"
           >
             {/* Header with photo preview */}
-            <div className="relative h-48 bg-black">
+            <div className="relative h-44 bg-black flex-shrink-0">
               {photo && (
                 <img
                   src={photo}
@@ -106,38 +126,37 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                   className="w-full h-full object-cover opacity-80"
                 />
               )}
-              <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/40" />
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onClose}
-                className="absolute top-4 left-4 text-white hover:bg-white/10"
+                className="absolute top-4 left-4 text-white hover:bg-white/10 rounded-full"
               >
                 <X className="w-6 h-6" />
               </Button>
-              <h1 className="absolute top-4 left-1/2 -translate-x-1/2 text-white font-semibold">
+              <h1 className="absolute top-4 left-1/2 -translate-x-1/2 text-white font-bold text-lg">
                 Log Meal
               </h1>
             </div>
 
             {/* Form */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="flex-1 overflow-y-auto p-5 space-y-5">
               {/* Meal type */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Meal Type</Label>
+              <div className="space-y-2.5">
+                <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Meal Type</Label>
                 <div className="grid grid-cols-4 gap-2">
-                  {mealTypes.map(({ value, label, emoji }) => (
+                  {mealTypes.map(({ value, label }) => (
                     <button
                       key={value}
                       onClick={() => setMealType(value)}
-                      className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${
+                      className={`flex items-center justify-center py-3 px-2 rounded-xl font-medium text-sm transition-all ${
                         mealType === value
-                          ? 'border-primary bg-primary/10'
-                          : 'border-border'
+                          ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25'
+                          : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
                       }`}
                     >
-                      <span className="text-2xl mb-1">{emoji}</span>
-                      <span className="text-xs font-medium">{label}</span>
+                      {label}
                     </button>
                   ))}
                 </div>
@@ -145,7 +164,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
 
               {/* Calories - Required */}
               <div className="space-y-2">
-                <Label htmlFor="calories" className="text-base font-semibold">
+                <Label htmlFor="calories" className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                   Calories <span className="text-destructive">*</span>
                 </Label>
                 <Input
@@ -155,14 +174,14 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                   placeholder="e.g., 450"
                   value={calories}
                   onChange={(e) => setCalories(e.target.value)}
-                  className="h-14 text-lg rounded-xl"
+                  className="h-14 text-lg rounded-xl bg-secondary border-0 font-semibold"
                 />
               </div>
 
               {/* Optional macros */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 <div className="space-y-2">
-                  <Label htmlFor="protein" className="text-sm">
+                  <Label htmlFor="protein" className="text-xs font-medium text-muted-foreground">
                     Protein (g)
                   </Label>
                   <Input
@@ -172,11 +191,11 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                     placeholder="0"
                     value={protein}
                     onChange={(e) => setProtein(e.target.value)}
-                    className="h-12 rounded-xl"
+                    className="h-12 rounded-xl bg-secondary border-0"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="fiber" className="text-sm">
+                  <Label htmlFor="fiber" className="text-xs font-medium text-muted-foreground">
                     Fiber (g)
                   </Label>
                   <Input
@@ -186,11 +205,11 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                     placeholder="0"
                     value={fiber}
                     onChange={(e) => setFiber(e.target.value)}
-                    className="h-12 rounded-xl"
+                    className="h-12 rounded-xl bg-secondary border-0"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="sugar" className="text-sm">
+                  <Label htmlFor="sugar" className="text-xs font-medium text-muted-foreground">
                     Sugar (g)
                   </Label>
                   <Input
@@ -200,15 +219,15 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                     placeholder="0"
                     value={sugar}
                     onChange={(e) => setSugar(e.target.value)}
-                    className="h-12 rounded-xl"
+                    className="h-12 rounded-xl bg-secondary border-0"
                   />
                 </div>
               </div>
 
               {/* Date & Time */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-2">
-                  <Label htmlFor="date" className="text-sm">
+                  <Label htmlFor="date" className="text-xs font-medium text-muted-foreground">
                     Date
                   </Label>
                   <Input
@@ -216,11 +235,11 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="h-12 rounded-xl"
+                    className="h-12 rounded-xl bg-secondary border-0"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="time" className="text-sm">
+                  <Label htmlFor="time" className="text-xs font-medium text-muted-foreground">
                     Time
                   </Label>
                   <Input
@@ -228,7 +247,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                     type="time"
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
-                    className="h-12 rounded-xl"
+                    className="h-12 rounded-xl bg-secondary border-0"
                   />
                 </div>
               </div>
@@ -236,7 +255,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
               {/* Tags - Pro feature */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Label className="text-sm">Custom Tags</Label>
+                  <Label className="text-xs font-medium text-muted-foreground">Custom Tags</Label>
                   {!isPro && <ProBadge />}
                 </div>
                 {isPro ? (
@@ -247,7 +266,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                         value={tagInput}
                         onChange={(e) => setTagInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
-                        className="h-12 rounded-xl flex-1"
+                        className="h-12 rounded-xl bg-secondary border-0 flex-1"
                       />
                       <Button onClick={handleAddTag} size="icon" className="h-12 w-12 rounded-xl">
                         <Plus className="w-5 h-5" />
@@ -258,7 +277,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                         {tags.map((tag) => (
                           <span
                             key={tag}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-secondary rounded-full text-sm"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium"
                           >
                             <Tag className="w-3 h-3" />
                             {tag}
@@ -285,12 +304,12 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
               </div>
             </div>
 
-            {/* Submit button */}
-            <div className="p-6 safe-bottom border-t border-border">
+            {/* Submit button - Fixed at bottom */}
+            <div className="p-5 safe-bottom bg-background border-t border-border flex-shrink-0">
               <Button
                 onClick={handleSubmit}
                 disabled={!calories || isSubmitting}
-                className="w-full h-14 text-lg rounded-xl"
+                className="w-full h-14 text-lg rounded-xl font-bold shadow-lg shadow-primary/25"
               >
                 {isSubmitting ? 'Saving...' : 'Save Meal'}
               </Button>

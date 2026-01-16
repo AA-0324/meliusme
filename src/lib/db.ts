@@ -30,6 +30,7 @@ export interface Settings {
   proStatus: boolean;
   devMode: boolean;
   darkMode: boolean;
+  theme: string; // 'default', 'ocean', 'sunset', 'berry', 'midnight'
   goals: Goals;
   waterGoal: number; // glasses per day
 }
@@ -143,6 +144,7 @@ const DEFAULT_SETTINGS: Settings = {
   proStatus: false,
   devMode: false,
   darkMode: false,
+  theme: 'default',
   goals: {
     calories: 2000,
   },
