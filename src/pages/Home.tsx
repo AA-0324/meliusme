@@ -13,7 +13,7 @@ import { Meal } from '@/lib/db';
 import { useNavigate } from 'react-router-dom';
 
 export default function Home() {
-  const { meals, settings, isLoading, todayWater, incrementWater, decrementWater } = useApp();
+  const { meals, settings, isLoading, todayWater, incrementWater } = useApp();
   const navigate = useNavigate();
   
   const [showCamera, setShowCamera] = useState(false);
@@ -37,7 +37,7 @@ export default function Home() {
   // Get last meal time
   const lastMealTime = useMemo(() => {
     if (todaysMeals.length === 0) return undefined;
-    return todaysMeals[0].time; // Already sorted by createdAt desc
+    return todaysMeals[0].time;
   }, [todaysMeals]);
 
   // Calculate today's totals
@@ -78,21 +78,7 @@ export default function Home() {
   return (
     <div className="min-h-screen pb-24">
       {/* Header - Minimal */}
-      <div className="px-6 pt-8 pb-2 safe-top">
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-3"
-        >
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/25">
-            <span className="text-primary-foreground font-bold text-xl">M</span>
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight">Melius</h1>
-        </motion.div>
-      </div>
-
-      {/* Meal Reminder */}
-      <div className="px-6 py-2">
+      <div className="px-6 pt-10 pb-4 safe-top">
         <MealReminder lastMealTime={lastMealTime} todayMealTypes={todayMealTypes} />
       </div>
 
@@ -105,9 +91,9 @@ export default function Home() {
         >
           <Button
             onClick={() => setShowCamera(true)}
-            className="w-full h-14 text-lg rounded-2xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/30 font-bold"
+            className="w-full h-16 text-lg rounded-2xl gradient-primary hover:opacity-90 shadow-neon font-bold tracking-wide"
           >
-            <Plus className="w-5 h-5 mr-2" />
+            <Plus className="w-6 h-6 mr-2" />
             Log a Meal
           </Button>
         </motion.div>
@@ -120,9 +106,9 @@ export default function Home() {
         transition={{ delay: 0.15 }}
         className="px-6 py-3"
       >
-        <div className="bg-card rounded-3xl border border-border/50 p-5 shadow-sm">
+        <div className="glass rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Today</h2>
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Today</h2>
             <button 
               onClick={() => navigate('/dashboard')}
               className="text-primary text-sm font-semibold flex items-center gap-0.5 hover:gap-1.5 transition-all"
@@ -133,30 +119,30 @@ export default function Home() {
 
           <div className="grid grid-cols-2 gap-3">
             {/* Calories */}
-            <div className={`rounded-2xl p-4 ${
-              goalStatus === 'success' ? 'bg-primary/10' : 
-              goalStatus === 'warning' ? 'bg-warning/10' : 'bg-destructive/10'
+            <div className={`rounded-xl p-4 ${
+              goalStatus === 'success' ? 'bg-primary/15 border border-primary/20' : 
+              goalStatus === 'warning' ? 'bg-warning/15 border border-warning/20' : 'bg-destructive/15 border border-destructive/20'
             }`}>
               <div className={`flex items-center gap-2 mb-1 ${
                 goalStatus === 'success' ? 'text-primary' : 
                 goalStatus === 'warning' ? 'text-warning' : 'text-destructive'
               }`}>
                 <Flame className="w-4 h-4" />
-                <span className="text-xs font-bold uppercase tracking-wide">Calories</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest">Calories</span>
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-extrabold">{todayStats.calories}</span>
+                <span className="text-3xl font-extrabold">{todayStats.calories}</span>
                 <span className="text-muted-foreground text-xs font-medium">/ {settings.goals.calories}</span>
               </div>
             </div>
 
             {/* Meal count */}
-            <div className="bg-secondary rounded-2xl p-4">
+            <div className="bg-secondary/50 rounded-xl p-4 border border-border/50">
               <div className="flex items-center gap-2 text-muted-foreground mb-1">
                 <Utensils className="w-4 h-4" />
-                <span className="text-xs font-bold uppercase tracking-wide">Meals</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest">Meals</span>
               </div>
-              <span className="text-2xl font-extrabold">{todayStats.mealCount}</span>
+              <span className="text-3xl font-extrabold">{todayStats.mealCount}</span>
             </div>
           </div>
 
@@ -168,7 +154,7 @@ export default function Home() {
                 animate={{ width: `${Math.min((todayStats.calories / settings.goals.calories) * 100, 100)}%` }}
                 transition={{ duration: 0.5, delay: 0.3 }}
                 className={`h-full rounded-full ${
-                  goalStatus === 'success' ? 'bg-primary' : 
+                  goalStatus === 'success' ? 'bg-primary shadow-glow' : 
                   goalStatus === 'warning' ? 'bg-warning' : 'bg-destructive'
                 }`}
               />
@@ -188,7 +174,6 @@ export default function Home() {
           glasses={todayWater}
           goal={settings.waterGoal}
           onIncrement={incrementWater}
-          onDecrement={decrementWater}
         />
       </motion.div>
 
@@ -201,7 +186,7 @@ export default function Home() {
           className="py-3"
         >
           <div className="px-6 mb-3">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Today's Meals</h2>
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Today's Meals</h2>
           </div>
           <div className="flex gap-3 overflow-x-auto px-6 pb-2 scrollbar-hide">
             {todaysMeals.map((meal) => (
@@ -222,9 +207,9 @@ export default function Home() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="px-6 py-8 text-center"
+          className="px-6 py-10 text-center"
         >
-          <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center mx-auto mb-3">
+          <div className="w-16 h-16 bg-secondary/50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-border/50">
             <Utensils className="w-8 h-8 text-muted-foreground" />
           </div>
           <p className="text-muted-foreground font-semibold">No meals logged today</p>

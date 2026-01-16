@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useApp } from '@/contexts/AppContext';
 import { ProBadge } from '@/components/ProBadge';
 import { ProUpgradeModal } from '@/components/ProUpgradeModal';
+import { HealthWarning } from '@/components/HealthWarning';
 
 interface MealFormProps {
   open: boolean;
@@ -31,7 +32,7 @@ function getSuggestedMealType(): MealType {
   if (hour >= 11 && hour < 15) return 'lunch';
   if (hour >= 15 && hour < 18) return 'snack';
   if (hour >= 18 && hour < 22) return 'dinner';
-  return 'snack'; // Late night
+  return 'snack';
 }
 
 export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
@@ -59,6 +60,11 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
       setTime(now.toTimeString().slice(0, 5));
     }
   }, [open]);
+
+  // Compute health warnings in real-time
+  const showWarnings = useMemo(() => {
+    return calories && parseInt(calories, 10) > 0;
+  }, [calories]);
 
   const handleAddTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {
@@ -118,15 +124,15 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
             className="fixed inset-0 z-[100] bg-background flex flex-col"
           >
             {/* Header with photo preview */}
-            <div className="relative h-44 bg-black flex-shrink-0">
+            <div className="relative h-40 bg-black flex-shrink-0">
               {photo && (
                 <img
                   src={photo}
                   alt="Meal"
-                  className="w-full h-full object-cover opacity-80"
+                  className="w-full h-full object-cover opacity-70"
                 />
               )}
-              <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/40" />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/50" />
               <Button
                 variant="ghost"
                 size="icon"
@@ -144,16 +150,16 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
             <div className="flex-1 overflow-y-auto p-5 space-y-5">
               {/* Meal type */}
               <div className="space-y-2.5">
-                <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Meal Type</Label>
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Meal Type</Label>
                 <div className="grid grid-cols-4 gap-2">
                   {mealTypes.map(({ value, label }) => (
                     <button
                       key={value}
                       onClick={() => setMealType(value)}
-                      className={`flex items-center justify-center py-3 px-2 rounded-xl font-medium text-sm transition-all ${
+                      className={`flex items-center justify-center py-3 px-2 rounded-xl font-semibold text-sm transition-all border ${
                         mealType === value
-                          ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25'
-                          : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                          ? 'bg-primary text-primary-foreground shadow-neon border-primary'
+                          : 'bg-secondary/50 text-secondary-foreground hover:bg-secondary border-border/50'
                       }`}
                     >
                       {label}
@@ -164,7 +170,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
 
               {/* Calories - Required */}
               <div className="space-y-2">
-                <Label htmlFor="calories" className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                <Label htmlFor="calories" className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                   Calories <span className="text-destructive">*</span>
                 </Label>
                 <Input
@@ -174,14 +180,14 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                   placeholder="e.g., 450"
                   value={calories}
                   onChange={(e) => setCalories(e.target.value)}
-                  className="h-14 text-lg rounded-xl bg-secondary border-0 font-semibold"
+                  className="h-14 text-lg rounded-xl bg-secondary/50 border-border/50 font-semibold"
                 />
               </div>
 
               {/* Optional macros */}
               <div className="grid grid-cols-3 gap-2">
                 <div className="space-y-2">
-                  <Label htmlFor="protein" className="text-xs font-medium text-muted-foreground">
+                  <Label htmlFor="protein" className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                     Protein (g)
                   </Label>
                   <Input
@@ -191,11 +197,11 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                     placeholder="0"
                     value={protein}
                     onChange={(e) => setProtein(e.target.value)}
-                    className="h-12 rounded-xl bg-secondary border-0"
+                    className="h-12 rounded-xl bg-secondary/50 border-border/50"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="fiber" className="text-xs font-medium text-muted-foreground">
+                  <Label htmlFor="fiber" className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                     Fiber (g)
                   </Label>
                   <Input
@@ -205,11 +211,11 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                     placeholder="0"
                     value={fiber}
                     onChange={(e) => setFiber(e.target.value)}
-                    className="h-12 rounded-xl bg-secondary border-0"
+                    className="h-12 rounded-xl bg-secondary/50 border-border/50"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="sugar" className="text-xs font-medium text-muted-foreground">
+                  <Label htmlFor="sugar" className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                     Sugar (g)
                   </Label>
                   <Input
@@ -219,15 +225,26 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                     placeholder="0"
                     value={sugar}
                     onChange={(e) => setSugar(e.target.value)}
-                    className="h-12 rounded-xl bg-secondary border-0"
+                    className="h-12 rounded-xl bg-secondary/50 border-border/50"
                   />
                 </div>
               </div>
 
+              {/* Health Warning - Real-time */}
+              {showWarnings && (
+                <HealthWarning
+                  calories={parseInt(calories, 10) || 0}
+                  protein={protein ? parseInt(protein, 10) : undefined}
+                  fiber={fiber ? parseInt(fiber, 10) : undefined}
+                  sugar={sugar ? parseInt(sugar, 10) : undefined}
+                  mealType={mealType}
+                />
+              )}
+
               {/* Date & Time */}
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-2">
-                  <Label htmlFor="date" className="text-xs font-medium text-muted-foreground">
+                  <Label htmlFor="date" className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                     Date
                   </Label>
                   <Input
@@ -235,11 +252,11 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="h-12 rounded-xl bg-secondary border-0"
+                    className="h-12 rounded-xl bg-secondary/50 border-border/50"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="time" className="text-xs font-medium text-muted-foreground">
+                  <Label htmlFor="time" className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                     Time
                   </Label>
                   <Input
@@ -247,7 +264,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                     type="time"
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
-                    className="h-12 rounded-xl bg-secondary border-0"
+                    className="h-12 rounded-xl bg-secondary/50 border-border/50"
                   />
                 </div>
               </div>
@@ -255,7 +272,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
               {/* Tags - Pro feature */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Label className="text-xs font-medium text-muted-foreground">Custom Tags</Label>
+                  <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Custom Tags</Label>
                   {!isPro && <ProBadge />}
                 </div>
                 {isPro ? (
@@ -266,7 +283,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                         value={tagInput}
                         onChange={(e) => setTagInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
-                        className="h-12 rounded-xl bg-secondary border-0 flex-1"
+                        className="h-12 rounded-xl bg-secondary/50 border-border/50 flex-1"
                       />
                       <Button onClick={handleAddTag} size="icon" className="h-12 w-12 rounded-xl">
                         <Plus className="w-5 h-5" />
@@ -277,7 +294,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                         {tags.map((tag) => (
                           <span
                             key={tag}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/15 text-primary rounded-lg text-sm font-medium border border-primary/20"
                           >
                             <Tag className="w-3 h-3" />
                             {tag}
@@ -295,7 +312,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                 ) : (
                   <button
                     onClick={handleProFeatureClick}
-                    className="w-full h-12 rounded-xl border-2 border-dashed border-border flex items-center justify-center gap-2 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+                    className="w-full h-12 rounded-xl border border-dashed border-border/50 flex items-center justify-center gap-2 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
                   >
                     <Tag className="w-4 h-4" />
                     <span className="text-sm">Unlock with Pro</span>
@@ -305,11 +322,11 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
             </div>
 
             {/* Submit button - Fixed at bottom */}
-            <div className="p-5 safe-bottom bg-background border-t border-border flex-shrink-0">
+            <div className="p-5 safe-bottom bg-background border-t border-border/50 flex-shrink-0">
               <Button
                 onClick={handleSubmit}
                 disabled={!calories || isSubmitting}
-                className="w-full h-14 text-lg rounded-xl font-bold shadow-lg shadow-primary/25"
+                className="w-full h-14 text-lg rounded-xl font-bold shadow-neon"
               >
                 {isSubmitting ? 'Saving...' : 'Save Meal'}
               </Button>
