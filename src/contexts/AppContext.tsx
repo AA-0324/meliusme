@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { Meal, Settings, getSettings, saveSettings, getAllMeals, addMeal, deleteMeal, updateGoals, Goals } from '@/lib/db';
+import { Meal, Settings, getSettings, saveSettings, getAllMeals, addMeal, deleteMeal, updateGoals, Goals, getWaterIntake, setWaterIntake } from '@/lib/db';
 
 interface AppContextType {
   settings: Settings;
@@ -7,11 +7,17 @@ interface AppContextType {
   isLoading: boolean;
   isPro: boolean;
   
+  // Water tracking
+  todayWater: number;
+  incrementWater: () => void;
+  decrementWater: () => void;
+  
   // Settings actions
   setDevMode: (enabled: boolean) => void;
   setDarkMode: (enabled: boolean) => void;
   setPro: (enabled: boolean) => void;
   updateUserGoals: (goals: Partial<Goals>) => void;
+  setWaterGoal: (glasses: number) => void;
   
   // Meal actions
   refreshMeals: () => Promise<void>;
@@ -25,6 +31,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettingsState] = useState<Settings>(getSettings);
   const [meals, setMeals] = useState<Meal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  const today = new Date().toISOString().split('T')[0];
+  const [todayWater, setTodayWater] = useState(() => getWaterIntake(today));
 
   // Derived state: Pro status is true if either proStatus is true OR devMode is true
   const isPro = settings.proStatus || settings.devMode;
@@ -78,6 +87,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setSettingsState(updated);
   }, []);
 
+  const setWaterGoal = useCallback((glasses: number) => {
+    const updated = saveSettings({ waterGoal: glasses });
+    setSettingsState(updated);
+  }, []);
+
+  const incrementWater = useCallback(() => {
+    const newValue = todayWater + 1;
+    setTodayWater(newValue);
+    setWaterIntake(today, newValue);
+  }, [todayWater, today]);
+
+  const decrementWater = useCallback(() => {
+    const newValue = Math.max(0, todayWater - 1);
+    setTodayWater(newValue);
+    setWaterIntake(today, newValue);
+  }, [todayWater, today]);
+
   const logMeal = useCallback(async (meal: Omit<Meal, 'id' | 'createdAt'>) => {
     const newMeal = await addMeal(meal);
     setMeals((prev) => [newMeal, ...prev]);
@@ -96,10 +122,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         meals,
         isLoading,
         isPro,
+        todayWater,
+        incrementWater,
+        decrementWater,
         setDevMode,
         setDarkMode,
         setPro,
         updateUserGoals,
+        setWaterGoal,
         refreshMeals,
         logMeal,
         removeMeal,

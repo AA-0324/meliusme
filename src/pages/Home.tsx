@@ -7,11 +7,13 @@ import { Camera } from '@/components/Camera';
 import { MealForm } from '@/components/MealForm';
 import { MealCard } from '@/components/MealCard';
 import { MealDetail } from '@/components/MealDetail';
+import { WaterTracker } from '@/components/WaterTracker';
+import { MealReminder } from '@/components/MealReminder';
 import { Meal } from '@/lib/db';
 import { useNavigate } from 'react-router-dom';
 
 export default function Home() {
-  const { meals, settings, isLoading } = useApp();
+  const { meals, settings, isLoading, todayWater, incrementWater, decrementWater } = useApp();
   const navigate = useNavigate();
   
   const [showCamera, setShowCamera] = useState(false);
@@ -26,6 +28,17 @@ export default function Home() {
   const todaysMeals = useMemo(() => {
     return meals.filter((meal) => meal.date === today);
   }, [meals, today]);
+
+  // Get meal types logged today
+  const todayMealTypes = useMemo(() => {
+    return todaysMeals.map(m => m.mealType);
+  }, [todaysMeals]);
+
+  // Get last meal time
+  const lastMealTime = useMemo(() => {
+    if (todaysMeals.length === 0) return undefined;
+    return todaysMeals[0].time; // Already sorted by createdAt desc
+  }, [todaysMeals]);
 
   // Calculate today's totals
   const todayStats = useMemo(() => {
@@ -65,19 +78,29 @@ export default function Home() {
   return (
     <div className="min-h-screen pb-24">
       {/* Header */}
-      <div className="px-6 pt-8 pb-4 safe-top">
-        <motion.h1 
+      <div className="px-6 pt-8 pb-2 safe-top">
+        <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-3xl font-bold"
+          className="flex items-center gap-3"
         >
-          Melius
-        </motion.h1>
-        <p className="text-muted-foreground mt-1">Track your nutrition</p>
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/25">
+            <span className="text-white font-bold text-lg">M</span>
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Melius</h1>
+            <p className="text-muted-foreground text-sm">Track your nutrition</p>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Meal Reminder */}
+      <div className="px-6 py-2">
+        <MealReminder lastMealTime={lastMealTime} todayMealTypes={todayMealTypes} />
       </div>
 
       {/* Main Log Button */}
-      <div className="px-6 py-4">
+      <div className="px-6 py-3">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -85,9 +108,9 @@ export default function Home() {
         >
           <Button
             onClick={() => setShowCamera(true)}
-            className="w-full h-16 text-xl rounded-2xl shadow-lg shadow-primary/25"
+            className="w-full h-14 text-lg rounded-2xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/30 font-semibold"
           >
-            <Plus className="w-6 h-6 mr-2" />
+            <Plus className="w-5 h-5 mr-2" />
             Log a Meal
           </Button>
         </motion.div>
@@ -97,21 +120,21 @@ export default function Home() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="px-6 py-4"
+        transition={{ delay: 0.15 }}
+        className="px-6 py-3"
       >
-        <div className="bg-card rounded-3xl border border-border p-6 shadow-sm">
+        <div className="bg-card rounded-3xl border border-border/50 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Today's Summary</h2>
+            <h2 className="text-base font-semibold">Today's Summary</h2>
             <button 
               onClick={() => navigate('/dashboard')}
-              className="text-primary text-sm font-medium flex items-center"
+              className="text-primary text-sm font-medium flex items-center gap-0.5 hover:gap-1.5 transition-all"
             >
               See all <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             {/* Calories */}
             <div className={`rounded-2xl p-4 ${
               goalStatus === 'success' ? 'bg-primary/10' : 
@@ -121,28 +144,28 @@ export default function Home() {
                 goalStatus === 'success' ? 'text-primary' : 
                 goalStatus === 'warning' ? 'text-warning' : 'text-destructive'
               }`}>
-                <Flame className="w-5 h-5" />
-                <span className="text-sm font-medium">Calories</span>
+                <Flame className="w-4 h-4" />
+                <span className="text-xs font-semibold uppercase tracking-wide">Calories</span>
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-bold">{todayStats.calories}</span>
-                <span className="text-muted-foreground text-sm">/ {settings.goals.calories}</span>
+                <span className="text-2xl font-bold">{todayStats.calories}</span>
+                <span className="text-muted-foreground text-xs">/ {settings.goals.calories}</span>
               </div>
             </div>
 
             {/* Meal count */}
-            <div className="bg-secondary rounded-2xl p-4">
+            <div className="bg-secondary/60 rounded-2xl p-4">
               <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                <Utensils className="w-5 h-5" />
-                <span className="text-sm font-medium">Meals</span>
+                <Utensils className="w-4 h-4" />
+                <span className="text-xs font-semibold uppercase tracking-wide">Meals</span>
               </div>
-              <span className="text-3xl font-bold">{todayStats.mealCount}</span>
+              <span className="text-2xl font-bold">{todayStats.mealCount}</span>
             </div>
           </div>
 
           {/* Progress bar */}
           <div className="mt-4">
-            <div className="h-2 bg-secondary rounded-full overflow-hidden">
+            <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.min((todayStats.calories / settings.goals.calories) * 100, 100)}%` }}
@@ -157,16 +180,31 @@ export default function Home() {
         </div>
       </motion.div>
 
+      {/* Water Tracker */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="px-6 py-3"
+      >
+        <WaterTracker
+          glasses={todayWater}
+          goal={settings.waterGoal}
+          onIncrement={incrementWater}
+          onDecrement={decrementWater}
+        />
+      </motion.div>
+
       {/* Today's Meals Carousel */}
       {todaysMeals.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="py-4"
+          transition={{ delay: 0.25 }}
+          className="py-3"
         >
           <div className="px-6 mb-3">
-            <h2 className="text-lg font-semibold">Today's Meals</h2>
+            <h2 className="text-base font-semibold">Today's Meals</h2>
           </div>
           <div className="flex gap-3 overflow-x-auto px-6 pb-2 scrollbar-hide">
             {todaysMeals.map((meal) => (
@@ -189,11 +227,11 @@ export default function Home() {
           transition={{ delay: 0.3 }}
           className="px-6 py-8 text-center"
         >
-          <div className="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
-            <Utensils className="w-10 h-10 text-muted-foreground" />
+          <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <Utensils className="w-8 h-8 text-muted-foreground" />
           </div>
-          <p className="text-muted-foreground">No meals logged today</p>
-          <p className="text-sm text-muted-foreground mt-1">Tap the button above to get started</p>
+          <p className="text-muted-foreground font-medium">No meals logged today</p>
+          <p className="text-sm text-muted-foreground/70 mt-1">Tap the button above to get started</p>
         </motion.div>
       )}
 
