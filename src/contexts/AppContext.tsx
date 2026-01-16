@@ -16,6 +16,7 @@ interface AppContextType {
   setDevMode: (enabled: boolean) => void;
   setDarkMode: (enabled: boolean) => void;
   setPro: (enabled: boolean) => void;
+  setTheme: (theme: string) => void;
   updateUserGoals: (goals: Partial<Goals>) => void;
   setWaterGoal: (glasses: number) => void;
   
@@ -38,14 +39,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Derived state: Pro status is true if either proStatus is true OR devMode is true
   const isPro = settings.proStatus || settings.devMode;
 
-  // Apply dark mode
+  // Apply dark mode and theme
   useEffect(() => {
+    const root = document.documentElement;
+    
+    // Apply dark mode
     if (settings.darkMode) {
-      document.documentElement.classList.add('dark');
+      root.classList.add('dark');
     } else {
-      document.documentElement.classList.remove('dark');
+      root.classList.remove('dark');
     }
-  }, [settings.darkMode]);
+    
+    // Apply theme
+    root.classList.remove('theme-ocean', 'theme-sunset', 'theme-berry', 'theme-midnight');
+    if (settings.theme && settings.theme !== 'default') {
+      root.classList.add(`theme-${settings.theme}`);
+    }
+  }, [settings.darkMode, settings.theme]);
 
   // Load initial data
   useEffect(() => {
@@ -79,6 +89,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const setPro = useCallback((enabled: boolean) => {
     const updated = saveSettings({ proStatus: enabled });
+    setSettingsState(updated);
+  }, []);
+
+  const setTheme = useCallback((theme: string) => {
+    const updated = saveSettings({ theme });
     setSettingsState(updated);
   }, []);
 
@@ -128,6 +143,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setDevMode,
         setDarkMode,
         setPro,
+        setTheme,
         updateUserGoals,
         setWaterGoal,
         refreshMeals,
