@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera as CameraIcon, X, RotateCcw, Check, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -42,14 +42,10 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
     }
   }, [stream]);
 
-  const handleOpen = useCallback(() => {
-    setCapturedPhoto(null);
-    startCamera();
-  }, [startCamera]);
-
   const handleClose = useCallback(() => {
     stopCamera();
     setCapturedPhoto(null);
+    setError(null);
     onClose();
   }, [stopCamera, onClose]);
 
@@ -97,13 +93,25 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
   const switchCamera = useCallback(() => {
     stopCamera();
     setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
-    setTimeout(startCamera, 100);
-  }, [stopCamera, startCamera]);
+  }, [stopCamera]);
+
+  // Start camera when facingMode changes after switching
+  useEffect(() => {
+    if (open && !stream && !capturedPhoto) {
+      startCamera();
+    }
+  }, [facingMode]);
 
   // Start camera when opened
-  if (open && !stream && !capturedPhoto && !error) {
-    handleOpen();
-  }
+  useEffect(() => {
+    if (open) {
+      setCapturedPhoto(null);
+      setError(null);
+      startCamera();
+    } else {
+      stopCamera();
+    }
+  }, [open]);
 
   return (
     <AnimatePresence>
