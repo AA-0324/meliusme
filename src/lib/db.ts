@@ -21,11 +21,41 @@ export interface Goals {
   sugar?: number;
 }
 
+export interface WaterIntake {
+  date: string; // YYYY-MM-DD
+  glasses: number;
+}
+
 export interface Settings {
   proStatus: boolean;
   devMode: boolean;
   darkMode: boolean;
   goals: Goals;
+  waterGoal: number; // glasses per day
+}
+
+// Water tracking (localStorage)
+const WATER_KEY = 'melius-water';
+
+export function getWaterIntake(date: string): number {
+  const stored = localStorage.getItem(WATER_KEY);
+  if (!stored) return 0;
+  try {
+    const data: Record<string, number> = JSON.parse(stored);
+    return data[date] || 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function setWaterIntake(date: string, glasses: number): void {
+  const stored = localStorage.getItem(WATER_KEY);
+  let data: Record<string, number> = {};
+  try {
+    if (stored) data = JSON.parse(stored);
+  } catch {}
+  data[date] = glasses;
+  localStorage.setItem(WATER_KEY, JSON.stringify(data));
 }
 
 interface MeliusDB extends DBSchema {
@@ -116,6 +146,7 @@ const DEFAULT_SETTINGS: Settings = {
   goals: {
     calories: 2000,
   },
+  waterGoal: 8,
 };
 
 export function getSettings(): Settings {
@@ -139,6 +170,14 @@ export function updateGoals(goals: Partial<Goals>): Settings {
   const current = getSettings();
   return saveSettings({
     goals: { ...current.goals, ...goals },
+  });
+}
+
+// Reset pro status (for reverting to free plan)
+export function resetProStatus(): Settings {
+  return saveSettings({
+    proStatus: false,
+    devMode: false,
   });
 }
 
