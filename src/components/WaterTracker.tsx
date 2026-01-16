@@ -1,60 +1,65 @@
+import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Droplets, Plus, Minus } from 'lucide-react';
+import { Droplets, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import confetti from 'canvas-confetti';
 
 interface WaterTrackerProps {
   glasses: number;
   goal: number;
   onIncrement: () => void;
-  onDecrement: () => void;
 }
 
-export function WaterTracker({ glasses, goal, onIncrement, onDecrement }: WaterTrackerProps) {
+export function WaterTracker({ glasses, goal, onIncrement }: WaterTrackerProps) {
   const progress = Math.min((glasses / goal) * 100, 100);
   const isComplete = glasses >= goal;
+  const prevCompleteRef = useRef(false);
+
+  // Fire confetti when goal is reached
+  useEffect(() => {
+    if (isComplete && !prevCompleteRef.current) {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#22d3ee', '#0ea5e9', '#3b82f6', '#06b6d4'],
+      });
+    }
+    prevCompleteRef.current = isComplete;
+  }, [isComplete]);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-br from-[hsl(199,89%,48%)] to-[hsl(199,89%,40%)] rounded-3xl p-5 text-white shadow-lg"
+      className="bg-gradient-to-br from-[hsl(199,89%,40%)] to-[hsl(199,89%,30%)] rounded-2xl p-5 text-white shadow-lg shadow-[hsl(199,89%,40%)]/20"
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-            <Droplets className="w-5 h-5" />
+          <div className="w-11 h-11 bg-white/15 rounded-xl flex items-center justify-center backdrop-blur-sm">
+            <Droplets className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="font-semibold text-sm opacity-90">Water Intake</h3>
-            <p className="text-2xl font-bold">
-              {glasses} <span className="text-base font-medium opacity-80">/ {goal} glasses</span>
+            <h3 className="font-semibold text-sm opacity-80 uppercase tracking-wide">Water</h3>
+            <p className="text-3xl font-bold">
+              {glasses} <span className="text-lg font-medium opacity-70">/ {goal}</span>
             </p>
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={onDecrement}
-            disabled={glasses <= 0}
-            className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 text-white disabled:opacity-30"
-          >
-            <Minus className="w-5 h-5" />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={onIncrement}
-            className="w-10 h-10 rounded-xl bg-white/20 hover:bg-white/30 text-white"
-          >
-            <Plus className="w-5 h-5" />
-          </Button>
-        </div>
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={onIncrement}
+          disabled={isComplete}
+          className="w-12 h-12 rounded-xl bg-white/20 hover:bg-white/30 text-white disabled:opacity-30 disabled:hover:bg-white/20"
+        >
+          <Plus className="w-6 h-6" />
+        </Button>
       </div>
 
       {/* Progress bar */}
-      <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+      <div className="h-2.5 bg-white/15 rounded-full overflow-hidden">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
@@ -67,9 +72,9 @@ export function WaterTracker({ glasses, goal, onIncrement, onDecrement }: WaterT
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-sm text-center mt-2 font-medium"
+          className="text-sm text-center mt-3 font-semibold"
         >
-          🎉 Goal reached!
+          🎉 Goal reached! Great job staying hydrated!
         </motion.p>
       )}
     </motion.div>
