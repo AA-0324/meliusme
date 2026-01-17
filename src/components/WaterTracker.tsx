@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Droplets, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,14 +10,20 @@ interface WaterTrackerProps {
   onIncrement: () => void;
 }
 
+// Session key to track if confetti has been shown today
+const getConfettiKey = () => `melius-confetti-${new Date().toISOString().split('T')[0]}`;
+
 export function WaterTracker({ glasses, goal, onIncrement }: WaterTrackerProps) {
   const progress = Math.min((glasses / goal) * 100, 100);
   const isComplete = glasses >= goal;
-  const prevCompleteRef = useRef(false);
 
-  // Fire confetti when goal is reached
+  // Fire confetti when goal is reached - only once per day
   useEffect(() => {
-    if (isComplete && !prevCompleteRef.current) {
+    const confettiKey = getConfettiKey();
+    const alreadyShown = sessionStorage.getItem(confettiKey) === 'true';
+    
+    if (isComplete && !alreadyShown) {
+      sessionStorage.setItem(confettiKey, 'true');
       confetti({
         particleCount: 100,
         spread: 70,
@@ -25,7 +31,6 @@ export function WaterTracker({ glasses, goal, onIncrement }: WaterTrackerProps) 
         colors: ['#22d3ee', '#0ea5e9', '#3b82f6', '#06b6d4'],
       });
     }
-    prevCompleteRef.current = isComplete;
   }, [isComplete]);
 
   return (

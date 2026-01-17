@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Meal, Settings, getSettings, saveSettings, getAllMeals, addMeal, deleteMeal, updateGoals, Goals, getWaterIntake, setWaterIntake } from '@/lib/db';
+import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/userProfile';
+import { requestNotificationPermission, areNotificationsSupported } from '@/lib/notifications';
 
 interface AppContextType {
   settings: Settings;
@@ -7,10 +9,18 @@ interface AppContextType {
   isLoading: boolean;
   isPro: boolean;
   
+  // User profile
+  userProfile: UserProfile | null;
+  setUserName: (name: string) => void;
+  
   // Water tracking
   todayWater: number;
   incrementWater: () => void;
   decrementWater: () => void;
+  
+  // Notifications
+  notificationsEnabled: boolean;
+  toggleNotifications: () => Promise<void>;
   
   // Settings actions
   setDevMode: (enabled: boolean) => void;
@@ -19,6 +29,7 @@ interface AppContextType {
   setTheme: (theme: string) => void;
   updateUserGoals: (goals: Partial<Goals>) => void;
   setWaterGoal: (glasses: number) => void;
+  resetDailyData: () => void;
   
   // Meal actions
   refreshMeals: () => Promise<void>;
@@ -32,6 +43,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettingsState] = useState<Settings>(getSettings);
   const [meals, setMeals] = useState<Meal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(() => getUserProfile());
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   
   const today = new Date().toISOString().split('T')[0];
   const [todayWater, setTodayWater] = useState(() => getWaterIntake(today));
@@ -50,12 +63,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       root.classList.remove('dark');
     }
     
-    // Apply theme
-    root.classList.remove('theme-ocean', 'theme-sunset', 'theme-berry', 'theme-midnight');
-    if (settings.theme && settings.theme !== 'default') {
+    // Apply theme - only if Pro
+    root.classList.remove('theme-ocean', 'theme-sunset', 'theme-berry', 'theme-midnight', 'theme-cyber');
+    if (isPro && settings.theme && settings.theme !== 'default') {
       root.classList.add(`theme-${settings.theme}`);
     }
-  }, [settings.darkMode, settings.theme]);
+  }, [settings.darkMode, settings.theme, isPro]);
+
+  // Check notification permission on load
+  useEffect(() => {
+    if (areNotificationsSupported() && Notification.permission === 'granted') {
+      setNotificationsEnabled(true);
+    }
+  }, []);
 
   // Load initial data
   useEffect(() => {
@@ -77,10 +97,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setMeals(allMeals);
   }, []);
 
-  const setDevMode = useCallback((enabled: boolean) => {
-    const updated = saveSettings({ devMode: enabled });
-    setSettingsState(updated);
+  const setUserName = useCallback((name: string) => {
+    const updated = saveUserProfile({ name });
+    setUserProfile(updated);
   }, []);
+
+  const setDevMode = useCallback((enabled: boolean) => {
+    // When disabling dev mode and user is not a paid Pro, reset theme
+    if (!enabled && !settings.proStatus) {
+      const updated = saveSettings({ devMode: enabled, theme: 'default' });
+      setSettingsState(updated);
+    } else {
+      const updated = saveSettings({ devMode: enabled });
+      setSettingsState(updated);
+    }
+  }, [settings.proStatus]);
 
   const setDarkMode = useCallback((enabled: boolean) => {
     const updated = saveSettings({ darkMode: enabled });
@@ -88,8 +119,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setPro = useCallback((enabled: boolean) => {
-    const updated = saveSettings({ proStatus: enabled });
-    setSettingsState(updated);
+    // When disabling Pro, reset theme to default
+    if (!enabled) {
+      const updated = saveSettings({ proStatus: enabled, theme: 'default' });
+      setSettingsState(updated);
+    } else {
+      const updated = saveSettings({ proStatus: enabled });
+      setSettingsState(updated);
+    }
   }, []);
 
   const setTheme = useCallback((theme: string) => {
@@ -106,6 +143,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const updated = saveSettings({ waterGoal: glasses });
     setSettingsState(updated);
   }, []);
+
+  const resetDailyData = useCallback(() => {
+    setTodayWater(0);
+    setWaterIntake(today, 0);
+    // Clear confetti flag for today
+    sessionStorage.removeItem(`melius-confetti-${today}`);
+  }, [today]);
+
+  const toggleNotifications = useCallback(async () => {
+    if (!areNotificationsSupported()) {
+      return;
+    }
+    
+    if (notificationsEnabled) {
+      setNotificationsEnabled(false);
+    } else {
+      const granted = await requestNotificationPermission();
+      setNotificationsEnabled(granted);
+    }
+  }, [notificationsEnabled]);
 
   const incrementWater = useCallback(() => {
     const newValue = todayWater + 1;
@@ -137,15 +194,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         meals,
         isLoading,
         isPro,
+        userProfile,
+        setUserName,
         todayWater,
         incrementWater,
         decrementWater,
+        notificationsEnabled,
+        toggleNotifications,
         setDevMode,
         setDarkMode,
         setPro,
         setTheme,
         updateUserGoals,
         setWaterGoal,
+        resetDailyData,
         refreshMeals,
         logMeal,
         removeMeal,
