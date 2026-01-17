@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Moon, Sun, Sparkles, Download, Code2, Target, Check, Lock, Droplets, Palette } from 'lucide-react';
+import { Moon, Sun, Sparkles, Download, Settings, Target, Check, Lock, Droplets, Palette, User, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,9 @@ import { useApp } from '@/contexts/AppContext';
 import { ProBadge } from '@/components/ProBadge';
 import { ProUpgradeModal } from '@/components/ProUpgradeModal';
 import { exportMealsToCSV } from '@/lib/db';
+import { getGreeting, formatMemberSince } from '@/lib/userProfile';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 const proFeatures = [
   'Track protein, fiber & sugar goals',
@@ -28,13 +30,16 @@ const themes = [
 ];
 
 export default function Profile() {
-  const { settings, isPro, setDarkMode, setDevMode, setPro, updateUserGoals, setWaterGoal, setTheme } = useApp();
+  const { settings, isPro, setDarkMode, updateUserGoals, setWaterGoal, setTheme, userProfile, setUserName } = useApp();
+  const navigate = useNavigate();
   const [showProModal, setShowProModal] = useState(false);
   const [calorieGoal, setCalorieGoal] = useState(settings.goals.calories.toString());
   const [proteinGoal, setProteinGoal] = useState(settings.goals.protein?.toString() || '');
   const [fiberGoal, setFiberGoal] = useState(settings.goals.fiber?.toString() || '');
   const [sugarGoal, setSugarGoal] = useState(settings.goals.sugar?.toString() || '');
   const [waterGoalInput, setWaterGoalInput] = useState(settings.waterGoal.toString());
+  const [nameInput, setNameInput] = useState(userProfile?.name || '');
+  const [isEditingName, setIsEditingName] = useState(false);
 
   const handleSaveGoals = () => {
     updateUserGoals({
@@ -45,6 +50,14 @@ export default function Profile() {
     });
     setWaterGoal(parseInt(waterGoalInput, 10) || 8);
     toast.success('Goals saved!');
+  };
+
+  const handleSaveName = () => {
+    if (nameInput.trim()) {
+      setUserName(nameInput.trim());
+      setIsEditingName(false);
+      toast.success('Profile updated!');
+    }
   };
 
   const handleExport = async () => {
@@ -83,17 +96,76 @@ export default function Profile() {
     <div className="min-h-screen pb-24">
       {/* Header */}
       <div className="px-6 pt-8 pb-4 safe-top">
-        <motion.h1
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-2xl font-bold tracking-tight"
-        >
-          Profile
-        </motion.h1>
-        <p className="text-muted-foreground text-sm mt-0.5">Settings & preferences</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <motion.h1
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-2xl font-bold tracking-tight"
+            >
+              {getGreeting(userProfile?.name)}
+            </motion.h1>
+            {userProfile?.createdAt && (
+              <p className="text-muted-foreground text-sm mt-0.5">
+                {formatMemberSince(userProfile.createdAt)}
+              </p>
+            )}
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/settings')}
+            className="rounded-xl"
+          >
+            <Settings className="w-5 h-5" />
+          </Button>
+        </div>
       </div>
 
       <div className="px-6 space-y-4">
+        {/* User Profile */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="bg-card rounded-2xl p-5 border border-border/50"
+        >
+          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Your Profile</h2>
+          
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center">
+              <User className="w-7 h-7 text-primary" />
+            </div>
+            <div className="flex-1">
+              {isEditingName ? (
+                <div className="flex gap-2">
+                  <Input
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    placeholder="Enter your name"
+                    className="h-10 rounded-xl bg-secondary border-0"
+                    autoFocus
+                    onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+                  />
+                  <Button onClick={handleSaveName} size="sm" className="rounded-xl">
+                    Save
+                  </Button>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => setIsEditingName(true)}
+                  className="text-left w-full group"
+                >
+                  <p className="font-bold text-lg group-hover:text-primary transition-colors">
+                    {userProfile?.name || 'Set your name'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Tap to edit</p>
+                </button>
+              )}
+            </div>
+          </div>
+        </motion.div>
+
         {/* Pro Status */}
         {!isPro && (
           <motion.div
@@ -338,25 +410,6 @@ export default function Profile() {
             </div>
             {!isPro && <ProBadge />}
           </Button>
-        </motion.div>
-
-        {/* Developer Mode */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-card rounded-2xl p-5 border border-dashed border-border/50"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Code2 className="w-5 h-5 text-muted-foreground" />
-              <div>
-                <span className="font-semibold">Developer Mode</span>
-                <p className="text-xs text-muted-foreground">DEV ONLY - Unlocks Pro</p>
-              </div>
-            </div>
-            <Switch checked={settings.devMode} onCheckedChange={setDevMode} />
-          </div>
         </motion.div>
       </div>
 

@@ -10,10 +10,11 @@ import { MealDetail } from '@/components/MealDetail';
 import { WaterTracker } from '@/components/WaterTracker';
 import { MealReminder } from '@/components/MealReminder';
 import { Meal } from '@/lib/db';
+import { getGreeting } from '@/lib/userProfile';
 import { useNavigate } from 'react-router-dom';
 
 export default function Home() {
-  const { meals, settings, isLoading, todayWater, incrementWater } = useApp();
+  const { meals, settings, isLoading, todayWater, incrementWater, userProfile } = useApp();
   const navigate = useNavigate();
   
   const [showCamera, setShowCamera] = useState(false);
@@ -77,8 +78,19 @@ export default function Home() {
 
   return (
     <div className="min-h-screen pb-24">
-      {/* Header - Minimal */}
-      <div className="px-6 pt-10 pb-4 safe-top">
+      {/* Header - Greeting */}
+      <div className="px-6 pt-10 pb-2 safe-top">
+        <motion.h1
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-xl font-bold text-foreground"
+        >
+          {getGreeting(userProfile?.name)}
+        </motion.h1>
+      </div>
+
+      {/* Meal Reminder */}
+      <div className="px-6 py-2">
         <MealReminder lastMealTime={lastMealTime} todayMealTypes={todayMealTypes} />
       </div>
 
