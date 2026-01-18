@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,8 @@ import { useApp } from '@/contexts/AppContext';
 import { ProBadge } from '@/components/ProBadge';
 import { ProUpgradeModal } from '@/components/ProUpgradeModal';
 import { HealthWarning } from '@/components/HealthWarning';
+import { validateNutrition, validateTag, containsProfanity } from '@/lib/validation';
+import { toast } from 'sonner';
 
 interface MealFormProps {
   open: boolean;
@@ -25,7 +27,6 @@ const mealTypes: { value: MealType; label: string }[] = [
   { value: 'snack', label: 'Snack' },
 ];
 
-// Get suggested meal type based on current time
 function getSuggestedMealType(): MealType {
   const hour = new Date().getHours();
   if (hour >= 5 && hour < 11) return 'breakfast';
@@ -51,7 +52,6 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
   const [tags, setTags] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Update meal type when form opens
   useEffect(() => {
     if (open) {
       setMealType(getSuggestedMealType());
@@ -61,13 +61,17 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
     }
   }, [open]);
 
-  // Compute health warnings in real-time
   const showWarnings = useMemo(() => {
     return calories && parseInt(calories, 10) > 0;
   }, [calories]);
 
   const handleAddTag = () => {
-    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+    const validation = validateTag(tagInput);
+    if (!validation.valid) {
+      toast.error(validation.error);
+      return;
+    }
+    if (!tags.includes(tagInput.trim())) {
       setTags([...tags, tagInput.trim()]);
       setTagInput('');
     }
@@ -80,21 +84,32 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
   const handleSubmit = async () => {
     if (!photo || !calories || isSubmitting) return;
 
+    const cal = parseInt(calories, 10);
+    const prot = protein ? parseInt(protein, 10) : undefined;
+    const fib = fiber ? parseInt(fiber, 10) : undefined;
+    const sug = sugar ? parseInt(sugar, 10) : undefined;
+
+    // Validate nutrition values
+    const validation = validateNutrition(cal, prot, fib, sug, mealType);
+    if (!validation.valid) {
+      toast.error(validation.errors[0]);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await logMeal({
         photo,
-        calories: parseInt(calories, 10),
-        protein: protein ? parseInt(protein, 10) : undefined,
-        fiber: fiber ? parseInt(fiber, 10) : undefined,
-        sugar: sugar ? parseInt(sugar, 10) : undefined,
+        calories: cal,
+        protein: prot,
+        fiber: fib,
+        sugar: sug,
         mealType,
         date,
         time,
         tags: tags.length > 0 ? tags : undefined,
       });
       onSuccess();
-      // Reset form
       setCalories('');
       setProtein('');
       setFiber('');
@@ -104,12 +119,6 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
       console.error('Failed to log meal:', error);
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleProFeatureClick = () => {
-    if (!isPro) {
-      setShowProModal(true);
     }
   };
 
@@ -123,40 +132,33 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] bg-background flex flex-col"
           >
-            {/* Header with photo preview */}
-            <div className="relative h-40 bg-black flex-shrink-0">
+            <div className="relative h-32 bg-black flex-shrink-0">
               {photo && (
-                <img
-                  src={photo}
-                  alt="Meal"
-                  className="w-full h-full object-cover opacity-70"
-                />
+                <img src={photo} alt="Meal" className="w-full h-full object-cover opacity-70" />
               )}
               <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/50" />
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onClose}
-                className="absolute top-4 left-4 text-white hover:bg-white/10 rounded-full"
+                className="absolute top-3 left-3 text-white hover:bg-white/10 rounded-full safe-top"
               >
                 <X className="w-6 h-6" />
               </Button>
-              <h1 className="absolute top-4 left-1/2 -translate-x-1/2 text-white font-bold text-lg">
+              <h1 className="absolute top-3 left-1/2 -translate-x-1/2 text-white font-bold text-lg safe-top">
                 Log Meal
               </h1>
             </div>
 
-            {/* Form */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-5">
-              {/* Meal type */}
-              <div className="space-y-2.5">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div className="space-y-2">
                 <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Meal Type</Label>
                 <div className="grid grid-cols-4 gap-2">
                   {mealTypes.map(({ value, label }) => (
                     <button
                       key={value}
                       onClick={() => setMealType(value)}
-                      className={`flex items-center justify-center py-3 px-2 rounded-xl font-semibold text-sm transition-all border ${
+                      className={`py-2.5 px-2 rounded-xl font-semibold text-xs transition-all border ${
                         mealType === value
                           ? 'bg-primary text-primary-foreground shadow-neon border-primary'
                           : 'bg-secondary/50 text-secondary-foreground hover:bg-secondary border-border/50'
@@ -168,7 +170,6 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                 </div>
               </div>
 
-              {/* Calories - Required */}
               <div className="space-y-2">
                 <Label htmlFor="calories" className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                   Calories <span className="text-destructive">*</span>
@@ -177,60 +178,56 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                   id="calories"
                   type="number"
                   inputMode="numeric"
+                  min="0"
                   placeholder="e.g., 450"
                   value={calories}
                   onChange={(e) => setCalories(e.target.value)}
-                  className="h-14 text-lg rounded-xl bg-secondary/50 border-border/50 font-semibold"
+                  className="h-12 text-lg rounded-xl bg-secondary/50 border-border/50 font-semibold"
                 />
               </div>
 
-              {/* Optional macros */}
               <div className="grid grid-cols-3 gap-2">
-                <div className="space-y-2">
-                  <Label htmlFor="protein" className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                    Protein (g)
-                  </Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="protein" className="text-[10px] font-bold text-muted-foreground uppercase">Protein (g)</Label>
                   <Input
                     id="protein"
                     type="number"
                     inputMode="numeric"
+                    min="0"
                     placeholder="0"
                     value={protein}
                     onChange={(e) => setProtein(e.target.value)}
-                    className="h-12 rounded-xl bg-secondary/50 border-border/50"
+                    className="h-11 rounded-xl bg-secondary/50 border-border/50"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="fiber" className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                    Fiber (g)
-                  </Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="fiber" className="text-[10px] font-bold text-muted-foreground uppercase">Fiber (g)</Label>
                   <Input
                     id="fiber"
                     type="number"
                     inputMode="numeric"
+                    min="0"
                     placeholder="0"
                     value={fiber}
                     onChange={(e) => setFiber(e.target.value)}
-                    className="h-12 rounded-xl bg-secondary/50 border-border/50"
+                    className="h-11 rounded-xl bg-secondary/50 border-border/50"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sugar" className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                    Sugar (g)
-                  </Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="sugar" className="text-[10px] font-bold text-muted-foreground uppercase">Sugar (g)</Label>
                   <Input
                     id="sugar"
                     type="number"
                     inputMode="numeric"
+                    min="0"
                     placeholder="0"
                     value={sugar}
                     onChange={(e) => setSugar(e.target.value)}
-                    className="h-12 rounded-xl bg-secondary/50 border-border/50"
+                    className="h-11 rounded-xl bg-secondary/50 border-border/50"
                   />
                 </div>
               </div>
 
-              {/* Health Warning - Real-time */}
               {showWarnings && (
                 <HealthWarning
                   calories={parseInt(calories, 10) || 0}
@@ -241,92 +238,66 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                 />
               )}
 
-              {/* Date & Time */}
               <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-2">
-                  <Label htmlFor="date" className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                    Date
-                  </Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="date" className="text-[10px] font-bold text-muted-foreground uppercase">Date</Label>
                   <Input
                     id="date"
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="h-12 rounded-xl bg-secondary/50 border-border/50"
+                    className="h-11 rounded-xl bg-secondary/50 border-border/50"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="time" className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                    Time
-                  </Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="time" className="text-[10px] font-bold text-muted-foreground uppercase">Time</Label>
                   <Input
                     id="time"
                     type="time"
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
-                    className="h-12 rounded-xl bg-secondary/50 border-border/50"
+                    className="h-11 rounded-xl bg-secondary/50 border-border/50"
                   />
                 </div>
               </div>
 
-              {/* Tags - Pro feature */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Custom Tags</Label>
-                  {!isPro && <ProBadge />}
-                </div>
-                {isPro ? (
-                  <>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Add a tag..."
-                        value={tagInput}
-                        onChange={(e) => setTagInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
-                        className="h-12 rounded-xl bg-secondary/50 border-border/50 flex-1"
-                      />
-                      <Button onClick={handleAddTag} size="icon" className="h-12 w-12 rounded-xl">
-                        <Plus className="w-5 h-5" />
-                      </Button>
+              {isPro && (
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold text-muted-foreground uppercase">Custom Tags</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add a tag..."
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
+                      className="h-11 rounded-xl bg-secondary/50 border-border/50 flex-1"
+                    />
+                    <Button onClick={handleAddTag} size="icon" className="h-11 w-11 rounded-xl">
+                      <Plus className="w-5 h-5" />
+                    </Button>
+                  </div>
+                  {tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map((tag) => (
+                        <span key={tag} className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/15 text-primary rounded-lg text-sm font-medium border border-primary/20">
+                          <Tag className="w-3 h-3" />
+                          {tag}
+                          <button onClick={() => handleRemoveTag(tag)} className="ml-1 hover:text-destructive">
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
                     </div>
-                    {tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/15 text-primary rounded-lg text-sm font-medium border border-primary/20"
-                          >
-                            <Tag className="w-3 h-3" />
-                            {tag}
-                            <button
-                              onClick={() => handleRemoveTag(tag)}
-                              className="ml-1 hover:text-destructive"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <button
-                    onClick={handleProFeatureClick}
-                    className="w-full h-12 rounded-xl border border-dashed border-border/50 flex items-center justify-center gap-2 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
-                  >
-                    <Tag className="w-4 h-4" />
-                    <span className="text-sm">Unlock with Pro</span>
-                  </button>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Submit button - Fixed at bottom */}
-            <div className="p-5 safe-bottom bg-background border-t border-border/50 flex-shrink-0">
+            <div className="p-4 safe-bottom bg-background border-t border-border/50 flex-shrink-0">
               <Button
                 onClick={handleSubmit}
                 disabled={!calories || isSubmitting}
-                className="w-full h-14 text-lg rounded-xl font-bold shadow-neon"
+                className="w-full h-12 text-base rounded-xl font-bold shadow-neon"
               >
                 {isSubmitting ? 'Saving...' : 'Save Meal'}
               </Button>
