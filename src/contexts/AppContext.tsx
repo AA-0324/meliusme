@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Meal, Settings, getSettings, saveSettings, getAllMeals, addMeal, deleteMeal, updateGoals, Goals, getWaterIntake, setWaterIntake } from '@/lib/db';
 import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/userProfile';
+import { getBodyProfile, saveBodyProfile, BodyProfile } from '@/lib/bodyGoals';
 import { requestNotificationPermission, areNotificationsSupported } from '@/lib/notifications';
+import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge, getEarnedBadges, Badge, awardBadge } from '@/lib/streaks';
 
 interface AppContextType {
   settings: Settings;
@@ -13,10 +15,19 @@ interface AppContextType {
   userProfile: UserProfile | null;
   setUserName: (name: string) => void;
   
+  // Body profile
+  bodyProfile: BodyProfile | null;
+  updateBodyProfile: (profile: Partial<BodyProfile>) => void;
+  
+  // Streak & gamification
+  streak: StreakData;
+  currentChallenge: Challenge;
+  badges: Badge[];
+  refreshStreak: () => void;
+  
   // Water tracking
   todayWater: number;
   incrementWater: () => void;
-  decrementWater: () => void;
   
   // Notifications
   notificationsEnabled: boolean;
@@ -27,6 +38,7 @@ interface AppContextType {
   setDarkMode: (enabled: boolean) => void;
   setPro: (enabled: boolean) => void;
   setTheme: (theme: string) => void;
+  setUse24Hour: (use24Hour: boolean) => void;
   updateUserGoals: (goals: Partial<Goals>) => void;
   setWaterGoal: (glasses: number) => void;
   resetDailyData: () => void;
@@ -35,35 +47,42 @@ interface AppContextType {
   refreshMeals: () => Promise<void>;
   logMeal: (meal: Omit<Meal, 'id' | 'createdAt'>) => Promise<Meal>;
   removeMeal: (id: string) => Promise<void>;
+  
+  // Show meal logged toast
+  showMealLoggedToast: boolean;
+  setShowMealLoggedToast: (show: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettingsState] = useState<Settings>(getSettings);
+  const [settings, setSettingsState] = useState<Settings>(() => getSettings());
   const [meals, setMeals] = useState<Meal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(() => getUserProfile());
+  const [bodyProfile, setBodyProfile] = useState<BodyProfile | null>(() => getBodyProfile());
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [streak, setStreak] = useState<StreakData>(() => getStreakData());
+  const [currentChallenge, setCurrentChallenge] = useState<Challenge>(() => getCurrentChallenge());
+  const [badges, setBadges] = useState<Badge[]>(() => getEarnedBadges());
+  const [showMealLoggedToast, setShowMealLoggedToast] = useState(false);
   
   const today = new Date().toISOString().split('T')[0];
   const [todayWater, setTodayWater] = useState(() => getWaterIntake(today));
 
-  // Derived state: Pro status is true if either proStatus is true OR devMode is true
+  // Derived state: Pro status
   const isPro = settings.proStatus || settings.devMode;
 
   // Apply dark mode and theme
   useEffect(() => {
     const root = document.documentElement;
     
-    // Apply dark mode
     if (settings.darkMode) {
       root.classList.add('dark');
     } else {
       root.classList.remove('dark');
     }
     
-    // Apply theme - only if Pro
     root.classList.remove('theme-ocean', 'theme-sunset', 'theme-berry', 'theme-midnight', 'theme-cyber');
     if (isPro && settings.theme && settings.theme !== 'default') {
       root.classList.add(`theme-${settings.theme}`);
@@ -97,13 +116,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setMeals(allMeals);
   }, []);
 
+  const refreshStreak = useCallback(() => {
+    setStreak(getStreakData());
+    setCurrentChallenge(getCurrentChallenge());
+    setBadges(getEarnedBadges());
+  }, []);
+
   const setUserName = useCallback((name: string) => {
     const updated = saveUserProfile({ name });
     setUserProfile(updated);
   }, []);
 
+  const updateBodyProfile = useCallback((profile: Partial<BodyProfile>) => {
+    const updated = saveBodyProfile(profile);
+    setBodyProfile(updated);
+  }, []);
+
   const setDevMode = useCallback((enabled: boolean) => {
-    // When disabling dev mode and user is not a paid Pro, reset theme
     if (!enabled && !settings.proStatus) {
       const updated = saveSettings({ devMode: enabled, theme: 'default' });
       setSettingsState(updated);
@@ -119,7 +148,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setPro = useCallback((enabled: boolean) => {
-    // When disabling Pro, reset theme to default
     if (!enabled) {
       const updated = saveSettings({ proStatus: enabled, theme: 'default' });
       setSettingsState(updated);
@@ -134,6 +162,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setSettingsState(updated);
   }, []);
 
+  const setUse24Hour = useCallback((use24Hour: boolean) => {
+    const updated = saveSettings({ use24Hour });
+    setSettingsState(updated);
+  }, []);
+
   const updateUserGoals = useCallback((goals: Partial<Goals>) => {
     const updated = updateGoals(goals);
     setSettingsState(updated);
@@ -145,11 +178,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const resetDailyData = useCallback(() => {
+    const todayStr = new Date().toISOString().split('T')[0];
     setTodayWater(0);
-    setWaterIntake(today, 0);
-    // Clear confetti flag for today
-    sessionStorage.removeItem(`melius-confetti-${today}`);
-  }, [today]);
+    setWaterIntake(todayStr, 0);
+    sessionStorage.removeItem(`melius-confetti-${todayStr}`);
+  }, []);
 
   const toggleNotifications = useCallback(async () => {
     if (!areNotificationsSupported()) {
@@ -170,15 +203,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setWaterIntake(today, newValue);
   }, [todayWater, today]);
 
-  const decrementWater = useCallback(() => {
-    const newValue = Math.max(0, todayWater - 1);
-    setTodayWater(newValue);
-    setWaterIntake(today, newValue);
-  }, [todayWater, today]);
-
   const logMeal = useCallback(async (meal: Omit<Meal, 'id' | 'createdAt'>) => {
     const newMeal = await addMeal(meal);
     setMeals((prev) => [newMeal, ...prev]);
+    
+    // Update streak
+    const updatedStreak = updateStreak(meal.date);
+    setStreak(updatedStreak);
+    
+    // Check for first meal badge
+    const currentBadges = getEarnedBadges();
+    if (!currentBadges.some(b => b.id === 'first_meal')) {
+      awardBadge('first_meal');
+      setBadges(getEarnedBadges());
+    }
+    
+    // Show toast
+    setShowMealLoggedToast(true);
+    
     return newMeal;
   }, []);
 
@@ -196,21 +238,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         isPro,
         userProfile,
         setUserName,
+        bodyProfile,
+        updateBodyProfile,
+        streak,
+        currentChallenge,
+        badges,
+        refreshStreak,
         todayWater,
         incrementWater,
-        decrementWater,
         notificationsEnabled,
         toggleNotifications,
         setDevMode,
         setDarkMode,
         setPro,
         setTheme,
+        setUse24Hour,
         updateUserGoals,
         setWaterGoal,
         resetDailyData,
         refreshMeals,
         logMeal,
         removeMeal,
+        showMealLoggedToast,
+        setShowMealLoggedToast,
       }}
     >
       {children}

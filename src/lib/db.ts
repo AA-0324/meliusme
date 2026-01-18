@@ -2,15 +2,15 @@ import { openDB, DBSchema, IDBPDatabase } from 'idb';
 
 export interface Meal {
   id: string;
-  photo: string; // base64 data URL
+  photo: string;
   calories: number;
   protein?: number;
   fiber?: number;
   sugar?: number;
   mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   tags?: string[];
-  date: string; // YYYY-MM-DD
-  time: string; // HH:MM
+  date: string;
+  time: string;
   createdAt: number;
 }
 
@@ -22,7 +22,7 @@ export interface Goals {
 }
 
 export interface WaterIntake {
-  date: string; // YYYY-MM-DD
+  date: string;
   glasses: number;
 }
 
@@ -30,9 +30,10 @@ export interface Settings {
   proStatus: boolean;
   devMode: boolean;
   darkMode: boolean;
-  theme: string; // 'default', 'ocean', 'sunset', 'berry', 'midnight'
+  theme: string;
   goals: Goals;
-  waterGoal: number; // glasses per day
+  waterGoal: number;
+  use24Hour: boolean;
 }
 
 // Water tracking (localStorage)
@@ -57,6 +58,16 @@ export function setWaterIntake(date: string, glasses: number): void {
   } catch {}
   data[date] = glasses;
   localStorage.setItem(WATER_KEY, JSON.stringify(data));
+}
+
+export function getAllWaterData(): Record<string, number> {
+  const stored = localStorage.getItem(WATER_KEY);
+  if (!stored) return {};
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return {};
+  }
 }
 
 interface MeliusDB extends DBSchema {
@@ -149,6 +160,7 @@ const DEFAULT_SETTINGS: Settings = {
     calories: 2000,
   },
   waterGoal: 8,
+  use24Hour: false,
 };
 
 export function getSettings(): Settings {
@@ -175,7 +187,6 @@ export function updateGoals(goals: Partial<Goals>): Settings {
   });
 }
 
-// Reset pro status (for reverting to free plan)
 export function resetProStatus(): Settings {
   return saveSettings({
     proStatus: false,
