@@ -2,8 +2,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Flame, Clock, Trash2 } from 'lucide-react';
 import { Meal } from '@/lib/db';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useApp } from '@/contexts/AppContext';
 import { HealthWarning } from '@/components/HealthWarning';
+import { formatTime } from '@/lib/validation';
 
 interface MealDetailProps {
   meal: Meal | null;
@@ -18,7 +30,7 @@ const mealTypeLabels = {
 };
 
 export function MealDetail({ meal, onClose }: MealDetailProps) {
-  const { removeMeal } = useApp();
+  const { removeMeal, settings } = useApp();
 
   const handleDelete = async () => {
     if (meal) {
@@ -71,7 +83,7 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
                 </div>
                 <div className="flex items-center gap-1.5 text-muted-foreground">
                   <Clock className="w-5 h-5" />
-                  <span className="text-lg font-medium">{meal.time}</span>
+                  <span className="text-lg font-medium">{formatTime(meal.time, settings.use24Hour)}</span>
                 </div>
               </div>
 
@@ -128,14 +140,29 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
               )}
 
               {/* Delete button */}
-              <Button
-                variant="destructive"
-                className="w-full h-14 text-lg rounded-xl"
-                onClick={handleDelete}
-              >
-                <Trash2 className="w-5 h-5 mr-2" />
-                Delete Meal
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    className="w-full h-14 text-lg rounded-xl"
+                  >
+                    <Trash2 className="w-5 h-5 mr-2" />
+                    Delete Meal
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete this meal?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently remove this log from your device.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </motion.div>
         </motion.div>

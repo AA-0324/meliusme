@@ -7,8 +7,8 @@ import { Label } from '@/components/ui/label';
 import { useApp } from '@/contexts/AppContext';
 import { ProBadge } from '@/components/ProBadge';
 import { ProUpgradeModal } from '@/components/ProUpgradeModal';
-import { HealthWarning } from '@/components/HealthWarning';
-import { validateNutrition, validateTag, containsProfanity } from '@/lib/validation';
+import { HealthWarning, hasAnyWarning, getHealthWarnings } from '@/components/HealthWarning';
+import { validateNutrition, validateTag } from '@/lib/validation';
 import { toast } from 'sonner';
 
 interface MealFormProps {
@@ -82,12 +82,17 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
   };
 
   const handleSubmit = async () => {
-    if (!photo || !calories || isSubmitting) return;
+    if (!photo || isSubmitting) return;
+
+    if (!calories || !protein || !fiber || !sugar) {
+      toast.error('Please fill out calories, protein, fiber, and sugar.');
+      return;
+    }
 
     const cal = parseInt(calories, 10);
-    const prot = protein ? parseInt(protein, 10) : undefined;
-    const fib = fiber ? parseInt(fiber, 10) : undefined;
-    const sug = sugar ? parseInt(sugar, 10) : undefined;
+    const prot = parseInt(protein, 10);
+    const fib = parseInt(fiber, 10);
+    const sug = parseInt(sugar, 10);
 
     // Validate nutrition values
     const validation = validateNutrition(cal, prot, fib, sug, mealType);
@@ -117,6 +122,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
       setTags([]);
     } catch (error) {
       console.error('Failed to log meal:', error);
+      toast.error('Failed to save meal.');
     } finally {
       setIsSubmitting(false);
     }
@@ -130,7 +136,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-background flex flex-col"
+            className="fixed inset-0 z-[100] bg-background flex flex-col overflow-x-hidden"
           >
             <div className="relative h-32 bg-black flex-shrink-0">
               {photo && (
@@ -188,7 +194,9 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
 
               <div className="grid grid-cols-3 gap-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="protein" className="text-[10px] font-bold text-muted-foreground uppercase">Protein (g)</Label>
+                  <Label htmlFor="protein" className="text-[10px] font-bold text-muted-foreground uppercase">
+                    Protein (g) <span className="text-destructive">*</span>
+                  </Label>
                   <Input
                     id="protein"
                     type="number"
@@ -201,7 +209,9 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="fiber" className="text-[10px] font-bold text-muted-foreground uppercase">Fiber (g)</Label>
+                  <Label htmlFor="fiber" className="text-[10px] font-bold text-muted-foreground uppercase">
+                    Fiber (g) <span className="text-destructive">*</span>
+                  </Label>
                   <Input
                     id="fiber"
                     type="number"
@@ -214,7 +224,9 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="sugar" className="text-[10px] font-bold text-muted-foreground uppercase">Sugar (g)</Label>
+                  <Label htmlFor="sugar" className="text-[10px] font-bold text-muted-foreground uppercase">
+                    Sugar (g) <span className="text-destructive">*</span>
+                  </Label>
                   <Input
                     id="sugar"
                     type="number"
@@ -229,13 +241,28 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
               </div>
 
               {showWarnings && (
-                <HealthWarning
-                  calories={parseInt(calories, 10) || 0}
-                  protein={protein ? parseInt(protein, 10) : undefined}
-                  fiber={fiber ? parseInt(fiber, 10) : undefined}
-                  sugar={sugar ? parseInt(sugar, 10) : undefined}
-                  mealType={mealType}
-                />
+                <>
+                  <HealthWarning
+                    calories={parseInt(calories, 10) || 0}
+                    protein={protein ? parseInt(protein, 10) : undefined}
+                    fiber={fiber ? parseInt(fiber, 10) : undefined}
+                    sugar={sugar ? parseInt(sugar, 10) : undefined}
+                    mealType={mealType}
+                  />
+                  {(() => {
+                    const cal = parseInt(calories, 10) || 0;
+                    const prot = protein ? parseInt(protein, 10) : undefined;
+                    const fib = fiber ? parseInt(fiber, 10) : undefined;
+                    const sug = sugar ? parseInt(sugar, 10) : undefined;
+                    if (prot === undefined || fib === undefined || sug === undefined) return null;
+                    const warnings = getHealthWarnings(cal, prot, fib, sug, mealType);
+                    return hasAnyWarning(warnings) ? null : (
+                      <div className="text-xs font-semibold text-success bg-success/10 border border-success/20 rounded-xl p-3">
+                        Looks healthy for this meal type.
+                      </div>
+                    );
+                  })()}
+                </>
               )}
 
               <div className="grid grid-cols-2 gap-2">
@@ -296,7 +323,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
             <div className="p-4 safe-bottom bg-background border-t border-border/50 flex-shrink-0">
               <Button
                 onClick={handleSubmit}
-                disabled={!calories || isSubmitting}
+                disabled={!calories || !protein || !fiber || !sugar || isSubmitting}
                 className="w-full h-12 text-base rounded-xl font-bold shadow-neon"
               >
                 {isSubmitting ? 'Saving...' : 'Save Meal'}

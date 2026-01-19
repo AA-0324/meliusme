@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles } from 'lucide-react';
+import logo from '@/assets/meliusme-logo.png';
 
 interface SplashScreenProps {
   show: boolean;
@@ -55,8 +55,8 @@ export function SplashScreen({ show, onComplete }: SplashScreenProps) {
                 className="absolute inset-0 bg-primary/30 rounded-3xl blur-2xl"
               />
               {/* Icon */}
-              <div className="relative w-20 h-20 bg-gradient-to-br from-primary to-primary/70 rounded-3xl flex items-center justify-center shadow-glow">
-                <Sparkles className="w-10 h-10 text-primary-foreground" />
+              <div className="relative w-20 h-20 bg-card/40 rounded-3xl flex items-center justify-center shadow-glow border border-border/50">
+                <img src={logo} alt="MeliusMe logo" className="w-12 h-12" />
               </div>
             </motion.div>
 
@@ -67,7 +67,7 @@ export function SplashScreen({ show, onComplete }: SplashScreenProps) {
               transition={{ delay: 0.4 }}
               className="text-4xl font-extrabold tracking-tight text-glow"
             >
-              Melius
+              MeliusMe
             </motion.h1>
             
             <motion.p

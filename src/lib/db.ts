@@ -148,6 +148,16 @@ export async function deleteMeal(id: string): Promise<void> {
   await db.delete('meals', id);
 }
 
+export async function deleteMealsByDate(date: string): Promise<void> {
+  const db = await getDB();
+  const meals = await db.getAllFromIndex('meals', 'by-date', date);
+  const tx = db.transaction('meals', 'readwrite');
+  for (const meal of meals) {
+    await tx.store.delete(meal.id);
+  }
+  await tx.done;
+}
+
 // Settings operations (localStorage)
 const SETTINGS_KEY = 'melius-settings';
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Moon, Sun, Sparkles, Download, Settings, Target, Check, Lock, Droplets, Palette, User, ChevronRight } from 'lucide-react';
+import { Moon, Sun, Sparkles, Download, Settings, Target, Check, Lock, Droplets, Palette, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { ProBadge } from '@/components/ProBadge';
 import { ProUpgradeModal } from '@/components/ProUpgradeModal';
 import { exportMealsToCSV } from '@/lib/db';
 import { getGreeting, formatMemberSince } from '@/lib/userProfile';
+import { validateName } from '@/lib/validation';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
@@ -53,11 +54,14 @@ export default function Profile() {
   };
 
   const handleSaveName = () => {
-    if (nameInput.trim()) {
-      setUserName(nameInput.trim());
-      setIsEditingName(false);
-      toast.success('Profile updated!');
+    const validation = validateName(nameInput);
+    if (!validation.valid) {
+      toast.error(validation.error);
+      return;
     }
+    setUserName(nameInput.trim());
+    setIsEditingName(false);
+    toast.success('Profile updated!');
   };
 
   const handleExport = async () => {
@@ -72,7 +76,7 @@ export default function Profile() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `melius-export-${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = `meliusme-export-${new Date().toISOString().split('T')[0]}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -210,7 +214,7 @@ export default function Profile() {
                 <Sparkles className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h2 className="text-lg font-bold">Melius Pro</h2>
+                <h2 className="text-lg font-bold">MeliusMe Pro</h2>
                 <p className="text-muted-foreground text-sm">All features unlocked</p>
               </div>
             </div>

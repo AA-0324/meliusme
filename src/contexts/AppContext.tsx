@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { Meal, Settings, getSettings, saveSettings, getAllMeals, addMeal, deleteMeal, updateGoals, Goals, getWaterIntake, setWaterIntake } from '@/lib/db';
+import { Meal, Settings, getSettings, saveSettings, getAllMeals, addMeal, deleteMeal, deleteMealsByDate, updateGoals, Goals, getWaterIntake, setWaterIntake } from '@/lib/db';
 import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/userProfile';
 import { getBodyProfile, saveBodyProfile, BodyProfile } from '@/lib/bodyGoals';
 import { requestNotificationPermission, areNotificationsSupported } from '@/lib/notifications';
@@ -179,9 +179,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const resetDailyData = useCallback(() => {
     const todayStr = new Date().toISOString().split('T')[0];
+
+    // Reset water
     setTodayWater(0);
     setWaterIntake(todayStr, 0);
     sessionStorage.removeItem(`melius-confetti-${todayStr}`);
+
+    // Remove today's meals
+    setMeals((prev) => prev.filter((m) => m.date !== todayStr));
+    void deleteMealsByDate(todayStr);
   }, []);
 
   const toggleNotifications = useCallback(async () => {
