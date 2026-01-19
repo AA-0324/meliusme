@@ -3,6 +3,8 @@ import { Meal } from '@/lib/db';
 import { cn } from '@/lib/utils';
 import { Flame, Clock, AlertTriangle } from 'lucide-react';
 import { getHealthWarnings, hasAnyWarning } from '@/components/HealthWarning';
+import { useApp } from '@/contexts/AppContext';
+import { formatTime } from '@/lib/validation';
 
 interface MealCardProps {
   meal: Meal;
@@ -25,6 +27,7 @@ const mealTypeColors = {
 };
 
 export function MealCard({ meal, onClick, compact }: MealCardProps) {
+  const { settings } = useApp();
   const warnings = getHealthWarnings(meal.calories, meal.protein, meal.fiber, meal.sugar, meal.mealType);
   const hasWarnings = hasAnyWarning(warnings);
 
@@ -87,7 +90,7 @@ export function MealCard({ meal, onClick, compact }: MealCardProps) {
           </div>
           <div className="flex items-center gap-1.5 text-muted-foreground">
             <Clock className="w-4 h-4" />
-            <span className="text-sm">{meal.time}</span>
+            <span className="text-sm">{formatTime(meal.time, settings.use24Hour)}</span>
           </div>
         </div>
         {(meal.protein || meal.fiber || meal.sugar) && (

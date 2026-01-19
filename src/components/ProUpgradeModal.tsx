@@ -30,7 +30,7 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] bg-black/98 backdrop-blur-xl flex flex-col items-center justify-center p-6"
+          className="fixed inset-0 z-[100] bg-black/98 backdrop-blur-xl flex flex-col items-center justify-center p-6 overflow-hidden"
           onClick={onClose}
         >
           <motion.div
@@ -39,10 +39,10 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm"
+            className="w-full max-w-sm max-h-[88vh]"
           >
             {/* Close button */}
-            <div className="flex justify-end mb-4">
+            <div className="flex justify-end mb-2">
               <Button
                 variant="ghost"
                 size="icon"
@@ -54,35 +54,28 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
             </div>
 
             {/* Hero section */}
-            <div className="text-center mb-6">
+            <div className="text-center mb-4">
               <motion.div
                 initial={{ scale: 0, rotate: -10 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ delay: 0.1, type: 'spring', damping: 12 }}
-                className="relative w-20 h-20 mx-auto mb-5"
+                className="relative w-16 h-16 mx-auto mb-4"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 rounded-2xl blur-xl opacity-60" />
                 <div className="absolute inset-0 bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 rounded-2xl flex items-center justify-center">
-                  <Crown className="w-10 h-10 text-white drop-shadow-lg" />
+                  <Crown className="w-8 h-8 text-white drop-shadow-lg" />
                 </div>
-                <motion.div
-                  animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                  transition={{ rotate: { duration: 8, repeat: Infinity, ease: 'linear' }, scale: { duration: 2, repeat: Infinity } }}
-                  className="absolute -top-1 -right-1"
-                >
-                  <Sparkles className="w-5 h-5 text-amber-300 drop-shadow-lg" />
-                </motion.div>
               </motion.div>
               
-              <h2 className="text-3xl font-extrabold text-white mb-2">
-                Melius <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Pro</span>
+              <h2 className="text-2xl font-extrabold text-white mb-1">
+                MeliusMe <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Pro</span>
               </h2>
-              <p className="text-white/60 text-sm font-medium">Transform your health journey forever</p>
+              <p className="text-white/60 text-sm font-medium">Lifetime upgrade</p>
             </div>
 
             {/* Features */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 space-y-3 mb-6">
-              {proFeatures.map((feature, index) => (
+            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 space-y-3 mb-4">
+              {proFeatures.slice(0, 3).map((feature, index) => (
                 <motion.div
                   key={feature.text}
                   initial={{ opacity: 0, x: -20 }}
@@ -99,25 +92,24 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
             </div>
 
             {/* Pricing */}
-            <div className="text-center mb-6">
-              <span className="text-5xl font-extrabold text-white">$4.99</span>
-              <div className="flex items-center justify-center gap-2 mt-3">
+            <div className="text-center mb-4">
+              <span className="text-4xl font-extrabold text-white">$4.99</span>
+              <div className="flex items-center justify-center gap-2 mt-2">
                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/20 rounded-full border border-amber-500/30">
                   <InfinityIcon className="w-4 h-4 text-amber-400" />
                   <span className="text-amber-400 font-bold text-xs uppercase tracking-wide">Lifetime Access</span>
                 </div>
               </div>
-              <p className="text-white/40 text-xs mt-3 font-medium">One-time • No subscriptions • Forever yours</p>
+              <p className="text-white/40 text-xs mt-2 font-medium">One-time • No subscriptions</p>
             </div>
 
             {/* CTA */}
             <Button
               onClick={handleUpgrade}
-              className="w-full h-14 text-base font-bold rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 hover:from-amber-500 hover:via-orange-600 hover:to-rose-600 shadow-2xl shadow-orange-500/40 text-white border-0"
+              className="w-full h-12 text-sm font-bold rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 hover:from-amber-500 hover:via-orange-600 hover:to-rose-600 shadow-2xl shadow-orange-500/40 text-white border-0"
             >
-              Unlock Pro Forever
+              Unlock MeliusMe Pro
             </Button>
-            <p className="text-center text-white/30 text-xs mt-4">Join 50,000+ users investing in their health</p>
           </motion.div>
         </motion.div>
       )}

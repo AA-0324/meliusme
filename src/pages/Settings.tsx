@@ -15,11 +15,21 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useApp } from '@/contexts/AppContext';
 import { ProUpgradeModal } from '@/components/ProUpgradeModal';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { setWaterIntake } from '@/lib/db';
 
 const APP_VERSION = '1.0.0';
 
@@ -27,19 +37,18 @@ export default function Settings() {
   const { 
     settings, 
     isPro, 
-    setDevMode, 
+    setDevMode,
     resetDailyData,
     notificationsEnabled,
-    toggleNotifications
+    toggleNotifications,
+    setUse24Hour,
   } = useApp();
   const navigate = useNavigate();
   const [showProModal, setShowProModal] = useState(false);
 
   const handleResetDaily = () => {
-    const today = new Date().toISOString().split('T')[0];
-    setWaterIntake(today, 0);
     resetDailyData();
-    toast.success('Daily data reset successfully');
+    toast.success("Today's nutrition reset");
   };
 
   const handleDeleteAccount = () => {
@@ -121,14 +130,46 @@ export default function Settings() {
         >
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Data Management</h2>
           
-          <Button
-            onClick={handleResetDaily}
-            variant="outline"
-            className="w-full h-12 rounded-xl justify-start gap-3 font-semibold"
-          >
-            <RotateCcw className="w-5 h-5 text-warning" />
-            <span>Reset Today's Nutrition</span>
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full h-12 rounded-xl justify-start gap-3 font-semibold"
+              >
+                <RotateCcw className="w-5 h-5 text-warning" />
+                <span>Reset Today's Nutrition</span>
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Reset today's nutrition?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will remove today's logged meals and reset today's water count.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleResetDaily}>Reset</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </motion.div>
+
+        {/* Time */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
+          className="bg-card rounded-2xl p-5 border border-border/50"
+        >
+          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Time Display</h2>
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="font-semibold">Use 24-hour time</span>
+              <p className="text-xs text-muted-foreground">Turn off for 12-hour (AM/PM)</p>
+            </div>
+            <Switch checked={settings.use24Hour} onCheckedChange={setUse24Hour} />
+          </div>
         </motion.div>
 
         {/* Account */}
@@ -146,7 +187,7 @@ export default function Settings() {
               className="w-full h-12 rounded-xl justify-start gap-3 font-semibold bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 hover:from-amber-600 hover:via-orange-600 hover:to-rose-600"
             >
               <Sparkles className="w-5 h-5" />
-              <span>Upgrade to Pro</span>
+              <span>Upgrade to MeliusMe Pro</span>
             </Button>
           )}
           

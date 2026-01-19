@@ -181,6 +181,7 @@
     @apply bg-background text-foreground antialiased;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
   }
 
   /* Mobile-first touch optimizations */

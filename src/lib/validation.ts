@@ -1,4 +1,4 @@
-// Input Validation and Content Moderation for Melius
+// Input Validation and Content Moderation for MeliusMe
 
 // Profanity filter - basic list of inappropriate words
 const PROFANITY_LIST = [
@@ -7,10 +7,17 @@ const PROFANITY_LIST = [
   'cunt', 'piss', 'motherfucker', 'asshole', 'bullshit', 'dumbass'
 ];
 
-// Check if text contains profanity
+function escapeRegExp(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Check if text contains profanity (word-boundary based)
 export function containsProfanity(text: string): boolean {
-  const lowered = text.toLowerCase().replace(/[^a-z]/g, '');
-  return PROFANITY_LIST.some(word => lowered.includes(word));
+  const lowered = text.toLowerCase();
+  return PROFANITY_LIST.some((word) => {
+    const re = new RegExp(`\\b${escapeRegExp(word)}\\b`, 'i');
+    return re.test(lowered);
+  });
 }
 
 // Validate name input

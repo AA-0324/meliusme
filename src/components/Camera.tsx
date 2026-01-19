@@ -22,12 +22,21 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
     try {
       setError(null);
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: {
+          facingMode: { ideal: facingMode },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
         audio: false,
       });
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().catch(() => {
+            // Some mobile browsers require a user gesture; capture still works.
+          });
+        };
       }
     } catch (err) {
       console.error('Camera error:', err);
