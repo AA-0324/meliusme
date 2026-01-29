@@ -1,28 +1,38 @@
-# 🥗 MeliusMe
+🥗 MeliusMe
 
 **MeliusMe** is a minimalist nutrition and meal-tracking application designed to give users total ownership over their health data. By eliminating cloud dependencies, accounts, and ads, MeliusMe provides a high-performance, private-by-default experience for users serious about a better life.
 
-> **Current Phase:** 🏗️ Vibe-Coded Prototype (~60% Core Logic)
+**Current Progress:** Vibe-Coded Prototype - Estimated 60% finished
 
-## ✨ Key Features
+## Features
 - **Zero Friction Logging:** Rapid, intuitive entry system to reduce tracking fatigue.
 - **Privacy First:** All data is stored locally on-device. No accounts, no tracking.
 - **Goal-Aware Tools:** Integrated logic for bulking, cutting, and maintenance phases.
-- **Data Insights:** Clear, actionable progress visualization without unnecessary complexity.
+- **Insights:** Clear, actionable progress visualization without unnecessary complexity.
 
-## 🛠️ Tech Stack
-- **Frontend:** React, Vite, Tailwind CSS
-- **Prototyping:** Iterative AI "Vibe-Coding"
+## Stack
+- **Frontend:** TypeScript, CSS
+- **Prototyping:** Iterative AI Vibe-Coding
 - **Upcoming Infrastructure:** Local-first database refactoring (SQLite/IndexedDB).
 
-## 🛡️ Security & Analytics Roadmap
-This project serves as a practical application for my professional certification journey:
-- **Cybersecurity (Google):** Implementing secure local storage and data encryption to ensure user privacy is uncompromised.
-- **Data Analytics (Google):** Developing advanced progress insights and automated goal-setting algorithms.
-- **Python (UMich):** Building data-processing scripts for deeper nutritional analysis and food recognition logic.
+Behind The Scenes
+- **Cybersecurity:** I am dedicated to delivering a finished product that features secure local storage and data encryption to make sure user privacy is uncompromised. By purposefully eliminating any use of the cloud, I am making sure that users' private information remains private and that it all remains under the users' control, protecting their info from external vulnerabilities and unauthorized access.
+- **Data Analytics:** Coding the app is only 40% of the process. Before starting the code, I researched and analyzed mobile app niches that had significant growth over the past year, a growing userbase, and good potential (and made sure it wasn't just an outlier). After that, I further analyzed nine of the top apps in the niche I chose to find problems and issues that my app could set out to fix. I repeated this process multiple times until eventually, I stumbled across the nutrition-tracking niche. That will not be all, however. In order to market MeliusMe, I must anaylze market trends and user behavior. These insights will help in order to come up with a targeted marketing strategy meant to market MeliusMe to a wide, diverse, global audience.
+- **Programming:** I cannot simply 'copy and paste' the Lovable code. I'm perusing through it, making sure that I understand every line of code, it's reason for being there, tweaking it, and learning along the way. I think that anyone can type a prompt into any vibe-coding website and come out with an app eventually, but in order to really 'own' your work, you *must* go through it snd understand each line of code.
 
-## 🚀 Future Roadmap
-- [ ] Automated goal-setting engine
-- [ ] AI-powered food recognition (Privacy-compliant)
-- [ ] Advanced CSV/JSON Data Export (Full User Ownership)
-- [ ] Official Launch: Summer 2026
+Developing Methodology
+MeliusMe was developed using an iterative, AI-assisted vibe-coding workflow. Doing this allowed me to focus on high-level system architecture, product logic, and user experience while utilizing AI agents like Lovable to handle the frontend scaffolding. This modern development cycle allows for much faster prototyping and makes sure that the focus remains on solving nutritional data challenges rather than boilerplate syntax.
+I did not start this project half-baked. I researched for around 3 weeks, using articles, forums, videos, and real-life examples to see what to do and what not to do. While doing this, I came across Zero-Trust review processes. I decided to implement an altered version of them into my use of vibe-coding, so now I continously perform manual 'audits' of all AI-generated logic.
+
+## Roadmap
+- [ ] Set up Gemini 2.5 Flash Lite API for AI-powered food image scans
+- [ ] Update logo
+- [ ] Update example prices for MeliusMe Pro and AI-scan subscription
+- [ ] Fix multiple formatting issues plaguing this current prototype
+- [ ] Fix multiple animation errors/Add multiple planned animations
+- [ ] Add advanced bulking/cutting goals
+- [ ] Fix minor glitches (white border aound account deletion/reset daily nutrition, horizontal scrolling when logging a meal, outdated version number, etc)
+- [ ] Add the ability to access the user's photo gallery *only* when logging meals
+- [ ] Implement RevenueCat for micro transactions (much later)
+- [ ] More will come as the prototype continues to develop
+- [ ] **Ideal Deadline: December 31, 2026**
