@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Flame, Utensils, ChevronRight } from 'lucide-react';
+import { Plus, Flame, Utensils, ChevronRight, Target, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useApp } from '@/contexts/AppContext';
 import { Camera } from '@/components/Camera';
@@ -9,18 +9,25 @@ import { MealCard } from '@/components/MealCard';
 import { MealDetail } from '@/components/MealDetail';
 import { WaterTracker } from '@/components/WaterTracker';
 import { MealReminder } from '@/components/MealReminder';
+import { ProgressRing } from '@/components/ProgressRing';
+import { StreakDisplay } from '@/components/StreakDisplay';
+import { ChallengesPanel } from '@/components/ChallengesPanel';
+import { DayCompleteModal } from '@/components/DayCompleteModal';
 import { Meal } from '@/lib/db';
 import { getGreeting } from '@/lib/userProfile';
+import { generateInsight } from '@/lib/streaks';
 import { useNavigate } from 'react-router-dom';
 
 export default function Home() {
-  const { meals, settings, isLoading, todayWater, incrementWater, userProfile } = useApp();
+  const { meals, settings, isLoading, todayWater, incrementWater, userProfile, streak, currentChallenge } = useApp();
   const navigate = useNavigate();
   
   const [showCamera, setShowCamera] = useState(false);
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [showMealForm, setShowMealForm] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
+  const [showChallenges, setShowChallenges] = useState(false);
+  const [showDayComplete, setShowDayComplete] = useState(false);
 
   // Get today's date
   const today = new Date().toISOString().split('T')[0];
@@ -45,9 +52,17 @@ export default function Home() {
   const todayStats = useMemo(() => {
     return {
       calories: todaysMeals.reduce((sum, meal) => sum + meal.calories, 0),
+      protein: todaysMeals.reduce((sum, meal) => sum + (meal.protein || 0), 0),
+      fiber: todaysMeals.reduce((sum, meal) => sum + (meal.fiber || 0), 0),
+      sugar: todaysMeals.reduce((sum, meal) => sum + (meal.sugar || 0), 0),
       mealCount: todaysMeals.length,
     };
   }, [todaysMeals]);
+
+  // Calculate progress percentage
+  const calorieProgress = useMemo(() => {
+    return Math.min((todayStats.calories / settings.goals.calories) * 100, 100);
+  }, [todayStats.calories, settings.goals.calories]);
 
   // Calculate goal status
   const goalStatus = useMemo(() => {
@@ -58,6 +73,11 @@ export default function Home() {
     return 'destructive';
   }, [todayStats.calories, settings.goals]);
 
+  // Generate insight
+  const insight = useMemo(() => {
+    return generateInsight(meals);
+  }, [meals]);
+
   const handlePhotoCapture = (photoDataUrl: string) => {
     setCapturedPhoto(photoDataUrl);
     setShowMealForm(true);
@@ -66,6 +86,13 @@ export default function Home() {
   const handleMealLogged = () => {
     setShowMealForm(false);
     setCapturedPhoto(null);
+    
+    // Check if day is complete (breakfast, lunch, dinner logged)
+    const mealTypesAfterLog = [...todayMealTypes];
+    if (mealTypesAfterLog.includes('breakfast') && mealTypesAfterLog.includes('lunch') && mealTypesAfterLog.includes('dinner')) {
+      // Show day complete after a small delay
+      setTimeout(() => setShowDayComplete(true), 500);
+    }
   };
 
   if (isLoading) {
@@ -89,38 +116,31 @@ export default function Home() {
         </motion.h1>
       </div>
 
+      {/* Streak Display */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="px-6 py-2"
+      >
+        <StreakDisplay streak={streak} />
+      </motion.div>
+
       {/* Meal Reminder */}
       <div className="px-6 py-2">
         <MealReminder lastMealTime={lastMealTime} todayMealTypes={todayMealTypes} />
       </div>
 
-      {/* Main Log Button */}
-      <div className="px-6 py-3">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1 }}
-        >
-          <Button
-            onClick={() => setShowCamera(true)}
-            className="w-full h-16 text-lg rounded-2xl gradient-primary hover:opacity-90 shadow-neon font-bold tracking-wide"
-          >
-            <Plus className="w-6 h-6 mr-2" />
-            Log a Meal
-          </Button>
-        </motion.div>
-      </div>
-
-      {/* Today's Summary */}
+      {/* Progress Ring + Stats */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
+        transition={{ delay: 0.1 }}
         className="px-6 py-3"
       >
         <div className="glass rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Today</h2>
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Today's Progress</h2>
             <button 
               onClick={() => navigate('/dashboard')}
               className="text-primary text-sm font-semibold flex items-center gap-0.5 hover:gap-1.5 transition-all"
@@ -129,57 +149,124 @@ export default function Home() {
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            {/* Calories */}
-            <div className={`rounded-xl p-4 ${
-              goalStatus === 'success' ? 'bg-primary/15 border border-primary/20' : 
-              goalStatus === 'warning' ? 'bg-warning/15 border border-warning/20' : 'bg-destructive/15 border border-destructive/20'
-            }`}>
-              <div className={`flex items-center gap-2 mb-1 ${
-                goalStatus === 'success' ? 'text-primary' : 
-                goalStatus === 'warning' ? 'text-warning' : 'text-destructive'
-              }`}>
-                <Flame className="w-4 h-4" />
-                <span className="text-[10px] font-bold uppercase tracking-widest">Calories</span>
+          <div className="flex items-center gap-6">
+            {/* Progress Ring */}
+            <ProgressRing progress={calorieProgress} size={120} strokeWidth={10} showAnimation={calorieProgress >= 100}>
+              <div className="text-center">
+                <div className="text-2xl font-extrabold">{todayStats.calories}</div>
+                <div className="text-[10px] text-muted-foreground font-medium">/ {settings.goals.calories}</div>
               </div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-extrabold">{todayStats.calories}</span>
-                <span className="text-muted-foreground text-xs font-medium">/ {settings.goals.calories}</span>
-              </div>
-            </div>
+            </ProgressRing>
 
-            {/* Meal count */}
-            <div className="bg-secondary/50 rounded-xl p-4 border border-border/50">
-              <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                <Utensils className="w-4 h-4" />
-                <span className="text-[10px] font-bold uppercase tracking-widest">Meals</span>
+            {/* Stats */}
+            <div className="flex-1 space-y-2">
+              <div className="flex items-center justify-between p-2 bg-secondary/30 rounded-lg">
+                <span className="text-xs text-muted-foreground">Meals</span>
+                <span className="font-bold">{todayStats.mealCount}</span>
               </div>
-              <span className="text-3xl font-extrabold">{todayStats.mealCount}</span>
+              <div className="flex items-center justify-between p-2 bg-secondary/30 rounded-lg">
+                <span className="text-xs text-muted-foreground">Protein</span>
+                <span className="font-bold">{todayStats.protein}g</span>
+              </div>
+              <div className="flex items-center justify-between p-2 bg-secondary/30 rounded-lg">
+                <span className="text-xs text-muted-foreground">Water</span>
+                <span className="font-bold">{todayWater}/{settings.waterGoal}</span>
+              </div>
             </div>
           </div>
 
-          {/* Progress bar */}
-          <div className="mt-4">
-            <div className="h-2 bg-secondary rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.min((todayStats.calories / settings.goals.calories) * 100, 100)}%` }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className={`h-full rounded-full ${
-                  goalStatus === 'success' ? 'bg-primary shadow-glow' : 
-                  goalStatus === 'warning' ? 'bg-warning' : 'bg-destructive'
-                }`}
-              />
-            </div>
-          </div>
+          {/* Calorie warning */}
+          {goalStatus === 'destructive' && (
+            <motion.div
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-xl flex items-center gap-2"
+            >
+              <Flame className="w-4 h-4 text-destructive" />
+              <span className="text-xs font-semibold text-destructive">You've exceeded your calorie goal</span>
+            </motion.div>
+          )}
         </div>
       </motion.div>
+
+      {/* Quick Actions */}
+      <div className="px-6 py-3 grid grid-cols-2 gap-3">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.15 }}
+        >
+          <Button
+            onClick={() => setShowCamera(true)}
+            className="w-full h-14 text-base rounded-2xl gradient-primary hover:opacity-90 shadow-neon font-bold"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Log Meal
+          </Button>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Button
+            onClick={() => setShowChallenges(true)}
+            variant="outline"
+            className="w-full h-14 text-base rounded-2xl font-bold border-2"
+          >
+            <Target className="w-5 h-5 mr-2" />
+            Challenges
+          </Button>
+        </motion.div>
+      </div>
+
+      {/* Current Challenge Preview */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+        className="px-6 py-2"
+      >
+        <button
+          onClick={() => setShowChallenges(true)}
+          className="w-full bg-card rounded-2xl p-4 border border-border/50 text-left hover:bg-secondary/30 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center">
+              <Zap className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-muted-foreground uppercase font-bold">
+                {currentChallenge.type === 'daily' ? 'Daily Mission' : 'Weekly Challenge'}
+              </p>
+              <p className="font-semibold truncate">{currentChallenge.title}</p>
+            </div>
+            <div className="text-right">
+              <span className="text-lg font-bold text-primary">{currentChallenge.progress}/{currentChallenge.target}</span>
+            </div>
+          </div>
+        </button>
+      </motion.div>
+
+      {/* Insight */}
+      {insight && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="px-6 py-2"
+        >
+          <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl p-4 border border-primary/20">
+            <p className="text-sm font-medium text-primary">{insight}</p>
+          </div>
+        </motion.div>
+      )}
 
       {/* Water Tracker */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
+        transition={{ delay: 0.35 }}
         className="px-6 py-3"
       >
         <WaterTracker
@@ -194,7 +281,7 @@ export default function Home() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
+          transition={{ delay: 0.4 }}
           className="py-3"
         >
           <div className="px-6 mb-3">
@@ -218,7 +305,7 @@ export default function Home() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.4 }}
           className="px-6 py-10 text-center"
         >
           <div className="w-16 h-16 bg-secondary/50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-border/50">
@@ -251,6 +338,20 @@ export default function Home() {
       <MealDetail
         meal={selectedMeal}
         onClose={() => setSelectedMeal(null)}
+      />
+
+      {/* Challenges Panel */}
+      <ChallengesPanel
+        open={showChallenges}
+        onClose={() => setShowChallenges(false)}
+      />
+
+      {/* Day Complete Modal */}
+      <DayCompleteModal
+        open={showDayComplete}
+        onClose={() => setShowDayComplete(false)}
+        totalCalories={todayStats.calories}
+        totalMeals={todayStats.mealCount}
       />
     </div>
   );
