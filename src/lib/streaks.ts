@@ -1,9 +1,39 @@
-// Streak and Gamification System for Melius
+// Streak and Gamification System for MeliusMe
 
-const STREAK_KEY = 'melius-streak';
-const CHALLENGES_KEY = 'melius-challenges';
-const BADGES_KEY = 'melius-badges';
-const REFLECTION_KEY = 'melius-reflection';
+const STREAK_KEY = 'meliusme-streak';
+const CHALLENGES_KEY = 'meliusme-challenges';
+const BADGES_KEY = 'meliusme-badges';
+const REFLECTION_KEY = 'meliusme-reflection';
+
+export interface ReflectionData {
+  weekNumber: number;
+  mealId: string;
+  answeredAt: number;
+}
+
+export function getLastReflection(): ReflectionData | null {
+  const stored = localStorage.getItem(REFLECTION_KEY);
+  if (!stored) return null;
+  try {
+    const data = JSON.parse(stored);
+    // Convert old format to new
+    if (data.weekStart) {
+      return null;
+    }
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+export function saveLastReflection(weekNumber: number, mealId: string): void {
+  const data: ReflectionData = {
+    weekNumber,
+    mealId,
+    answeredAt: Date.now(),
+  };
+  localStorage.setItem(REFLECTION_KEY, JSON.stringify(data));
+}
 
 export interface StreakData {
   currentStreak: number;
@@ -23,6 +53,7 @@ export interface Badge {
 export interface Challenge {
   id: string;
   name: string;
+  title: string; // For display
   description: string;
   target: number;
   progress: number;
@@ -211,6 +242,7 @@ export function getCurrentChallenge(): Challenge {
   const challenge: Challenge = {
     id: template.id,
     name: template.name,
+    title: template.name,
     description: template.description,
     target: template.target,
     progress: 0,
@@ -277,8 +309,8 @@ function getWeekNumber(): number {
   return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
 }
 
-// Generate a micro-insight based on meal data
-export function generateInsight(meals: any[], waterData: Record<string, number>, goals: any): string | null {
+// Generate a micro-insight based on meal data (simplified version)
+export function generateInsight(meals: any[]): string | null {
   if (meals.length < 5) return null;
   
   const insights: string[] = [];
@@ -287,18 +319,25 @@ export function generateInsight(meals: any[], waterData: Record<string, number>,
   // Calculate calories by day of week
   const caloriesByDay: number[] = [0, 0, 0, 0, 0, 0, 0];
   const countByDay: number[] = [0, 0, 0, 0, 0, 0, 0];
+  const proteinByDay: number[] = [0, 0, 0, 0, 0, 0, 0];
   
   meals.forEach(meal => {
     const dayOfWeek = new Date(meal.date).getDay();
     caloriesByDay[dayOfWeek] += meal.calories;
+    proteinByDay[dayOfWeek] += meal.protein || 0;
     countByDay[dayOfWeek]++;
   });
   
   const avgByDay = caloriesByDay.map((cal, i) => countByDay[i] > 0 ? cal / countByDay[i] : 0);
-  const maxDay = avgByDay.indexOf(Math.max(...avgByDay.filter(v => v > 0)));
+  const maxCalDay = avgByDay.indexOf(Math.max(...avgByDay.filter(v => v > 0)));
+  const maxProteinDay = proteinByDay.indexOf(Math.max(...proteinByDay.filter(v => v > 0)));
   
-  if (maxDay >= 0 && avgByDay[maxDay] > 0) {
-    insights.push(`You tend to eat more calories on ${dayNames[maxDay]}s.`);
+  if (maxCalDay >= 0 && avgByDay[maxCalDay] > 0) {
+    insights.push(`You tend to eat more calories on ${dayNames[maxCalDay]}s.`);
+  }
+  
+  if (maxProteinDay >= 0 && proteinByDay[maxProteinDay] > 0) {
+    insights.push(`Your highest-protein day was ${dayNames[maxProteinDay]}.`);
   }
   
   // Check breakfast consistency
@@ -308,10 +347,10 @@ export function generateInsight(meals: any[], waterData: Record<string, number>,
     insights.push('You log breakfast more consistently than other meals. Great habit!');
   }
   
-  // Water goal hits
-  const waterGoalHits = Object.values(waterData).filter(g => g >= (goals.waterGoal || 8)).length;
-  if (waterGoalHits > 0) {
-    insights.push(`You hit your water goal ${waterGoalHits} times this week!`);
+  // Meal count
+  const avgMeals = meals.length / Math.max(totalDays, 1);
+  if (avgMeals > 0) {
+    insights.push(`You average ${avgMeals.toFixed(1)} meals per day.`);
   }
   
   // Return a random insight

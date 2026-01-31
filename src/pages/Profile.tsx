@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Moon, Sun, Sparkles, Download, Settings, Target, Check, Lock, Droplets, Palette, User } from 'lucide-react';
+import { Moon, Sun, Sparkles, Download, Settings, Target, Check, Lock, Droplets, Palette, User, Scale } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useApp } from '@/contexts/AppContext';
 import { ProBadge } from '@/components/ProBadge';
 import { ProUpgradeModal } from '@/components/ProUpgradeModal';
+import { BodyProfileEditor } from '@/components/BodyProfileEditor';
 import { exportMealsToCSV } from '@/lib/db';
 import { getGreeting, formatMemberSince } from '@/lib/userProfile';
 import { validateName } from '@/lib/validation';
@@ -31,9 +32,10 @@ const themes = [
 ];
 
 export default function Profile() {
-  const { settings, isPro, setDarkMode, updateUserGoals, setWaterGoal, setTheme, userProfile, setUserName } = useApp();
+  const { settings, isPro, setDarkMode, updateUserGoals, setWaterGoal, setTheme, userProfile, setUserName, bodyProfile } = useApp();
   const navigate = useNavigate();
   const [showProModal, setShowProModal] = useState(false);
+  const [showBodyProfile, setShowBodyProfile] = useState(false);
   const [calorieGoal, setCalorieGoal] = useState(settings.goals.calories.toString());
   const [proteinGoal, setProteinGoal] = useState(settings.goals.protein?.toString() || '');
   const [fiberGoal, setFiberGoal] = useState(settings.goals.fiber?.toString() || '');
@@ -41,6 +43,17 @@ export default function Profile() {
   const [waterGoalInput, setWaterGoalInput] = useState(settings.waterGoal.toString());
   const [nameInput, setNameInput] = useState(userProfile?.name || '');
   const [isEditingName, setIsEditingName] = useState(false);
+  
+  // Track if goals have changed
+  const goalsChanged = useMemo(() => {
+    return (
+      calorieGoal !== settings.goals.calories.toString() ||
+      proteinGoal !== (settings.goals.protein?.toString() || '') ||
+      fiberGoal !== (settings.goals.fiber?.toString() || '') ||
+      sugarGoal !== (settings.goals.sugar?.toString() || '') ||
+      waterGoalInput !== settings.waterGoal.toString()
+    );
+  }, [calorieGoal, proteinGoal, fiberGoal, sugarGoal, waterGoalInput, settings]);
 
   const handleSaveGoals = () => {
     updateUserGoals({
@@ -168,6 +181,28 @@ export default function Profile() {
               )}
             </div>
           </div>
+        </motion.div>
+
+        {/* Body Profile */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+        >
+          <Button
+            onClick={() => setShowBodyProfile(true)}
+            variant="outline"
+            className="w-full h-14 rounded-2xl justify-start gap-3 font-semibold"
+          >
+            <Scale className="w-5 h-5 text-primary" />
+            <div className="text-left flex-1">
+              <span className="block">Body Profile</span>
+              <span className="text-xs text-muted-foreground font-normal">
+                {bodyProfile?.goal ? `${bodyProfile.goal.charAt(0).toUpperCase() + bodyProfile.goal.slice(1)} • ` : ''}
+                {bodyProfile?.weightKg ? `${Math.round(bodyProfile.weightKg)}kg` : 'Set up your profile'}
+              </span>
+            </div>
+          </Button>
         </motion.div>
 
         {/* Pro Status */}
@@ -391,7 +426,11 @@ export default function Profile() {
               )}
             </div>
 
-            <Button onClick={handleSaveGoals} className="w-full h-11 rounded-xl font-bold">
+            <Button 
+              onClick={handleSaveGoals} 
+              disabled={!goalsChanged}
+              className="w-full h-11 rounded-xl font-bold"
+            >
               Save Goals
             </Button>
           </div>
@@ -418,6 +457,7 @@ export default function Profile() {
       </div>
 
       <ProUpgradeModal open={showProModal} onClose={() => setShowProModal(false)} />
+      <BodyProfileEditor open={showBodyProfile} onClose={() => setShowBodyProfile(false)} />
     </div>
   );
 }
