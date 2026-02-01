@@ -16,7 +16,7 @@ We believe in full user ownership.
  - You can wipe all data instantly within the app settings.
  - MeliusMe will release with a CSV export feature on day one so you can move your data to any other platform of your choosing.
 
-MeliusMe only requests access to your photo gallery for meal logging and for permission to send you notifications so you can stay on top of your goals. It does not access any other part of your system.
+MeliusMe only requests access to your photo gallery for meal logging/altering your profile picture and for permission to send you notifications so you can stay on top of your goals. It does not access any other part of your system.
 
 The only external connection MeliusMe makes is to the Gemini API for AI-powered food recognition (if enabled) and to RevenueCat to handle in-app purchases.
 Note: Images sent for analysis are processed according to those companies' respective privacy standards and are not stored by MeliusMe.
