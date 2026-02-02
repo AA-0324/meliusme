@@ -186,16 +186,16 @@ export default function Dashboard() {
 
           {isPro ? (
             mealsByType.length > 0 ? (
-              <div className="flex items-center justify-center">
-                <div className="w-40 h-40">
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="w-32 h-32 flex-shrink-0">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={mealsByType}
                         cx="50%"
                         cy="50%"
-                        innerRadius={40}
-                        outerRadius={70}
+                        innerRadius={30}
+                        outerRadius={55}
                         paddingAngle={2}
                         dataKey="value"
                       >
@@ -215,15 +215,17 @@ export default function Dashboard() {
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="ml-4 space-y-2">
+                <div className="flex-1 grid grid-cols-2 gap-2 w-full">
                   {mealsByType.map((entry) => (
-                    <div key={entry.name} className="flex items-center gap-2">
+                    <div key={entry.name} className="flex items-center gap-2 bg-secondary/30 rounded-lg p-2">
                       <div
-                        className="w-3 h-3 rounded-full"
+                        className="w-3 h-3 rounded-full flex-shrink-0"
                         style={{ backgroundColor: entry.color }}
                       />
-                      <span className="text-sm">{entry.name}</span>
-                      <span className="text-sm text-muted-foreground">{entry.value} cal</span>
+                      <div className="min-w-0 flex-1">
+                        <span className="text-xs font-medium truncate block">{entry.name}</span>
+                        <span className="text-[10px] text-muted-foreground">{entry.value} cal</span>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -236,7 +238,7 @@ export default function Dashboard() {
           ) : (
             <button
               onClick={() => setShowProModal(true)}
-              className="w-full h-40 flex flex-col items-center justify-center gap-3 bg-secondary/50 rounded-2xl hover:bg-secondary transition-colors"
+              className="w-full h-32 flex flex-col items-center justify-center gap-3 bg-secondary/50 rounded-2xl hover:bg-secondary transition-colors"
             >
               <Lock className="w-8 h-8 text-muted-foreground" />
               <span className="text-muted-foreground">Unlock with Pro</span>

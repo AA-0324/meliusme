@@ -3,7 +3,7 @@ import { Meal, Settings, getSettings, saveSettings, getAllMeals, addMeal, delete
 import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/userProfile';
 import { getBodyProfile, saveBodyProfile, BodyProfile } from '@/lib/bodyGoals';
 import { requestNotificationPermission, areNotificationsSupported } from '@/lib/notifications';
-import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge, getEarnedBadges, Badge, awardBadge } from '@/lib/streaks';
+import { getStreakData, updateStreak, StreakData, getCurrentChallenge, updateChallengeProgress, Challenge, getEarnedBadges, Badge, awardBadge } from '@/lib/streaks';
 
 interface AppContextType {
   settings: Settings;
@@ -217,6 +217,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const updatedStreak = updateStreak(meal.date);
     setStreak(updatedStreak);
     
+    // Update challenge progress
+    const updatedChallenge = updateChallengeProgress(1);
+    setCurrentChallenge(updatedChallenge);
+    
     // Check for first meal badge
     const currentBadges = getEarnedBadges();
     if (!currentBadges.some(b => b.id === 'first_meal')) {
@@ -224,11 +228,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setBadges(getEarnedBadges());
     }
     
+    // Check for triple threat badge (3 meals in one day)
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayMeals = meals.filter(m => m.date === todayStr);
+    if (todayMeals.length >= 2 && !currentBadges.some(b => b.id === 'meals_3')) {
+      awardBadge('meals_3');
+      setBadges(getEarnedBadges());
+    }
+    
     // Show toast
     setShowMealLoggedToast(true);
     
     return newMeal;
-  }, []);
+  }, [meals]);
 
   const removeMeal = useCallback(async (id: string) => {
     await deleteMeal(id);

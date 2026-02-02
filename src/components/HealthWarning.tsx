@@ -1,11 +1,16 @@
 import { motion } from 'framer-motion';
-import { AlertTriangle, Info } from 'lucide-react';
+import { AlertTriangle, CheckCircle } from 'lucide-react';
+import { Goals } from '@/lib/db';
 
 export interface HealthWarnings {
   highCalories?: boolean;
   highSugar?: boolean;
   lowProtein?: boolean;
   lowFiber?: boolean;
+  goodCalories?: boolean;
+  goodProtein?: boolean;
+  goodFiber?: boolean;
+  goodSugar?: boolean;
 }
 
 interface HealthWarningProps {
@@ -15,54 +20,119 @@ interface HealthWarningProps {
   sugar?: number;
   mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   compact?: boolean;
+  userGoals?: Goals;
 }
 
-// Thresholds for health warnings
-const THRESHOLDS = {
-  breakfast: { maxCalories: 600, maxSugar: 20, minProtein: 10, minFiber: 3 },
-  lunch: { maxCalories: 800, maxSugar: 25, minProtein: 20, minFiber: 5 },
-  dinner: { maxCalories: 900, maxSugar: 20, minProtein: 25, minFiber: 6 },
-  snack: { maxCalories: 300, maxSugar: 15, minProtein: 5, minFiber: 2 },
-};
+// Dynamic thresholds based on meal type and time
+function getThresholds(mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack', userGoals?: Goals) {
+  const hour = new Date().getHours();
+  
+  // Base thresholds
+  const baseThresholds = {
+    breakfast: { maxCalories: 600, maxSugar: 20, minProtein: 10, minFiber: 3 },
+    lunch: { maxCalories: 800, maxSugar: 25, minProtein: 20, minFiber: 5 },
+    dinner: { maxCalories: 900, maxSugar: 20, minProtein: 25, minFiber: 6 },
+    snack: { maxCalories: 300, maxSugar: 15, minProtein: 5, minFiber: 2 },
+  };
+
+  let thresholds = { ...baseThresholds[mealType] };
+
+  // Adjust based on time of day
+  if (mealType === 'dinner' && hour >= 21) {
+    // Late dinner should be lighter
+    thresholds.maxCalories = Math.round(thresholds.maxCalories * 0.7);
+  }
+  if (mealType === 'breakfast' && hour >= 10) {
+    // Late breakfast (brunch) can be heavier
+    thresholds.maxCalories = Math.round(thresholds.maxCalories * 1.2);
+  }
+
+  // Adjust based on user goals if Pro
+  if (userGoals) {
+    const dailyCalories = userGoals.calories;
+    const mealRatios = {
+      breakfast: 0.25,
+      lunch: 0.35,
+      dinner: 0.30,
+      snack: 0.10,
+    };
+    thresholds.maxCalories = Math.round(dailyCalories * mealRatios[mealType] * 1.2);
+    
+    if (userGoals.protein) {
+      thresholds.minProtein = Math.round((userGoals.protein * mealRatios[mealType]) * 0.7);
+    }
+    if (userGoals.fiber) {
+      thresholds.minFiber = Math.round((userGoals.fiber * mealRatios[mealType]) * 0.7);
+    }
+    if (userGoals.sugar) {
+      thresholds.maxSugar = Math.round((userGoals.sugar * mealRatios[mealType]) * 1.2);
+    }
+  }
+
+  return thresholds;
+}
 
 export function getHealthWarnings(
   calories: number,
   protein: number | undefined,
   fiber: number | undefined,
   sugar: number | undefined,
-  mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack'
+  mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack',
+  userGoals?: Goals
 ): HealthWarnings {
-  const thresholds = THRESHOLDS[mealType];
+  const thresholds = getThresholds(mealType, userGoals);
   const warnings: HealthWarnings = {};
 
+  // Check calories
   if (calories > thresholds.maxCalories) {
     warnings.highCalories = true;
+  } else if (calories > 0 && calories <= thresholds.maxCalories) {
+    warnings.goodCalories = true;
   }
-  if (sugar !== undefined && sugar > thresholds.maxSugar) {
-    warnings.highSugar = true;
+
+  // Check sugar
+  if (sugar !== undefined) {
+    if (sugar > thresholds.maxSugar) {
+      warnings.highSugar = true;
+    } else if (sugar <= thresholds.maxSugar) {
+      warnings.goodSugar = true;
+    }
   }
-  if (protein !== undefined && protein < thresholds.minProtein && calories > 200) {
-    warnings.lowProtein = true;
+
+  // Check protein (only if calories are significant)
+  if (protein !== undefined && calories > 200) {
+    if (protein < thresholds.minProtein) {
+      warnings.lowProtein = true;
+    } else {
+      warnings.goodProtein = true;
+    }
   }
-  if (fiber !== undefined && fiber < thresholds.minFiber && calories > 200) {
-    warnings.lowFiber = true;
+
+  // Check fiber (only if calories are significant)
+  if (fiber !== undefined && calories > 200) {
+    if (fiber < thresholds.minFiber) {
+      warnings.lowFiber = true;
+    } else {
+      warnings.goodFiber = true;
+    }
   }
 
   return warnings;
 }
 
 export function hasAnyWarning(warnings: HealthWarnings): boolean {
-  return Object.values(warnings).some(Boolean);
+  return warnings.highCalories || warnings.highSugar || warnings.lowProtein || warnings.lowFiber || false;
 }
 
-export function HealthWarning({ calories, protein, fiber, sugar, mealType, compact }: HealthWarningProps) {
-  const warnings = getHealthWarnings(calories, protein, fiber, sugar, mealType);
+export function HealthWarning({ calories, protein, fiber, sugar, mealType, compact, userGoals }: HealthWarningProps) {
+  const warnings = getHealthWarnings(calories, protein, fiber, sugar, mealType, userGoals);
+  const hasWarnings = hasAnyWarning(warnings);
   
-  if (!hasAnyWarning(warnings)) return null;
+  if (!hasWarnings) return null;
 
   const warningMessages: string[] = [];
-  if (warnings.highCalories) warningMessages.push('High calories');
-  if (warnings.highSugar) warningMessages.push('High sugar');
+  if (warnings.highCalories) warningMessages.push('High calories for this meal');
+  if (warnings.highSugar) warningMessages.push('High sugar content');
   if (warnings.lowProtein) warningMessages.push('Low protein');
   if (warnings.lowFiber) warningMessages.push('Low fiber');
 
