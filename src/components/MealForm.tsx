@@ -8,7 +8,7 @@ import { useApp } from '@/contexts/AppContext';
 import { ProBadge } from '@/components/ProBadge';
 import { ProUpgradeModal } from '@/components/ProUpgradeModal';
 import { HealthWarning, hasAnyWarning, getHealthWarnings } from '@/components/HealthWarning';
-import { validateNutrition, validateTag } from '@/lib/validation';
+import { validateNutrition, validateTag, formatTime } from '@/lib/validation';
 import { toast } from 'sonner';
 
 interface MealFormProps {
@@ -27,6 +27,7 @@ const mealTypes: { value: MealType; label: string }[] = [
   { value: 'snack', label: 'Snack' },
 ];
 
+// Get suggested meal type based on time
 function getSuggestedMealType(): MealType {
   const hour = new Date().getHours();
   if (hour >= 5 && hour < 11) return 'breakfast';
@@ -36,8 +37,25 @@ function getSuggestedMealType(): MealType {
   return 'snack';
 }
 
+// Get available meal types based on time
+function getAvailableMealTypes(): MealType[] {
+  const hour = new Date().getHours();
+  // Early morning (5-9): Only breakfast and snack
+  if (hour >= 5 && hour < 9) return ['breakfast', 'snack'];
+  // Late morning (9-11): Breakfast, snack
+  if (hour >= 9 && hour < 11) return ['breakfast', 'snack', 'lunch'];
+  // Midday (11-14): Lunch and snack
+  if (hour >= 11 && hour < 14) return ['lunch', 'snack', 'breakfast'];
+  // Afternoon (14-17): Snack, lunch
+  if (hour >= 14 && hour < 17) return ['snack', 'lunch', 'dinner'];
+  // Evening (17-21): Dinner and snack
+  if (hour >= 17 && hour < 21) return ['dinner', 'snack', 'lunch'];
+  // Night (21+): Snack only
+  return ['snack', 'dinner'];
+}
+
 export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
-  const { logMeal, isPro } = useApp();
+  const { logMeal, isPro, settings, meals } = useApp();
   const [showProModal, setShowProModal] = useState(false);
 
   const now = new Date();
@@ -52,18 +70,42 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
   const [tags, setTags] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const availableMealTypes = useMemo(() => getAvailableMealTypes(), []);
+
   useEffect(() => {
     if (open) {
-      setMealType(getSuggestedMealType());
+      const suggested = getSuggestedMealType();
+      setMealType(suggested);
       const now = new Date();
       setDate(now.toISOString().split('T')[0]);
       setTime(now.toTimeString().slice(0, 5));
     }
   }, [open]);
 
+  // Check if user has already logged this meal type today
+  const todayMealTypes = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return meals.filter(m => m.date === today).map(m => m.mealType);
+  }, [meals]);
+
+  // Smart meal type suggestion: if breakfast/lunch/dinner already logged, suggest snack
+  useEffect(() => {
+    if (open) {
+      const suggested = getSuggestedMealType();
+      if (todayMealTypes.includes(suggested) && suggested !== 'snack') {
+        setMealType('snack');
+      } else {
+        setMealType(suggested);
+      }
+    }
+  }, [open, todayMealTypes]);
+
   const showWarnings = useMemo(() => {
     return calories && parseInt(calories, 10) > 0;
   }, [calories]);
+
+  // Get user's goals for personalized warnings
+  const userGoals = settings.goals;
 
   const handleAddTag = () => {
     const validation = validateTag(tagInput);
@@ -128,6 +170,9 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
     }
   };
 
+  // Format time for display (respects 12/24 hour setting)
+  const formattedTime = formatTime(time, settings.use24Hour);
+
   return (
     <>
       <AnimatePresence>
@@ -136,7 +181,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-background flex flex-col overflow-x-hidden"
+            className="fixed inset-0 z-[100] bg-background flex flex-col overflow-hidden"
           >
             <div className="relative h-32 bg-black flex-shrink-0">
               {photo && (
@@ -156,23 +201,29 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
               </h1>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4">
               <div className="space-y-2">
                 <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Meal Type</Label>
                 <div className="grid grid-cols-4 gap-2">
-                  {mealTypes.map(({ value, label }) => (
-                    <button
-                      key={value}
-                      onClick={() => setMealType(value)}
-                      className={`py-2.5 px-2 rounded-xl font-semibold text-xs transition-all border ${
-                        mealType === value
-                          ? 'bg-primary text-primary-foreground shadow-neon border-primary'
-                          : 'bg-secondary/50 text-secondary-foreground hover:bg-secondary border-border/50'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
+                  {mealTypes.map(({ value, label }) => {
+                    const isAvailable = availableMealTypes.includes(value);
+                    return (
+                      <button
+                        key={value}
+                        onClick={() => setMealType(value)}
+                        disabled={!isAvailable}
+                        className={`py-2.5 px-2 rounded-xl font-semibold text-xs transition-all border ${
+                          mealType === value
+                            ? 'bg-primary text-primary-foreground shadow-neon border-primary'
+                            : isAvailable
+                              ? 'bg-secondary/50 text-secondary-foreground hover:bg-secondary border-border/50'
+                              : 'bg-muted/30 text-muted-foreground/50 border-border/30 cursor-not-allowed'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -248,6 +299,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                     fiber={fiber ? parseInt(fiber, 10) : undefined}
                     sugar={sugar ? parseInt(sugar, 10) : undefined}
                     mealType={mealType}
+                    userGoals={isPro ? userGoals : undefined}
                   />
                   {(() => {
                     const cal = parseInt(calories, 10) || 0;
@@ -255,17 +307,17 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                     const fib = fiber ? parseInt(fiber, 10) : undefined;
                     const sug = sugar ? parseInt(sugar, 10) : undefined;
                     if (prot === undefined || fib === undefined || sug === undefined) return null;
-                    const warnings = getHealthWarnings(cal, prot, fib, sug, mealType);
+                    const warnings = getHealthWarnings(cal, prot, fib, sug, mealType, isPro ? userGoals : undefined);
                     return hasAnyWarning(warnings) ? null : (
                       <div className="text-xs font-semibold text-success bg-success/10 border border-success/20 rounded-xl p-3">
-                        Looks healthy for this meal type.
+                        ✓ Looks healthy for this meal type
                       </div>
                     );
                   })()}
                 </>
               )}
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="date" className="text-[10px] font-bold text-muted-foreground uppercase">Date</Label>
                   <Input
@@ -273,17 +325,19 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="h-11 rounded-xl bg-secondary/50 border-border/50"
+                    className="h-11 rounded-xl bg-secondary/50 border-border/50 text-sm"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="time" className="text-[10px] font-bold text-muted-foreground uppercase">Time</Label>
+                  <Label htmlFor="time" className="text-[10px] font-bold text-muted-foreground uppercase">
+                    Time {!settings.use24Hour && <span className="text-muted-foreground/70">({formattedTime})</span>}
+                  </Label>
                   <Input
                     id="time"
                     type="time"
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
-                    className="h-11 rounded-xl bg-secondary/50 border-border/50"
+                    className="h-11 rounded-xl bg-secondary/50 border-border/50 text-sm"
                   />
                 </div>
               </div>
@@ -299,7 +353,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                       onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
                       className="h-11 rounded-xl bg-secondary/50 border-border/50 flex-1"
                     />
-                    <Button onClick={handleAddTag} size="icon" className="h-11 w-11 rounded-xl">
+                    <Button onClick={handleAddTag} size="icon" className="h-11 w-11 rounded-xl flex-shrink-0">
                       <Plus className="w-5 h-5" />
                     </Button>
                   </div>

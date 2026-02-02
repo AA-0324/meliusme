@@ -40,10 +40,10 @@ export function ChallengesPanel({ open, onClose }: ChallengesPanelProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] bg-background"
+          className="fixed inset-0 z-[100] bg-background flex flex-col"
         >
           {/* Header */}
-          <div className="px-6 pt-8 pb-4 safe-top border-b border-border/50">
+          <div className="px-6 pt-8 pb-4 safe-top border-b border-border/50 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-bold">Challenges</h1>
@@ -55,7 +55,7 @@ export function ChallengesPanel({ open, onClose }: ChallengesPanelProps) {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6 pb-24 space-y-6">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 pb-24 space-y-6">
             {/* Current Challenge */}
             <div className="bg-card rounded-2xl p-5 border border-border/50">
               <div className="flex items-center gap-2 mb-4">

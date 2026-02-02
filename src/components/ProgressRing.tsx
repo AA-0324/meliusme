@@ -19,12 +19,21 @@ export function ProgressRing({
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (progress / 100) * circumference;
   
-  // Color based on progress
+  // Color based on progress - clearly visible
   const getColor = () => {
-    if (progress >= 100) return 'hsl(var(--primary))';
+    if (progress >= 100) return 'hsl(var(--success))';
     if (progress >= 80) return 'hsl(var(--primary))';
-    if (progress >= 60) return 'hsl(var(--warning))';
-    return 'hsl(var(--muted))';
+    if (progress >= 60) return 'hsl(var(--chart-3))'; // warning/amber
+    if (progress >= 30) return 'hsl(var(--chart-2))'; // blue
+    return 'hsl(var(--muted-foreground))';
+  };
+  
+  // Get glow color for visibility
+  const getGlowColor = () => {
+    if (progress >= 100) return 'hsl(var(--success) / 0.5)';
+    if (progress >= 80) return 'hsl(var(--primary) / 0.4)';
+    if (progress >= 60) return 'hsl(var(--chart-3) / 0.3)';
+    return 'transparent';
   };
 
   return (
@@ -54,7 +63,7 @@ export function ProgressRing({
           animate={{ strokeDashoffset }}
           transition={{ duration: 1, ease: 'easeOut' }}
           style={{
-            filter: progress >= 100 ? 'drop-shadow(0 0 8px hsl(var(--primary) / 0.5))' : undefined,
+            filter: progress >= 60 ? `drop-shadow(0 0 8px ${getGlowColor()})` : undefined,
           }}
         />
         

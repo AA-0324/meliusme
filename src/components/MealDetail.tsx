@@ -30,22 +30,24 @@ const mealTypeLabels = {
 };
 
 // Get color class based on nutrition health status
-function getNutritionColor(type: 'calories' | 'protein' | 'fiber' | 'sugar', value: number, mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack'): string {
-  const warnings = getHealthWarnings(
-    type === 'calories' ? value : 500,
-    type === 'protein' ? value : 20,
-    type === 'fiber' ? value : 5,
-    type === 'sugar' ? value : 10,
-    mealType
-  );
+function getNutritionColor(type: 'calories' | 'protein' | 'fiber' | 'sugar', value: number, mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack', allValues?: { calories: number; protein?: number; fiber?: number; sugar?: number }): string {
+  const cal = allValues?.calories || (type === 'calories' ? value : 500);
+  const prot = allValues?.protein ?? (type === 'protein' ? value : 20);
+  const fib = allValues?.fiber ?? (type === 'fiber' ? value : 5);
+  const sug = allValues?.sugar ?? (type === 'sugar' ? value : 10);
   
+  const warnings = getHealthWarnings(cal, prot, fib, sug, mealType);
+  
+  // Red for bad
   if (type === 'calories' && warnings.highCalories) return 'bg-destructive/20 border-destructive/30 text-destructive';
   if (type === 'sugar' && warnings.highSugar) return 'bg-destructive/20 border-destructive/30 text-destructive';
+  
+  // Yellow for concerning
   if (type === 'protein' && warnings.lowProtein) return 'bg-warning/20 border-warning/30 text-warning';
   if (type === 'fiber' && warnings.lowFiber) return 'bg-warning/20 border-warning/30 text-warning';
   
-  // Good/healthy
-  return 'bg-primary/15 border-primary/20';
+  // Green for good
+  return 'bg-success/15 border-success/20 text-success';
 }
 
 export function MealDetail({ meal, onClose }: MealDetailProps) {
@@ -117,7 +119,7 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
 
               {/* Nutrition with color coding */}
               <div className="grid grid-cols-2 gap-3">
-                <div className={`rounded-xl p-4 border ${getNutritionColor('calories', meal.calories, meal.mealType)}`}>
+                <div className={`rounded-xl p-4 border ${getNutritionColor('calories', meal.calories, meal.mealType, { calories: meal.calories, protein: meal.protein, fiber: meal.fiber, sugar: meal.sugar })}`}>
                   <div className="flex items-center gap-2 mb-1">
                     <Flame className="w-4 h-4" />
                     <span className="font-semibold text-sm">Calories</span>
@@ -125,7 +127,7 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
                   <p className="text-3xl font-bold">{meal.calories}</p>
                 </div>
                 {meal.protein !== undefined && (
-                  <div className={`rounded-xl p-4 border ${getNutritionColor('protein', meal.protein, meal.mealType)}`}>
+                  <div className={`rounded-xl p-4 border ${getNutritionColor('protein', meal.protein, meal.mealType, { calories: meal.calories, protein: meal.protein, fiber: meal.fiber, sugar: meal.sugar })}`}>
                     <div className="flex items-center gap-2 mb-1">
                       <Beef className="w-4 h-4" />
                       <span className="font-semibold text-sm">Protein</span>
@@ -134,7 +136,7 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
                   </div>
                 )}
                 {meal.fiber !== undefined && (
-                  <div className={`rounded-xl p-4 border ${getNutritionColor('fiber', meal.fiber, meal.mealType)}`}>
+                  <div className={`rounded-xl p-4 border ${getNutritionColor('fiber', meal.fiber, meal.mealType, { calories: meal.calories, protein: meal.protein, fiber: meal.fiber, sugar: meal.sugar })}`}>
                     <div className="flex items-center gap-2 mb-1">
                       <Apple className="w-4 h-4" />
                       <span className="font-semibold text-sm">Fiber</span>
@@ -143,7 +145,7 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
                   </div>
                 )}
                 {meal.sugar !== undefined && (
-                  <div className={`rounded-xl p-4 border ${getNutritionColor('sugar', meal.sugar, meal.mealType)}`}>
+                  <div className={`rounded-xl p-4 border ${getNutritionColor('sugar', meal.sugar, meal.mealType, { calories: meal.calories, protein: meal.protein, fiber: meal.fiber, sugar: meal.sugar })}`}>
                     <div className="flex items-center gap-2 mb-1">
                       <Candy className="w-4 h-4" />
                       <span className="font-semibold text-sm">Sugar</span>
