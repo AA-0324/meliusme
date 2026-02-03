@@ -30,12 +30,14 @@ const ForceHomeOnLoad = () => {
   return null;
 };
 
-const GlobalMealLoggedToast = () => {
-  const { showMealLoggedToast, setShowMealLoggedToast } = useApp();
+const GlobalBottomToast = () => {
+  const { bottomToast, hideBottomToast } = useApp();
   return (
     <MealLoggedToast
-      show={showMealLoggedToast}
-      onHide={() => setShowMealLoggedToast(false)}
+      show={bottomToast.open}
+      message={bottomToast.message}
+      variant={bottomToast.variant}
+      onHide={hideBottomToast}
     />
   );
 };
@@ -50,7 +52,7 @@ const App = () => {
           <Toaster />
           <Sonner />
           <SplashScreen show={showSplash} onComplete={() => setShowSplash(false)} />
-          <GlobalMealLoggedToast />
+          <GlobalBottomToast />
           <BrowserRouter>
             <ForceHomeOnLoad />
             <div className="min-h-screen bg-background overflow-x-hidden">

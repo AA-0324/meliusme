@@ -22,44 +22,19 @@ export function StreakDisplay({ streak, compact }: StreakDisplayProps) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-br from-orange-500/10 via-red-500/10 to-amber-500/10 rounded-2xl p-5 border border-orange-500/20"
+      className="bg-card rounded-2xl p-4 border border-border/50"
     >
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg">
-            <Flame className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold">Current Streak</p>
-            <p className="text-3xl font-extrabold text-orange-500">{streak.currentStreak} days</p>
-          </div>
+      <div className="flex items-center justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold">Streak</p>
+          <p className="text-2xl font-extrabold text-primary leading-tight">
+            {streak.currentStreak} day{streak.currentStreak === 1 ? '' : 's'}
+          </p>
         </div>
-        {streak.longestStreak > 0 && (
-          <div className="text-right">
-            <p className="text-[10px] text-muted-foreground uppercase">Best</p>
-            <p className="text-lg font-bold text-muted-foreground">{streak.longestStreak}</p>
-          </div>
-        )}
-      </div>
-
-      {/* Milestones */}
-      <div className="flex gap-2 mt-3">
-        {[7, 14, 30, 60, 100].map((milestone) => {
-          const achieved = streak.currentStreak >= milestone || streak.longestStreak >= milestone;
-          return (
-            <div
-              key={milestone}
-              className={`flex-1 text-center py-2 rounded-lg transition-all ${
-                achieved 
-                  ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-md' 
-                  : 'bg-secondary/50 text-muted-foreground'
-              }`}
-            >
-              <Star className={`w-3 h-3 mx-auto mb-0.5 ${achieved ? 'fill-current' : ''}`} />
-              <span className="text-[10px] font-bold">{milestone}d</span>
-            </div>
-          );
-        })}
+        <div className="text-right">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Best</p>
+          <p className="text-sm font-bold text-muted-foreground">{streak.longestStreak}</p>
+        </div>
       </div>
     </motion.div>
   );

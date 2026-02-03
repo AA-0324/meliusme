@@ -26,6 +26,13 @@ const mealTypeColors = {
   snack: 'bg-chart-2/15 text-chart-2 border-chart-2/20',
 };
 
+const mealTypeDotColors = {
+  breakfast: 'bg-warning',
+  lunch: 'bg-primary',
+  dinner: 'bg-chart-4',
+  snack: 'bg-chart-2',
+};
+
 export function MealCard({ meal, onClick, compact }: MealCardProps) {
   const { settings } = useApp();
   const warnings = getHealthWarnings(meal.calories, meal.protein, meal.fiber, meal.sugar, meal.mealType);
@@ -69,9 +76,10 @@ export function MealCard({ meal, onClick, compact }: MealCardProps) {
         />
         <div className="absolute top-3 left-3">
           <span className={cn(
-            'px-2.5 py-1 rounded-lg text-xs font-bold border',
-            mealTypeColors[meal.mealType]
+            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border border-border/60',
+            'bg-background/70 text-foreground backdrop-blur-sm shadow-soft'
           )}>
+            <span className={cn('w-2 h-2 rounded-full', mealTypeDotColors[meal.mealType])} />
             {mealTypeLabels[meal.mealType]}
           </span>
         </div>

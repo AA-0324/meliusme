@@ -196,7 +196,8 @@ export default function Dashboard() {
                         cy="50%"
                         innerRadius={30}
                         outerRadius={55}
-                        paddingAngle={2}
+                        paddingAngle={0}
+                        strokeWidth={0}
                         dataKey="value"
                       >
                         {mealsByType.map((entry, index) => (

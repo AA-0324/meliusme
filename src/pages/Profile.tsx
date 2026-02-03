@@ -55,6 +55,16 @@ export default function Profile() {
     );
   }, [calorieGoal, proteinGoal, fiberGoal, sugarGoal, waterGoalInput, settings]);
 
+  // Keep inputs in sync when goals are updated elsewhere (e.g., auto-goals acceptance)
+  useEffect(() => {
+    if (goalsChanged) return;
+    setCalorieGoal(settings.goals.calories.toString());
+    setProteinGoal(settings.goals.protein?.toString() || '');
+    setFiberGoal(settings.goals.fiber?.toString() || '');
+    setSugarGoal(settings.goals.sugar?.toString() || '');
+    setWaterGoalInput(settings.waterGoal.toString());
+  }, [goalsChanged, settings.goals.calories, settings.goals.protein, settings.goals.fiber, settings.goals.sugar, settings.waterGoal]);
+
   const handleSaveGoals = () => {
     updateUserGoals({
       calories: parseInt(calorieGoal, 10) || 2000,

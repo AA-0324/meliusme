@@ -28,30 +28,29 @@ const mealTypes: { value: MealType; label: string }[] = [
 ];
 
 // Get suggested meal type based on time
-function getSuggestedMealType(): MealType {
-  const hour = new Date().getHours();
+function hourFromTime(time: string): number {
+  const [h] = time.split(':');
+  const hour = parseInt(h || '0', 10);
+  return Number.isFinite(hour) ? hour : 0;
+}
+
+function getSuggestedMealTypeForHour(hour: number): MealType {
   if (hour >= 5 && hour < 11) return 'breakfast';
-  if (hour >= 11 && hour < 15) return 'lunch';
-  if (hour >= 15 && hour < 18) return 'snack';
-  if (hour >= 18 && hour < 22) return 'dinner';
+  if (hour >= 11 && hour < 16) return 'lunch';
+  if (hour >= 16 && hour < 22) return 'dinner';
   return 'snack';
 }
 
-// Get available meal types based on time
-function getAvailableMealTypes(): MealType[] {
-  const hour = new Date().getHours();
-  // Early morning (5-9): Only breakfast and snack
-  if (hour >= 5 && hour < 9) return ['breakfast', 'snack'];
-  // Late morning (9-11): Breakfast, snack
-  if (hour >= 9 && hour < 11) return ['breakfast', 'snack', 'lunch'];
-  // Midday (11-14): Lunch and snack
-  if (hour >= 11 && hour < 14) return ['lunch', 'snack', 'breakfast'];
-  // Afternoon (14-17): Snack, lunch
-  if (hour >= 14 && hour < 17) return ['snack', 'lunch', 'dinner'];
-  // Evening (17-21): Dinner and snack
-  if (hour >= 17 && hour < 21) return ['dinner', 'snack', 'lunch'];
-  // Night (21+): Snack only
-  return ['snack', 'dinner'];
+function getAvailableMealTypesForHour(hour: number): MealType[] {
+  // Strict time-based options
+  // Morning: breakfast + snack
+  if (hour >= 5 && hour < 11) return ['breakfast', 'snack'];
+  // Midday: lunch + snack
+  if (hour >= 11 && hour < 16) return ['lunch', 'snack'];
+  // Evening: dinner + snack
+  if (hour >= 16 && hour < 22) return ['dinner', 'snack'];
+  // Late night: snack only
+  return ['snack'];
 }
 
 export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
@@ -63,22 +62,25 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
   const [protein, setProtein] = useState('');
   const [fiber, setFiber] = useState('');
   const [sugar, setSugar] = useState('');
-  const [mealType, setMealType] = useState<MealType>(getSuggestedMealType());
+  const [mealType, setMealType] = useState<MealType>(getSuggestedMealTypeForHour(now.getHours()));
   const [date, setDate] = useState(now.toISOString().split('T')[0]);
   const [time, setTime] = useState(now.toTimeString().slice(0, 5));
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const availableMealTypes = useMemo(() => getAvailableMealTypes(), []);
+  const availableMealTypes = useMemo(() => {
+    return getAvailableMealTypesForHour(hourFromTime(time));
+  }, [time]);
 
   useEffect(() => {
     if (open) {
-      const suggested = getSuggestedMealType();
-      setMealType(suggested);
       const now = new Date();
       setDate(now.toISOString().split('T')[0]);
       setTime(now.toTimeString().slice(0, 5));
+
+      const suggested = getSuggestedMealTypeForHour(now.getHours());
+      setMealType(suggested);
     }
   }, [open]);
 
@@ -91,7 +93,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
   // Smart meal type suggestion: if breakfast/lunch/dinner already logged, suggest snack
   useEffect(() => {
     if (open) {
-      const suggested = getSuggestedMealType();
+      const suggested = getSuggestedMealTypeForHour(hourFromTime(time));
       if (todayMealTypes.includes(suggested) && suggested !== 'snack') {
         setMealType('snack');
       } else {
@@ -100,9 +102,27 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
     }
   }, [open, todayMealTypes]);
 
+  // Ensure selected meal type stays valid when time changes
+  useEffect(() => {
+    if (!open) return;
+    if (!availableMealTypes.includes(mealType)) {
+      setMealType(getSuggestedMealTypeForHour(hourFromTime(time)));
+    }
+  }, [open, availableMealTypes, mealType, time]);
+
   const showWarnings = useMemo(() => {
     return calories && parseInt(calories, 10) > 0;
   }, [calories]);
+
+  const sanityValidation = useMemo(() => {
+    const cal = parseInt(calories, 10);
+    const prot = parseInt(protein, 10);
+    const fib = parseInt(fiber, 10);
+    const sug = parseInt(sugar, 10);
+    if (!Number.isFinite(cal) || !Number.isFinite(prot) || !Number.isFinite(fib) || !Number.isFinite(sug)) return null;
+    if (calories === '' || protein === '' || fiber === '' || sugar === '') return null;
+    return validateNutrition(cal, prot, fib, sug, mealType);
+  }, [calories, protein, fiber, sugar, mealType]);
 
   // Get user's goals for personalized warnings
   const userGoals = settings.goals;
@@ -236,6 +256,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                   type="number"
                   inputMode="numeric"
                   min="0"
+                  max="5000"
                   placeholder="e.g., 450"
                   value={calories}
                   onChange={(e) => setCalories(e.target.value)}
@@ -253,6 +274,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                     type="number"
                     inputMode="numeric"
                     min="0"
+                    max="200"
                     placeholder="0"
                     value={protein}
                     onChange={(e) => setProtein(e.target.value)}
@@ -268,6 +290,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                     type="number"
                     inputMode="numeric"
                     min="0"
+                    max="100"
                     placeholder="0"
                     value={fiber}
                     onChange={(e) => setFiber(e.target.value)}
@@ -283,6 +306,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                     type="number"
                     inputMode="numeric"
                     min="0"
+                    max="300"
                     placeholder="0"
                     value={sugar}
                     onChange={(e) => setSugar(e.target.value)}
@@ -290,6 +314,12 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                   />
                 </div>
               </div>
+
+              {sanityValidation && !sanityValidation.valid && (
+                <div className="text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-xl p-3">
+                  {sanityValidation.errors[0]}
+                </div>
+              )}
 
               {showWarnings && (
                 <>
@@ -317,27 +347,27 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                 </>
               )}
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5 min-w-0">
                   <Label htmlFor="date" className="text-[10px] font-bold text-muted-foreground uppercase">Date</Label>
                   <Input
                     id="date"
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="h-11 rounded-xl bg-secondary/50 border-border/50 text-sm"
+                    className="h-11 w-full rounded-xl bg-secondary/50 border-border/50 text-sm"
                   />
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 min-w-0">
                   <Label htmlFor="time" className="text-[10px] font-bold text-muted-foreground uppercase">
-                    Time {!settings.use24Hour && <span className="text-muted-foreground/70">({formattedTime})</span>}
+                    Time <span className="text-muted-foreground/70">({formattedTime})</span>
                   </Label>
                   <Input
                     id="time"
                     type="time"
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
-                    className="h-11 rounded-xl bg-secondary/50 border-border/50 text-sm"
+                    className="h-11 w-full rounded-xl bg-secondary/50 border-border/50 text-sm"
                   />
                 </div>
               </div>
