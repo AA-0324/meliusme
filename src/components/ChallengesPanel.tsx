@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, Trophy, X, CheckCircle2, Circle, Award, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ interface ChallengesPanelProps {
 }
 
 export function ChallengesPanel({ open, onClose }: ChallengesPanelProps) {
-  const { currentChallenge, badges, meals } = useApp();
+  const { currentChallenge, badges, meals, todayWater, settings } = useApp();
   const [showReflection, setShowReflection] = useState(false);
   
   // Get weekly reflection question
@@ -27,6 +27,32 @@ export function ChallengesPanel({ open, onClose }: ChallengesPanelProps) {
     const mealDate = new Date(m.date).getTime();
     return mealDate >= thisWeekStart;
   });
+
+  const today = new Date().toISOString().split('T')[0];
+  const todaysMeals = useMemo(() => meals.filter((m) => m.date === today), [meals, today]);
+
+  const availableChallenges = useMemo(() => {
+    const waterTarget = settings.waterGoal;
+    const items = [
+      {
+        id: 'daily_meals_3',
+        title: 'Log 3 meals today',
+        type: 'daily' as const,
+        progress: Math.min(todaysMeals.length, 3),
+        target: 3,
+      },
+      {
+        id: 'daily_water',
+        title: `Drink ${waterTarget} glasses of water`,
+        type: 'daily' as const,
+        progress: Math.min(todayWater, waterTarget),
+        target: waterTarget,
+      },
+    ].map((c) => ({ ...c, completed: c.progress >= c.target }));
+
+    // Completed challenges move to bottom
+    return items.sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1));
+  }, [settings.waterGoal, todaysMeals.length, todayWater]);
 
   const handleReflectionSelect = (mealId: string) => {
     saveLastReflection(weekNumber, mealId);
@@ -55,7 +81,7 @@ export function ChallengesPanel({ open, onClose }: ChallengesPanelProps) {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 pb-24 space-y-6">
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-6 pb-24 space-y-6">
             {/* Current Challenge */}
             <div className="bg-card rounded-2xl p-5 border border-border/50">
               <div className="flex items-center gap-2 mb-4">
@@ -148,18 +174,23 @@ export function ChallengesPanel({ open, onClose }: ChallengesPanelProps) {
                 Available Challenges
               </h2>
               <div className="space-y-3">
-                {[
-                  { title: 'Log 3 meals today', type: 'daily' },
-                  { title: 'Stay within calorie range 5 days', type: 'weekly' },
-                  { title: 'Log every dinner this week', type: 'weekly' },
-                  { title: 'Drink 8 glasses of water', type: 'daily' },
-                  { title: 'Log a high-protein meal', type: 'daily' },
-                ].map((challenge, i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 bg-secondary/30 rounded-xl">
-                    <Circle className="w-5 h-5 text-muted-foreground" />
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{challenge.title}</p>
-                      <p className="text-[10px] text-muted-foreground uppercase">{challenge.type}</p>
+                {availableChallenges.map((challenge) => (
+                  <div key={challenge.id} className="p-3 bg-secondary/30 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      {challenge.completed ? (
+                        <CheckCircle2 className="w-5 h-5 text-primary" />
+                      ) : (
+                        <Circle className="w-5 h-5 text-muted-foreground" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{challenge.title}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase">
+                          {challenge.type} • {challenge.progress}/{challenge.target}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-2">
+                      <Progress value={(challenge.progress / challenge.target) * 100} className="h-2" />
                     </div>
                   </div>
                 ))}

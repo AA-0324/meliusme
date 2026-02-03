@@ -4,6 +4,7 @@ import { Goals } from '@/lib/db';
 
 export interface HealthWarnings {
   highCalories?: boolean;
+  lowCalories?: boolean;
   highSugar?: boolean;
   lowProtein?: boolean;
   lowFiber?: boolean;
@@ -29,10 +30,10 @@ function getThresholds(mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack', use
   
   // Base thresholds
   const baseThresholds = {
-    breakfast: { maxCalories: 600, maxSugar: 20, minProtein: 10, minFiber: 3 },
-    lunch: { maxCalories: 800, maxSugar: 25, minProtein: 20, minFiber: 5 },
-    dinner: { maxCalories: 900, maxSugar: 20, minProtein: 25, minFiber: 6 },
-    snack: { maxCalories: 300, maxSugar: 15, minProtein: 5, minFiber: 2 },
+    breakfast: { minCalories: 250, maxCalories: 600, maxSugar: 20, minProtein: 10, minFiber: 3 },
+    lunch: { minCalories: 350, maxCalories: 800, maxSugar: 25, minProtein: 20, minFiber: 5 },
+    dinner: { minCalories: 450, maxCalories: 900, maxSugar: 20, minProtein: 25, minFiber: 6 },
+    snack: { minCalories: 50, maxCalories: 300, maxSugar: 15, minProtein: 5, minFiber: 2 },
   };
 
   let thresholds = { ...baseThresholds[mealType] };
@@ -41,6 +42,7 @@ function getThresholds(mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack', use
   if (mealType === 'dinner' && hour >= 21) {
     // Late dinner should be lighter
     thresholds.maxCalories = Math.round(thresholds.maxCalories * 0.7);
+    thresholds.minCalories = Math.round(thresholds.minCalories * 0.7);
   }
   if (mealType === 'breakfast' && hour >= 10) {
     // Late breakfast (brunch) can be heavier
@@ -57,6 +59,7 @@ function getThresholds(mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack', use
       snack: 0.10,
     };
     thresholds.maxCalories = Math.round(dailyCalories * mealRatios[mealType] * 1.2);
+    thresholds.minCalories = Math.round(dailyCalories * mealRatios[mealType] * 0.5);
     
     if (userGoals.protein) {
       thresholds.minProtein = Math.round((userGoals.protein * mealRatios[mealType]) * 0.7);
@@ -86,6 +89,8 @@ export function getHealthWarnings(
   // Check calories
   if (calories > thresholds.maxCalories) {
     warnings.highCalories = true;
+  } else if (calories > 0 && calories < thresholds.minCalories && mealType !== 'snack') {
+    warnings.lowCalories = true;
   } else if (calories > 0 && calories <= thresholds.maxCalories) {
     warnings.goodCalories = true;
   }
@@ -131,7 +136,8 @@ export function HealthWarning({ calories, protein, fiber, sugar, mealType, compa
   if (!hasWarnings) return null;
 
   const warningMessages: string[] = [];
-  if (warnings.highCalories) warningMessages.push('High calories for this meal');
+  if (warnings.highCalories) warningMessages.push(userGoals ? 'High calories vs your goal for this meal' : 'High calories for this meal');
+  if (warnings.lowCalories) warningMessages.push('Very low calories for this meal');
   if (warnings.highSugar) warningMessages.push('High sugar content');
   if (warnings.lowProtein) warningMessages.push('Low protein');
   if (warnings.lowFiber) warningMessages.push('Low fiber');
