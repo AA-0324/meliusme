@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useApp } from '@/contexts/AppContext';
 import { ProBadge } from '@/components/ProBadge';
 import { ProUpgradeModal } from '@/components/ProUpgradeModal';
-import { HealthWarning, hasAnyWarning, getHealthWarnings } from '@/components/HealthWarning';
+import { HealthWarning, HealthPositive, hasAnyWarning, getHealthWarnings } from '@/components/HealthWarning';
 import { validateNutrition, validateTag, formatTime } from '@/lib/validation';
 import { toast } from 'sonner';
 
@@ -331,19 +331,14 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                     mealType={mealType}
                     userGoals={isPro ? userGoals : undefined}
                   />
-                  {(() => {
-                    const cal = parseInt(calories, 10) || 0;
-                    const prot = protein ? parseInt(protein, 10) : undefined;
-                    const fib = fiber ? parseInt(fiber, 10) : undefined;
-                    const sug = sugar ? parseInt(sugar, 10) : undefined;
-                    if (prot === undefined || fib === undefined || sug === undefined) return null;
-                    const warnings = getHealthWarnings(cal, prot, fib, sug, mealType, isPro ? userGoals : undefined);
-                    return hasAnyWarning(warnings) ? null : (
-                      <div className="text-xs font-semibold text-success bg-success/10 border border-success/20 rounded-xl p-3">
-                        ✓ Looks healthy for this meal type
-                      </div>
-                    );
-                  })()}
+                  <HealthPositive
+                    calories={parseInt(calories, 10) || 0}
+                    protein={protein ? parseInt(protein, 10) : undefined}
+                    fiber={fiber ? parseInt(fiber, 10) : undefined}
+                    sugar={sugar ? parseInt(sugar, 10) : undefined}
+                    mealType={mealType}
+                    userGoals={isPro ? userGoals : undefined}
+                  />
                 </>
               )}
 
