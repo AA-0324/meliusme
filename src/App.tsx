@@ -14,33 +14,31 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import { ChallengesPanel } from "@/components/ChallengesPanel";
 
 const queryClient = new QueryClient();
 
 const ForceHomeOnLoad = () => {
   const navigate = useNavigate();
   const didRun = useRef(false);
-
   useEffect(() => {
     if (didRun.current) return;
     didRun.current = true;
     navigate('/', { replace: true });
   }, [navigate]);
-
   return null;
 };
 
 const GlobalBottomToast = () => {
   const { bottomToast, hideBottomToast } = useApp();
-  return (
-    <MealLoggedToast
-      show={bottomToast.open}
-      message={bottomToast.message}
-      variant={bottomToast.variant}
-      onHide={hideBottomToast}
-    />
-  );
+  return <MealLoggedToast show={bottomToast.open} message={bottomToast.message} variant={bottomToast.variant} onHide={hideBottomToast} />;
 };
+
+// Challenges as a full page wrapper
+function ChallengesPage() {
+  const navigate = useNavigate();
+  return <ChallengesPanel open={true} onClose={() => navigate(-1)} />;
+}
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
@@ -62,6 +60,7 @@ const App = () => {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/challenges" element={<ChallengesPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <BottomNav />

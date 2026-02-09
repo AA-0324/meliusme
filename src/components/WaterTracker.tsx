@@ -10,26 +10,18 @@ interface WaterTrackerProps {
   onIncrement: () => void;
 }
 
-// Session key to track if confetti has been shown today
 const getConfettiKey = () => `melius-confetti-${new Date().toISOString().split('T')[0]}`;
 
 export function WaterTracker({ glasses, goal, onIncrement }: WaterTrackerProps) {
   const progress = Math.min((glasses / goal) * 100, 100);
   const isComplete = glasses >= goal;
 
-  // Fire confetti when goal is reached - only once per day
   useEffect(() => {
     const confettiKey = getConfettiKey();
     const alreadyShown = sessionStorage.getItem(confettiKey) === 'true';
-    
     if (isComplete && !alreadyShown) {
       sessionStorage.setItem(confettiKey, 'true');
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#22d3ee', '#0ea5e9', '#3b82f6', '#06b6d4'],
-      });
+      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#22d3ee', '#0ea5e9', '#3b82f6', '#06b6d4'] });
     }
   }, [isComplete]);
 
@@ -51,7 +43,6 @@ export function WaterTracker({ glasses, goal, onIncrement }: WaterTrackerProps) 
             </p>
           </div>
         </div>
-        
         <Button
           size="icon"
           variant="ghost"
@@ -63,7 +54,6 @@ export function WaterTracker({ glasses, goal, onIncrement }: WaterTrackerProps) 
         </Button>
       </div>
 
-      {/* Progress bar */}
       <div className="h-2.5 bg-white/15 rounded-full overflow-hidden">
         <motion.div
           initial={{ width: 0 }}
@@ -74,12 +64,8 @@ export function WaterTracker({ glasses, goal, onIncrement }: WaterTrackerProps) 
       </div>
       
       {isComplete && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-sm text-center mt-3 font-semibold"
-        >
-          🎉 Goal reached! Great job staying hydrated!
+        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-sm text-center mt-3 font-semibold">
+          Goal reached! Great job staying hydrated!
         </motion.p>
       )}
     </motion.div>

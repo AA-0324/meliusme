@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Moon, Sun, Sparkles, Download, Settings, Target, Check, Lock, Droplets, Palette, User, Scale } from 'lucide-react';
+import { Moon, Sun, Sparkles, Download, Settings, Target, Check, Lock, Droplets, Palette, User, Scale, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
@@ -43,8 +43,20 @@ export default function Profile() {
   const [waterGoalInput, setWaterGoalInput] = useState(settings.waterGoal.toString());
   const [nameInput, setNameInput] = useState(userProfile?.name || '');
   const [isEditingName, setIsEditingName] = useState(false);
-  
-  // Track if goals have changed
+
+  // Track previous sugar for change detection
+  const prevSugarRef = useRef(settings.goals.sugar?.toString() || '');
+
+  // Always sync inputs with settings (covers auto-goal acceptance & body profile save)
+  useEffect(() => {
+    setCalorieGoal(settings.goals.calories.toString());
+    setProteinGoal(settings.goals.protein?.toString() || '');
+    setFiberGoal(settings.goals.fiber?.toString() || '');
+    setSugarGoal(settings.goals.sugar?.toString() || '');
+    setWaterGoalInput(settings.waterGoal.toString());
+    prevSugarRef.current = settings.goals.sugar?.toString() || '';
+  }, [settings.goals.calories, settings.goals.protein, settings.goals.fiber, settings.goals.sugar, settings.waterGoal]);
+
   const goalsChanged = useMemo(() => {
     return (
       calorieGoal !== settings.goals.calories.toString() ||
@@ -55,17 +67,27 @@ export default function Profile() {
     );
   }, [calorieGoal, proteinGoal, fiberGoal, sugarGoal, waterGoalInput, settings]);
 
-  // Keep inputs in sync when goals are updated elsewhere (e.g., auto-goals acceptance)
-  useEffect(() => {
-    if (goalsChanged) return;
-    setCalorieGoal(settings.goals.calories.toString());
-    setProteinGoal(settings.goals.protein?.toString() || '');
-    setFiberGoal(settings.goals.fiber?.toString() || '');
-    setSugarGoal(settings.goals.sugar?.toString() || '');
-    setWaterGoalInput(settings.waterGoal.toString());
-  }, [goalsChanged, settings.goals.calories, settings.goals.protein, settings.goals.fiber, settings.goals.sugar, settings.waterGoal]);
-
   const handleSaveGoals = () => {
+    // Warn if user has bulking goals set and is changing calorie/protein
+    if (bodyProfile?.goal === 'bulking') {
+      const newCal = parseInt(calorieGoal, 10) || 2000;
+      const oldCal = settings.goals.calories;
+      if (newCal < oldCal) {
+        toast.warning('You\'re reducing calories while in bulking mode — make sure this aligns with your goals.');
+      }
+    }
+
+    // Sugar limit feedback
+    const newSugar = isPro && sugarGoal ? parseInt(sugarGoal, 10) : undefined;
+    const oldSugar = settings.goals.sugar;
+    if (newSugar !== undefined && oldSugar !== undefined) {
+      if (newSugar < oldSugar) {
+        toast.success('Great job lowering your sugar limit!');
+      } else if (newSugar > oldSugar) {
+        toast.warning('Increasing your sugar limit may affect your health goals.');
+      }
+    }
+
     updateUserGoals({
       calories: parseInt(calorieGoal, 10) || 2000,
       protein: isPro && proteinGoal ? parseInt(proteinGoal, 10) : undefined,
@@ -78,21 +100,14 @@ export default function Profile() {
 
   const handleSaveName = () => {
     const validation = validateName(nameInput);
-    if (!validation.valid) {
-      toast.error(validation.error);
-      return;
-    }
+    if (!validation.valid) { toast.error(validation.error); return; }
     setUserName(nameInput.trim());
     setIsEditingName(false);
     toast.success('Profile updated!');
   };
 
   const handleExport = async () => {
-    if (!isPro) {
-      setShowProModal(true);
-      return;
-    }
-
+    if (!isPro) { setShowProModal(true); return; }
     try {
       const csv = await exportMealsToCSV();
       const blob = new Blob([csv], { type: 'text/csv' });
@@ -112,10 +127,7 @@ export default function Profile() {
   };
 
   const handleThemeChange = (themeId: string) => {
-    if (!isPro) {
-      setShowProModal(true);
-      return;
-    }
+    if (!isPro) { setShowProModal(true); return; }
     setTheme(themeId);
   };
 
@@ -125,25 +137,14 @@ export default function Profile() {
       <div className="px-6 pt-8 pb-4 safe-top">
         <div className="flex items-center justify-between">
           <div>
-            <motion.h1
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-2xl font-bold tracking-tight"
-            >
+            <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-2xl font-bold tracking-tight">
               {getGreeting(userProfile?.name)}
             </motion.h1>
             {userProfile?.createdAt && (
-              <p className="text-muted-foreground text-sm mt-0.5">
-                {formatMemberSince(userProfile.createdAt)}
-              </p>
+              <p className="text-muted-foreground text-sm mt-0.5">{formatMemberSince(userProfile.createdAt)}</p>
             )}
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/settings')}
-            className="rounded-xl"
-          >
+          <Button variant="ghost" size="icon" onClick={() => navigate('/settings')} className="rounded-xl">
             <Settings className="w-5 h-5" />
           </Button>
         </div>
@@ -151,14 +152,9 @@ export default function Profile() {
 
       <div className="px-6 space-y-4">
         {/* User Profile */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="bg-card rounded-2xl p-5 border border-border/50"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+          className="bg-card rounded-2xl p-5 border border-border/50">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Your Profile</h2>
-          
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center">
               <User className="w-7 h-7 text-primary" />
@@ -166,26 +162,13 @@ export default function Profile() {
             <div className="flex-1">
               {isEditingName ? (
                 <div className="flex gap-2">
-                  <Input
-                    value={nameInput}
-                    onChange={(e) => setNameInput(e.target.value)}
-                    placeholder="Enter your name"
-                    className="h-10 rounded-xl bg-secondary border-0"
-                    autoFocus
-                    onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
-                  />
-                  <Button onClick={handleSaveName} size="sm" className="rounded-xl">
-                    Save
-                  </Button>
+                  <Input value={nameInput} onChange={(e) => setNameInput(e.target.value)} placeholder="Enter your name"
+                    className="h-10 rounded-xl bg-secondary border-0" autoFocus onKeyDown={(e) => e.key === 'Enter' && handleSaveName()} />
+                  <Button onClick={handleSaveName} size="sm" className="rounded-xl">Save</Button>
                 </div>
               ) : (
-                <button 
-                  onClick={() => setIsEditingName(true)}
-                  className="text-left w-full group"
-                >
-                  <p className="font-bold text-lg group-hover:text-primary transition-colors">
-                    {userProfile?.name || 'Set your name'}
-                  </p>
+                <button onClick={() => setIsEditingName(true)} className="text-left w-full group">
+                  <p className="font-bold text-lg group-hover:text-primary transition-colors">{userProfile?.name || 'Set your name'}</p>
                   <p className="text-sm text-muted-foreground">Tap to edit</p>
                 </button>
               )}
@@ -194,16 +177,8 @@ export default function Profile() {
         </motion.div>
 
         {/* Body Profile */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.08 }}
-        >
-          <Button
-            onClick={() => setShowBodyProfile(true)}
-            variant="outline"
-            className="w-full h-14 rounded-2xl justify-start gap-3 font-semibold"
-          >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
+          <Button onClick={() => setShowBodyProfile(true)} variant="outline" className="w-full h-14 rounded-2xl justify-start gap-3 font-semibold">
             <Scale className="w-5 h-5 text-primary" />
             <div className="text-left flex-1">
               <span className="block">Body Profile</span>
@@ -217,28 +192,22 @@ export default function Profile() {
 
         {/* Pro Status */}
         {!isPro && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <button
-              onClick={() => setShowProModal(true)}
-              className="w-full bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 rounded-2xl p-5 text-left shadow-xl shadow-orange-500/20"
-            >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <button onClick={() => setShowProModal(true)}
+              className="w-full bg-card rounded-2xl p-5 text-left border border-primary/30 hover:border-primary/50 transition-all group">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-white" />
+                <div className="w-11 h-11 bg-primary/15 rounded-xl flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-primary" />
                 </div>
-                <div>
-                  <h2 className="text-lg font-bold text-white">Upgrade to Pro</h2>
-                  <p className="text-white/80 text-sm">One-time • $4.99 forever</p>
+                <div className="flex-1">
+                  <h2 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">Upgrade to Pro</h2>
+                  <p className="text-muted-foreground text-sm">$4.99 • Lifetime access</p>
                 </div>
               </div>
               <div className="space-y-1.5">
                 {proFeatures.slice(0, 3).map((feature) => (
-                  <div key={feature} className="flex items-center gap-2 text-white/90 text-sm">
-                    <Check className="w-4 h-4 flex-shrink-0" />
+                  <div key={feature} className="flex items-center gap-2 text-muted-foreground text-sm">
+                    <Check className="w-4 h-4 text-primary flex-shrink-0" />
                     {feature}
                   </div>
                 ))}
@@ -248,12 +217,8 @@ export default function Profile() {
         )}
 
         {isPro && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-primary/10 rounded-2xl p-5"
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+            className="bg-primary/10 rounded-2xl p-5">
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 bg-primary/20 rounded-xl flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-primary" />
@@ -267,28 +232,16 @@ export default function Profile() {
         )}
 
         {/* Appearance */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="bg-card rounded-2xl p-5 border border-border/50"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+          className="bg-card rounded-2xl p-5 border border-border/50">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Appearance</h2>
-          
-          {/* Dark Mode */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              {settings.darkMode ? (
-                <Moon className="w-5 h-5 text-primary" />
-              ) : (
-                <Sun className="w-5 h-5 text-amber-500" />
-              )}
+              {settings.darkMode ? <Moon className="w-5 h-5 text-primary" /> : <Sun className="w-5 h-5 text-amber-500" />}
               <span className="font-semibold">Dark Mode</span>
             </div>
             <Switch checked={settings.darkMode} onCheckedChange={setDarkMode} />
           </div>
-
-          {/* Theme Selection */}
           <div className="pt-3 border-t border-border/50">
             <div className="flex items-center gap-2 mb-3">
               <Palette className="w-4 h-4 text-muted-foreground" />
@@ -297,20 +250,12 @@ export default function Profile() {
             </div>
             <div className="flex gap-2">
               {themes.map((theme) => (
-                <button
-                  key={theme.id}
-                  onClick={() => handleThemeChange(theme.id)}
+                <button key={theme.id} onClick={() => handleThemeChange(theme.id)}
                   className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                    settings.theme === theme.id
-                      ? 'ring-2 ring-primary ring-offset-2 ring-offset-card'
-                      : 'hover:scale-110'
+                    settings.theme === theme.id ? 'ring-2 ring-primary ring-offset-2 ring-offset-card' : 'hover:scale-110'
                   } ${!isPro && theme.id !== 'default' ? 'opacity-50' : ''}`}
-                  style={{ backgroundColor: theme.color }}
-                  title={theme.name}
-                >
-                  {settings.theme === theme.id && (
-                    <Check className="w-5 h-5 text-white" />
-                  )}
+                  style={{ backgroundColor: theme.color }} title={theme.name}>
+                  {settings.theme === theme.id && <Check className="w-5 h-5 text-white" />}
                 </button>
               ))}
             </div>
@@ -318,28 +263,26 @@ export default function Profile() {
         </motion.div>
 
         {/* Goals */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-card rounded-2xl p-5 border border-border/50"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+          className="bg-card rounded-2xl p-5 border border-border/50">
           <div className="flex items-center gap-2 mb-4">
             <Target className="w-4 h-4 text-primary" />
             <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Daily Goals</h2>
           </div>
 
+          {/* Bulking warning */}
+          {bodyProfile?.goal === 'bulking' && goalsChanged && (
+            <div className="flex items-start gap-2 p-3 mb-4 bg-warning/10 border border-warning/20 rounded-xl">
+              <AlertTriangle className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-warning font-medium">You have bulking goals set. Changing these may conflict with your body profile targets.</p>
+            </div>
+          )}
+
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="calorie-goal" className="text-sm font-semibold">Calorie Goal</Label>
-              <Input
-                id="calorie-goal"
-                type="number"
-                inputMode="numeric"
-                value={calorieGoal}
-                onChange={(e) => setCalorieGoal(e.target.value)}
-                className="h-11 rounded-xl bg-secondary border-0"
-              />
+              <Input id="calorie-goal" type="number" inputMode="numeric" value={calorieGoal}
+                onChange={(e) => setCalorieGoal(e.target.value)} className="h-11 rounded-xl bg-secondary border-0" />
             </div>
 
             <div className="space-y-2">
@@ -347,15 +290,8 @@ export default function Profile() {
                 <Droplets className="w-4 h-4 text-sky-500" />
                 <Label htmlFor="water-goal" className="text-sm font-semibold">Water Goal (glasses)</Label>
               </div>
-              <Input
-                id="water-goal"
-                type="number"
-                inputMode="numeric"
-                value={waterGoalInput}
-                onChange={(e) => setWaterGoalInput(e.target.value)}
-                placeholder="e.g., 8"
-                className="h-11 rounded-xl bg-secondary border-0"
-              />
+              <Input id="water-goal" type="number" inputMode="numeric" value={waterGoalInput}
+                onChange={(e) => setWaterGoalInput(e.target.value)} placeholder="e.g., 8" className="h-11 rounded-xl bg-secondary border-0" />
             </div>
 
             <div className="space-y-2">
@@ -364,22 +300,12 @@ export default function Profile() {
                 {!isPro && <ProBadge />}
               </div>
               {isPro ? (
-                <Input
-                  id="protein-goal"
-                  type="number"
-                  inputMode="numeric"
-                  value={proteinGoal}
-                  onChange={(e) => setProteinGoal(e.target.value)}
-                  placeholder="e.g., 50"
-                  className="h-11 rounded-xl bg-secondary border-0"
-                />
+                <Input id="protein-goal" type="number" inputMode="numeric" value={proteinGoal}
+                  onChange={(e) => setProteinGoal(e.target.value)} placeholder="e.g., 50" className="h-11 rounded-xl bg-secondary border-0" />
               ) : (
-                <button
-                  onClick={() => setShowProModal(true)}
-                  className="w-full h-11 rounded-xl border-2 border-dashed border-border flex items-center justify-center gap-2 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
-                >
-                  <Lock className="w-4 h-4" />
-                  <span className="text-sm font-medium">Unlock with Pro</span>
+                <button onClick={() => setShowProModal(true)}
+                  className="w-full h-11 rounded-xl border-2 border-dashed border-border flex items-center justify-center gap-2 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors">
+                  <Lock className="w-4 h-4" /><span className="text-sm font-medium">Unlock with Pro</span>
                 </button>
               )}
             </div>
@@ -390,22 +316,12 @@ export default function Profile() {
                 {!isPro && <ProBadge />}
               </div>
               {isPro ? (
-                <Input
-                  id="fiber-goal"
-                  type="number"
-                  inputMode="numeric"
-                  value={fiberGoal}
-                  onChange={(e) => setFiberGoal(e.target.value)}
-                  placeholder="e.g., 25"
-                  className="h-11 rounded-xl bg-secondary border-0"
-                />
+                <Input id="fiber-goal" type="number" inputMode="numeric" value={fiberGoal}
+                  onChange={(e) => setFiberGoal(e.target.value)} placeholder="e.g., 25" className="h-11 rounded-xl bg-secondary border-0" />
               ) : (
-                <button
-                  onClick={() => setShowProModal(true)}
-                  className="w-full h-11 rounded-xl border-2 border-dashed border-border flex items-center justify-center gap-2 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
-                >
-                  <Lock className="w-4 h-4" />
-                  <span className="text-sm font-medium">Unlock with Pro</span>
+                <button onClick={() => setShowProModal(true)}
+                  className="w-full h-11 rounded-xl border-2 border-dashed border-border flex items-center justify-center gap-2 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors">
+                  <Lock className="w-4 h-4" /><span className="text-sm font-medium">Unlock with Pro</span>
                 </button>
               )}
             </div>
@@ -416,50 +332,27 @@ export default function Profile() {
                 {!isPro && <ProBadge />}
               </div>
               {isPro ? (
-                <Input
-                  id="sugar-goal"
-                  type="number"
-                  inputMode="numeric"
-                  value={sugarGoal}
-                  onChange={(e) => setSugarGoal(e.target.value)}
-                  placeholder="e.g., 50"
-                  className="h-11 rounded-xl bg-secondary border-0"
-                />
+                <Input id="sugar-goal" type="number" inputMode="numeric" value={sugarGoal}
+                  onChange={(e) => setSugarGoal(e.target.value)} placeholder="e.g., 50" className="h-11 rounded-xl bg-secondary border-0" />
               ) : (
-                <button
-                  onClick={() => setShowProModal(true)}
-                  className="w-full h-11 rounded-xl border-2 border-dashed border-border flex items-center justify-center gap-2 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
-                >
-                  <Lock className="w-4 h-4" />
-                  <span className="text-sm font-medium">Unlock with Pro</span>
+                <button onClick={() => setShowProModal(true)}
+                  className="w-full h-11 rounded-xl border-2 border-dashed border-border flex items-center justify-center gap-2 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors">
+                  <Lock className="w-4 h-4" /><span className="text-sm font-medium">Unlock with Pro</span>
                 </button>
               )}
             </div>
 
-            <Button 
-              onClick={handleSaveGoals} 
-              disabled={!goalsChanged}
-              className="w-full h-11 rounded-xl font-bold"
-            >
+            <Button onClick={handleSaveGoals} disabled={!goalsChanged} className="w-full h-11 rounded-xl font-bold">
               Save Goals
             </Button>
           </div>
         </motion.div>
 
         {/* Export */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-        >
-          <Button
-            onClick={handleExport}
-            variant="outline"
-            className="w-full h-12 rounded-xl justify-between font-semibold"
-          >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+          <Button onClick={handleExport} variant="outline" className="w-full h-12 rounded-xl justify-between font-semibold">
             <div className="flex items-center gap-3">
-              <Download className="w-5 h-5" />
-              <span>Export Data (CSV)</span>
+              <Download className="w-5 h-5" /><span>Export Data (CSV)</span>
             </div>
             {!isPro && <ProBadge />}
           </Button>
