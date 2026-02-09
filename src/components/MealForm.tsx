@@ -27,7 +27,6 @@ const mealTypes: { value: MealType; label: string }[] = [
   { value: 'snack', label: 'Snack' },
 ];
 
-// Get suggested meal type based on time
 function hourFromTime(time: string): number {
   const [h] = time.split(':');
   const hour = parseInt(h || '0', 10);
@@ -42,14 +41,9 @@ function getSuggestedMealTypeForHour(hour: number): MealType {
 }
 
 function getAvailableMealTypesForHour(hour: number): MealType[] {
-  // Strict time-based options
-  // Morning: breakfast + snack
   if (hour >= 5 && hour < 11) return ['breakfast', 'snack'];
-  // Midday: lunch + snack
   if (hour >= 11 && hour < 16) return ['lunch', 'snack'];
-  // Evening: dinner + snack
   if (hour >= 16 && hour < 22) return ['dinner', 'snack'];
-  // Late night: snack only
   return ['snack'];
 }
 
@@ -69,28 +63,23 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
   const [tags, setTags] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const availableMealTypes = useMemo(() => {
-    return getAvailableMealTypesForHour(hourFromTime(time));
-  }, [time]);
+  const availableMealTypes = useMemo(() => getAvailableMealTypesForHour(hourFromTime(time)), [time]);
 
   useEffect(() => {
     if (open) {
       const now = new Date();
       setDate(now.toISOString().split('T')[0]);
       setTime(now.toTimeString().slice(0, 5));
-
       const suggested = getSuggestedMealTypeForHour(now.getHours());
       setMealType(suggested);
     }
   }, [open]);
 
-  // Check if user has already logged this meal type today
   const todayMealTypes = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
     return meals.filter(m => m.date === today).map(m => m.mealType);
   }, [meals]);
 
-  // Smart meal type suggestion: if breakfast/lunch/dinner already logged, suggest snack
   useEffect(() => {
     if (open) {
       const suggested = getSuggestedMealTypeForHour(hourFromTime(time));
@@ -102,7 +91,6 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
     }
   }, [open, todayMealTypes]);
 
-  // Ensure selected meal type stays valid when time changes
   useEffect(() => {
     if (!open) return;
     if (!availableMealTypes.includes(mealType)) {
@@ -110,9 +98,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
     }
   }, [open, availableMealTypes, mealType, time]);
 
-  const showWarnings = useMemo(() => {
-    return calories && parseInt(calories, 10) > 0;
-  }, [calories]);
+  const showWarnings = useMemo(() => calories && parseInt(calories, 10) > 0, [calories]);
 
   const sanityValidation = useMemo(() => {
     const cal = parseInt(calories, 10);
@@ -124,64 +110,30 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
     return validateNutrition(cal, prot, fib, sug, mealType);
   }, [calories, protein, fiber, sugar, mealType]);
 
-  // Get user's goals for personalized warnings
   const userGoals = settings.goals;
 
   const handleAddTag = () => {
     const validation = validateTag(tagInput);
-    if (!validation.valid) {
-      toast.error(validation.error);
-      return;
-    }
-    if (!tags.includes(tagInput.trim())) {
-      setTags([...tags, tagInput.trim()]);
-      setTagInput('');
-    }
+    if (!validation.valid) { toast.error(validation.error); return; }
+    if (!tags.includes(tagInput.trim())) { setTags([...tags, tagInput.trim()]); setTagInput(''); }
   };
 
-  const handleRemoveTag = (tag: string) => {
-    setTags(tags.filter((t) => t !== tag));
-  };
+  const handleRemoveTag = (tag: string) => setTags(tags.filter((t) => t !== tag));
 
   const handleSubmit = async () => {
     if (!photo || isSubmitting) return;
-
-    if (!calories || !protein || !fiber || !sugar) {
-      toast.error('Please fill out calories, protein, fiber, and sugar.');
-      return;
-    }
-
+    if (!calories || !protein || !fiber || !sugar) { toast.error('Please fill out calories, protein, fiber, and sugar.'); return; }
     const cal = parseInt(calories, 10);
     const prot = parseInt(protein, 10);
     const fib = parseInt(fiber, 10);
     const sug = parseInt(sugar, 10);
-
-    // Validate nutrition values
     const validation = validateNutrition(cal, prot, fib, sug, mealType);
-    if (!validation.valid) {
-      toast.error(validation.errors[0]);
-      return;
-    }
-
+    if (!validation.valid) { toast.error(validation.errors[0]); return; }
     setIsSubmitting(true);
     try {
-      await logMeal({
-        photo,
-        calories: cal,
-        protein: prot,
-        fiber: fib,
-        sugar: sug,
-        mealType,
-        date,
-        time,
-        tags: tags.length > 0 ? tags : undefined,
-      });
+      await logMeal({ photo, calories: cal, protein: prot, fiber: fib, sugar: sug, mealType, date, time, tags: tags.length > 0 ? tags : undefined });
       onSuccess();
-      setCalories('');
-      setProtein('');
-      setFiber('');
-      setSugar('');
-      setTags([]);
+      setCalories(''); setProtein(''); setFiber(''); setSugar(''); setTags([]);
     } catch (error) {
       console.error('Failed to log meal:', error);
       toast.error('Failed to save meal.');
@@ -190,56 +142,35 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
     }
   };
 
-  // Format time for display (respects 12/24 hour setting)
   const formattedTime = formatTime(time, settings.use24Hour);
 
   return (
     <>
       <AnimatePresence>
         {open && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-background flex flex-col overflow-hidden"
-          >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-background flex flex-col overflow-hidden">
             <div className="relative h-32 bg-black flex-shrink-0">
-              {photo && (
-                <img src={photo} alt="Meal" className="w-full h-full object-cover opacity-70" />
-              )}
+              {photo && <img src={photo} alt="Meal" className="w-full h-full object-cover opacity-70" />}
               <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/50" />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onClose}
-                className="absolute top-3 left-3 text-white hover:bg-white/10 rounded-full safe-top"
-              >
+              <Button variant="ghost" size="icon" onClick={onClose} className="absolute top-3 left-3 text-white hover:bg-white/10 rounded-full safe-top">
                 <X className="w-6 h-6" />
               </Button>
-              <h1 className="absolute top-3 left-1/2 -translate-x-1/2 text-white font-bold text-lg safe-top">
-                Log Meal
-              </h1>
+              <h1 className="absolute top-3 left-1/2 -translate-x-1/2 text-white font-bold text-lg safe-top">Log Meal</h1>
             </div>
 
-            <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-4">
               <div className="space-y-2">
                 <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Meal Type</Label>
                 <div className="grid grid-cols-4 gap-2">
                   {mealTypes.map(({ value, label }) => {
                     const isAvailable = availableMealTypes.includes(value);
                     return (
-                      <button
-                        key={value}
-                        onClick={() => setMealType(value)}
-                        disabled={!isAvailable}
+                      <button key={value} onClick={() => setMealType(value)} disabled={!isAvailable}
                         className={`py-2.5 px-2 rounded-xl font-semibold text-xs transition-all border ${
-                          mealType === value
-                            ? 'bg-primary text-primary-foreground shadow-neon border-primary'
-                            : isAvailable
-                              ? 'bg-secondary/50 text-secondary-foreground hover:bg-secondary border-border/50'
-                              : 'bg-muted/30 text-muted-foreground/50 border-border/30 cursor-not-allowed'
-                        }`}
-                      >
+                          mealType === value ? 'bg-primary text-primary-foreground shadow-neon border-primary'
+                          : isAvailable ? 'bg-secondary/50 text-secondary-foreground hover:bg-secondary border-border/50'
+                          : 'bg-muted/30 text-muted-foreground/50 border-border/30 cursor-not-allowed'
+                        }`}>
                         {label}
                       </button>
                     );
@@ -251,67 +182,25 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                 <Label htmlFor="calories" className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                   Calories <span className="text-destructive">*</span>
                 </Label>
-                <Input
-                  id="calories"
-                  type="number"
-                  inputMode="numeric"
-                  min="0"
-                  max="5000"
-                  placeholder="e.g., 450"
-                  value={calories}
-                  onChange={(e) => setCalories(e.target.value)}
-                  className="h-12 text-lg rounded-xl bg-secondary/50 border-border/50 font-semibold"
-                />
+                <Input id="calories" type="number" inputMode="numeric" min="0" max="5000" placeholder="e.g., 450" value={calories}
+                  onChange={(e) => setCalories(e.target.value)} className="h-12 text-lg rounded-xl bg-secondary/50 border-border/50 font-semibold" />
               </div>
 
               <div className="grid grid-cols-3 gap-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="protein" className="text-[10px] font-bold text-muted-foreground uppercase">
-                    Protein (g) <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="protein"
-                    type="number"
-                    inputMode="numeric"
-                    min="0"
-                    max="200"
-                    placeholder="0"
-                    value={protein}
-                    onChange={(e) => setProtein(e.target.value)}
-                    className="h-11 rounded-xl bg-secondary/50 border-border/50"
-                  />
+                  <Label htmlFor="protein" className="text-[10px] font-bold text-muted-foreground uppercase">Protein (g) <span className="text-destructive">*</span></Label>
+                  <Input id="protein" type="number" inputMode="numeric" min="0" max="200" placeholder="0" value={protein}
+                    onChange={(e) => setProtein(e.target.value)} className="h-11 rounded-xl bg-secondary/50 border-border/50" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="fiber" className="text-[10px] font-bold text-muted-foreground uppercase">
-                    Fiber (g) <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="fiber"
-                    type="number"
-                    inputMode="numeric"
-                    min="0"
-                    max="100"
-                    placeholder="0"
-                    value={fiber}
-                    onChange={(e) => setFiber(e.target.value)}
-                    className="h-11 rounded-xl bg-secondary/50 border-border/50"
-                  />
+                  <Label htmlFor="fiber" className="text-[10px] font-bold text-muted-foreground uppercase">Fiber (g) <span className="text-destructive">*</span></Label>
+                  <Input id="fiber" type="number" inputMode="numeric" min="0" max="100" placeholder="0" value={fiber}
+                    onChange={(e) => setFiber(e.target.value)} className="h-11 rounded-xl bg-secondary/50 border-border/50" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="sugar" className="text-[10px] font-bold text-muted-foreground uppercase">
-                    Sugar (g) <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="sugar"
-                    type="number"
-                    inputMode="numeric"
-                    min="0"
-                    max="300"
-                    placeholder="0"
-                    value={sugar}
-                    onChange={(e) => setSugar(e.target.value)}
-                    className="h-11 rounded-xl bg-secondary/50 border-border/50"
-                  />
+                  <Label htmlFor="sugar" className="text-[10px] font-bold text-muted-foreground uppercase">Sugar (g) <span className="text-destructive">*</span></Label>
+                  <Input id="sugar" type="number" inputMode="numeric" min="0" max="300" placeholder="0" value={sugar}
+                    onChange={(e) => setSugar(e.target.value)} className="h-11 rounded-xl bg-secondary/50 border-border/50" />
                 </div>
               </div>
 
@@ -323,47 +212,27 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
 
               {showWarnings && (
                 <>
-                  <HealthWarning
-                    calories={parseInt(calories, 10) || 0}
-                    protein={protein ? parseInt(protein, 10) : undefined}
-                    fiber={fiber ? parseInt(fiber, 10) : undefined}
-                    sugar={sugar ? parseInt(sugar, 10) : undefined}
-                    mealType={mealType}
-                    userGoals={isPro ? userGoals : undefined}
-                  />
-                  <HealthPositive
-                    calories={parseInt(calories, 10) || 0}
-                    protein={protein ? parseInt(protein, 10) : undefined}
-                    fiber={fiber ? parseInt(fiber, 10) : undefined}
-                    sugar={sugar ? parseInt(sugar, 10) : undefined}
-                    mealType={mealType}
-                    userGoals={isPro ? userGoals : undefined}
-                  />
+                  <HealthWarning calories={parseInt(calories, 10) || 0} protein={protein ? parseInt(protein, 10) : undefined}
+                    fiber={fiber ? parseInt(fiber, 10) : undefined} sugar={sugar ? parseInt(sugar, 10) : undefined}
+                    mealType={mealType} userGoals={isPro ? userGoals : undefined} />
+                  <HealthPositive calories={parseInt(calories, 10) || 0} protein={protein ? parseInt(protein, 10) : undefined}
+                    fiber={fiber ? parseInt(fiber, 10) : undefined} sugar={sugar ? parseInt(sugar, 10) : undefined}
+                    mealType={mealType} userGoals={isPro ? userGoals : undefined} />
                 </>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5 min-w-0">
                   <Label htmlFor="date" className="text-[10px] font-bold text-muted-foreground uppercase">Date</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="h-11 w-full rounded-xl bg-secondary/50 border-border/50 text-sm"
-                  />
+                  <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)}
+                    className="h-11 w-full rounded-xl bg-secondary/50 border-border/50 text-sm [&::-webkit-calendar-picker-indicator]:opacity-100" />
                 </div>
                 <div className="space-y-1.5 min-w-0">
                   <Label htmlFor="time" className="text-[10px] font-bold text-muted-foreground uppercase">
                     Time <span className="text-muted-foreground/70">({formattedTime})</span>
                   </Label>
-                  <Input
-                    id="time"
-                    type="time"
-                    value={time}
-                    onChange={(e) => setTime(e.target.value)}
-                    className="h-11 w-full rounded-xl bg-secondary/50 border-border/50 text-sm"
-                  />
+                  <Input id="time" type="time" value={time} onChange={(e) => setTime(e.target.value)}
+                    className="h-11 w-full rounded-xl bg-secondary/50 border-border/50 text-sm [&::-webkit-calendar-picker-indicator]:opacity-100" />
                 </div>
               </div>
 
@@ -371,13 +240,9 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                 <div className="space-y-2">
                   <Label className="text-[10px] font-bold text-muted-foreground uppercase">Custom Tags</Label>
                   <div className="flex gap-2">
-                    <Input
-                      placeholder="Add a tag..."
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
+                    <Input placeholder="Add a tag..." value={tagInput} onChange={(e) => setTagInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
-                      className="h-11 rounded-xl bg-secondary/50 border-border/50 flex-1"
-                    />
+                      className="h-11 rounded-xl bg-secondary/50 border-border/50 flex-1" />
                     <Button onClick={handleAddTag} size="icon" className="h-11 w-11 rounded-xl flex-shrink-0">
                       <Plus className="w-5 h-5" />
                     </Button>
@@ -386,11 +251,8 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                     <div className="flex flex-wrap gap-2">
                       {tags.map((tag) => (
                         <span key={tag} className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/15 text-primary rounded-lg text-sm font-medium border border-primary/20">
-                          <Tag className="w-3 h-3" />
-                          {tag}
-                          <button onClick={() => handleRemoveTag(tag)} className="ml-1 hover:text-destructive">
-                            <X className="w-3 h-3" />
-                          </button>
+                          <Tag className="w-3 h-3" />{tag}
+                          <button onClick={() => handleRemoveTag(tag)} className="ml-1 hover:text-destructive"><X className="w-3 h-3" /></button>
                         </span>
                       ))}
                     </div>
@@ -400,18 +262,14 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
             </div>
 
             <div className="p-4 safe-bottom bg-background border-t border-border/50 flex-shrink-0">
-              <Button
-                onClick={handleSubmit}
-                disabled={!calories || !protein || !fiber || !sugar || isSubmitting}
-                className="w-full h-12 text-base rounded-xl font-bold shadow-neon"
-              >
+              <Button onClick={handleSubmit} disabled={!calories || !protein || !fiber || !sugar || isSubmitting}
+                className="w-full h-12 text-base rounded-xl font-bold shadow-neon">
                 {isSubmitting ? 'Saving...' : 'Save Meal'}
               </Button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-
       <ProUpgradeModal open={showProModal} onClose={() => setShowProModal(false)} />
     </>
   );
