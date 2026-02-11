@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Moon, Sun, Sparkles, Download, Settings, Target, Check, Lock, Droplets, Palette, User, Scale, AlertTriangle } from 'lucide-react';
+import { Moon, Sun, Sparkles, Download, Settings, Target, Check, Lock, Droplets, Palette, User, Scale, AlertTriangle, Camera, ImagePlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,16 @@ import { getGreeting, formatMemberSince } from '@/lib/userProfile';
 import { validateName } from '@/lib/validation';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const proFeatures = [
   'Track protein, fiber & sugar goals',
@@ -32,7 +42,7 @@ const themes = [
 ];
 
 export default function Profile() {
-  const { settings, isPro, setDarkMode, updateUserGoals, setWaterGoal, setTheme, userProfile, setUserName, bodyProfile } = useApp();
+  const { settings, isPro, setDarkMode, updateUserGoals, setWaterGoal, setTheme, userProfile, setUserName, setUserAvatar, bodyProfile } = useApp();
   const navigate = useNavigate();
   const [showProModal, setShowProModal] = useState(false);
   const [showBodyProfile, setShowBodyProfile] = useState(false);
@@ -43,11 +53,13 @@ export default function Profile() {
   const [waterGoalInput, setWaterGoalInput] = useState(settings.waterGoal.toString());
   const [nameInput, setNameInput] = useState(userProfile?.name || '');
   const [isEditingName, setIsEditingName] = useState(false);
+  const [showGoalConfirm, setShowGoalConfirm] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   // Track previous sugar for change detection
   const prevSugarRef = useRef(settings.goals.sugar?.toString() || '');
 
-  // Always sync inputs with settings (covers auto-goal acceptance & body profile save)
+  // Always sync inputs with settings
   useEffect(() => {
     setCalorieGoal(settings.goals.calories.toString());
     setProteinGoal(settings.goals.protein?.toString() || '');
@@ -67,22 +79,19 @@ export default function Profile() {
     );
   }, [calorieGoal, proteinGoal, fiberGoal, sugarGoal, waterGoalInput, settings]);
 
-  const handleSaveGoals = () => {
-    // Warn if user has bulking goals set and is changing calorie/protein
-    if (bodyProfile?.goal === 'bulking') {
-      const newCal = parseInt(calorieGoal, 10) || 2000;
-      const oldCal = settings.goals.calories;
-      if (newCal < oldCal) {
-        toast.warning('You\'re reducing calories while in bulking mode — make sure this aligns with your goals.');
-      }
-    }
+  const hasBulkingConflict = useMemo(() => {
+    if (bodyProfile?.goal !== 'bulking') return false;
+    const newCal = parseInt(calorieGoal, 10) || 2000;
+    return newCal < settings.goals.calories;
+  }, [bodyProfile?.goal, calorieGoal, settings.goals.calories]);
 
+  const doSaveGoals = useCallback(() => {
     // Sugar limit feedback
     const newSugar = isPro && sugarGoal ? parseInt(sugarGoal, 10) : undefined;
     const oldSugar = settings.goals.sugar;
     if (newSugar !== undefined && oldSugar !== undefined) {
       if (newSugar < oldSugar) {
-        toast.success('Great job lowering your sugar limit!');
+        toast.success('Great job lowering your sugar limit! Your body will thank you.');
       } else if (newSugar > oldSugar) {
         toast.warning('Increasing your sugar limit may affect your health goals.');
       }
@@ -96,6 +105,14 @@ export default function Profile() {
     });
     setWaterGoal(parseInt(waterGoalInput, 10) || 8);
     toast.success('Goals saved!');
+  }, [calorieGoal, proteinGoal, fiberGoal, sugarGoal, waterGoalInput, isPro, settings.goals.sugar, updateUserGoals, setWaterGoal]);
+
+  const handleSaveGoals = () => {
+    if (hasBulkingConflict) {
+      setShowGoalConfirm(true);
+      return;
+    }
+    doSaveGoals();
   };
 
   const handleSaveName = () => {
@@ -104,6 +121,22 @@ export default function Profile() {
     setUserName(nameInput.trim());
     setIsEditingName(false);
     toast.success('Profile updated!');
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image must be under 2MB');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = reader.result as string;
+      setUserAvatar(dataUrl);
+      toast.success('Profile picture updated!');
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleExport = async () => {
@@ -151,14 +184,25 @@ export default function Profile() {
       </div>
 
       <div className="px-6 space-y-4">
-        {/* User Profile */}
+        {/* User Profile with Avatar */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
           className="bg-card rounded-2xl p-5 border border-border/50">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Your Profile</h2>
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center">
-              <User className="w-7 h-7 text-primary" />
-            </div>
+            {/* Avatar */}
+            <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
+            <button onClick={() => avatarInputRef.current?.click()} className="relative group flex-shrink-0">
+              {userProfile?.avatar ? (
+                <img src={userProfile.avatar} alt="Avatar" className="w-16 h-16 rounded-2xl object-cover" />
+              ) : (
+                <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center">
+                  <User className="w-8 h-8 text-primary" />
+                </div>
+              )}
+              <div className="absolute inset-0 rounded-2xl bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <Camera className="w-5 h-5 text-white" />
+              </div>
+            </button>
             <div className="flex-1">
               {isEditingName ? (
                 <div className="flex gap-2">
@@ -174,6 +218,9 @@ export default function Profile() {
               )}
             </div>
           </div>
+          <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
+            <ImagePlus className="w-3 h-3" /> Tap photo to change from camera or gallery
+          </p>
         </motion.div>
 
         {/* Body Profile */}
@@ -358,6 +405,27 @@ export default function Profile() {
           </Button>
         </motion.div>
       </div>
+
+      {/* Goal conflict confirmation dialog */}
+      <AlertDialog open={showGoalConfirm} onOpenChange={setShowGoalConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-warning" />
+              Conflicting with Bulking Goals
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              You're reducing your calorie goal while your body profile is set to bulking. This may slow your progress. Are you sure you want to save these goals?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setShowGoalConfirm(false); doSaveGoals(); }}>
+              Save Anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <ProUpgradeModal open={showProModal} onClose={() => setShowProModal(false)} />
       <BodyProfileEditor open={showBodyProfile} onClose={() => setShowBodyProfile(false)} />

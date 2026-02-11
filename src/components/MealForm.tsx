@@ -7,8 +7,8 @@ import { Label } from '@/components/ui/label';
 import { useApp } from '@/contexts/AppContext';
 import { ProBadge } from '@/components/ProBadge';
 import { ProUpgradeModal } from '@/components/ProUpgradeModal';
-import { HealthWarning, HealthPositive, hasAnyWarning, getHealthWarnings } from '@/components/HealthWarning';
-import { validateNutrition, validateTag, formatTime } from '@/lib/validation';
+import { HealthWarning, HealthPositive } from '@/components/HealthWarning';
+import { validateNutrition, validateTag } from '@/lib/validation';
 import { toast } from 'sonner';
 
 interface MealFormProps {
@@ -26,12 +26,6 @@ const mealTypes: { value: MealType; label: string }[] = [
   { value: 'dinner', label: 'Dinner' },
   { value: 'snack', label: 'Snack' },
 ];
-
-function hourFromTime(time: string): number {
-  const [h] = time.split(':');
-  const hour = parseInt(h || '0', 10);
-  return Number.isFinite(hour) ? hour : 0;
-}
 
 function getSuggestedMealTypeForHour(hour: number): MealType {
   if (hour >= 5 && hour < 11) return 'breakfast';
@@ -57,19 +51,16 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
   const [fiber, setFiber] = useState('');
   const [sugar, setSugar] = useState('');
   const [mealType, setMealType] = useState<MealType>(getSuggestedMealTypeForHour(now.getHours()));
-  const [date, setDate] = useState(now.toISOString().split('T')[0]);
-  const [time, setTime] = useState(now.toTimeString().slice(0, 5));
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const availableMealTypes = useMemo(() => getAvailableMealTypesForHour(hourFromTime(time)), [time]);
+  const currentHour = now.getHours();
+  const availableMealTypes = useMemo(() => getAvailableMealTypesForHour(currentHour), [currentHour]);
 
   useEffect(() => {
     if (open) {
       const now = new Date();
-      setDate(now.toISOString().split('T')[0]);
-      setTime(now.toTimeString().slice(0, 5));
       const suggested = getSuggestedMealTypeForHour(now.getHours());
       setMealType(suggested);
     }
@@ -82,7 +73,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
 
   useEffect(() => {
     if (open) {
-      const suggested = getSuggestedMealTypeForHour(hourFromTime(time));
+      const suggested = getSuggestedMealTypeForHour(currentHour);
       if (todayMealTypes.includes(suggested) && suggested !== 'snack') {
         setMealType('snack');
       } else {
@@ -94,9 +85,9 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
   useEffect(() => {
     if (!open) return;
     if (!availableMealTypes.includes(mealType)) {
-      setMealType(getSuggestedMealTypeForHour(hourFromTime(time)));
+      setMealType(getSuggestedMealTypeForHour(currentHour));
     }
-  }, [open, availableMealTypes, mealType, time]);
+  }, [open, availableMealTypes, mealType, currentHour]);
 
   const showWarnings = useMemo(() => calories && parseInt(calories, 10) > 0, [calories]);
 
@@ -130,6 +121,9 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
     const validation = validateNutrition(cal, prot, fib, sug, mealType);
     if (!validation.valid) { toast.error(validation.errors[0]); return; }
     setIsSubmitting(true);
+    const now = new Date();
+    const date = now.toISOString().split('T')[0];
+    const time = now.toTimeString().slice(0, 5);
     try {
       await logMeal({ photo, calories: cal, protein: prot, fiber: fib, sugar: sug, mealType, date, time, tags: tags.length > 0 ? tags : undefined });
       onSuccess();
@@ -141,8 +135,6 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
       setIsSubmitting(false);
     }
   };
-
-  const formattedTime = formatTime(time, settings.use24Hour);
 
   return (
     <>
@@ -220,21 +212,6 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                     mealType={mealType} userGoals={isPro ? userGoals : undefined} />
                 </>
               )}
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5 min-w-0">
-                  <Label htmlFor="date" className="text-[10px] font-bold text-muted-foreground uppercase">Date</Label>
-                  <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)}
-                    className="h-11 w-full rounded-xl bg-secondary/50 border-border/50 text-sm [&::-webkit-calendar-picker-indicator]:opacity-100" />
-                </div>
-                <div className="space-y-1.5 min-w-0">
-                  <Label htmlFor="time" className="text-[10px] font-bold text-muted-foreground uppercase">
-                    Time <span className="text-muted-foreground/70">({formattedTime})</span>
-                  </Label>
-                  <Input id="time" type="time" value={time} onChange={(e) => setTime(e.target.value)}
-                    className="h-11 w-full rounded-xl bg-secondary/50 border-border/50 text-sm [&::-webkit-calendar-picker-indicator]:opacity-100" />
-                </div>
-              </div>
 
               {isPro && (
                 <div className="space-y-2">

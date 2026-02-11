@@ -4,6 +4,7 @@ const PROFILE_KEY = 'melius-user-profile';
 
 export interface UserProfile {
   name: string;
+  avatar?: string; // base64 data URL stored locally
   createdAt: number; // timestamp
 }
 
@@ -20,7 +21,8 @@ export function getUserProfile(): UserProfile | null {
 export function saveUserProfile(profile: Partial<UserProfile>): UserProfile {
   const existing = getUserProfile();
   const updated: UserProfile = {
-    name: profile.name || existing?.name || '',
+    name: profile.name ?? existing?.name ?? '',
+    avatar: profile.avatar ?? existing?.avatar,
     createdAt: existing?.createdAt || Date.now(),
   };
   localStorage.setItem(PROFILE_KEY, JSON.stringify(updated));
