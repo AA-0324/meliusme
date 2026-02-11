@@ -44,6 +44,7 @@ interface AppContextType {
   // User profile
   userProfile: UserProfile | null;
   setUserName: (name: string) => void;
+  setUserAvatar: (avatar: string) => void;
   
   // Body profile
   bodyProfile: BodyProfile | null;
@@ -161,6 +162,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const setUserName = useCallback((name: string) => {
     const updated = saveUserProfile({ name });
+    setUserProfile(updated);
+  }, []);
+
+  const setUserAvatar = useCallback((avatar: string) => {
+    const updated = saveUserProfile({ avatar });
     setUserProfile(updated);
   }, []);
 
@@ -372,6 +378,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         isPro,
         userProfile,
         setUserName,
+        setUserAvatar,
         bodyProfile,
         updateBodyProfile,
         streak,

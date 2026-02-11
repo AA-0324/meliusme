@@ -69,13 +69,10 @@ export default function Home() {
   return (
     <div className="min-h-screen pb-24">
       {/* Header */}
-      <div className="px-6 pt-10 pb-2 safe-top flex items-center justify-between">
+      <div className="px-6 pt-10 pb-2 safe-top">
         <motion.h1 initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-xl font-bold text-foreground">
           {getGreeting(userProfile?.name)}
         </motion.h1>
-        <Button variant="ghost" size="icon" onClick={() => navigate('/profile')} className="rounded-xl">
-          <User className="w-5 h-5" />
-        </Button>
       </div>
 
       {/* Streak Display */}

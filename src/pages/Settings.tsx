@@ -4,7 +4,6 @@ import {
   Settings as SettingsIcon, 
   RotateCcw, 
   Code2, 
-  Trash2, 
   CreditCard, 
   Sparkles, 
   ChevronLeft,
@@ -45,14 +44,12 @@ export default function Settings() {
   } = useApp();
   const navigate = useNavigate();
   const [showProModal, setShowProModal] = useState(false);
+  const [showFinalConfirm, setShowFinalConfirm] = useState(false);
 
   const handleResetDaily = () => {
     resetDailyData();
+    setShowFinalConfirm(false);
     toast.success("Today's nutrition reset");
-  };
-
-  const handleDeleteAccount = () => {
-    toast.info('Account deletion is not available yet');
   };
 
   const handleManageSubscription = () => {
@@ -61,7 +58,6 @@ export default function Settings() {
 
   const handleRestorePurchase = async () => {
     toast.info('Checking for previous purchases...');
-    // Simulate store check delay
     await new Promise(resolve => setTimeout(resolve, 1500));
     toast.error('No previous purchase detected');
   };
@@ -130,6 +126,7 @@ export default function Settings() {
         >
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Data Management</h2>
           
+          {/* First confirmation */}
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
@@ -149,7 +146,28 @@ export default function Settings() {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleResetDaily}>Reset</AlertDialogAction>
+                <AlertDialogAction onClick={() => setShowFinalConfirm(true)}>Continue</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {/* Second (final) confirmation */}
+          <AlertDialog open={showFinalConfirm} onOpenChange={setShowFinalConfirm}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-destructive" />
+                  Are you absolutely sure?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. All of today's meals and water data will be permanently deleted.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleResetDaily} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Yes, Reset Everything
+                </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
@@ -207,15 +225,6 @@ export default function Settings() {
           >
             <RefreshCw className="w-5 h-5 text-primary" />
             <span>Restore Pro</span>
-          </Button>
-          
-          <Button
-            onClick={handleDeleteAccount}
-            variant="outline"
-            className="w-full h-12 rounded-xl justify-start gap-3 font-semibold text-destructive hover:text-destructive hover:bg-destructive/10"
-          >
-            <Trash2 className="w-5 h-5" />
-            <span>Delete Account</span>
           </Button>
         </motion.div>
 
