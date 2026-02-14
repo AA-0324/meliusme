@@ -150,7 +150,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
               <h1 className="absolute top-3 left-1/2 -translate-x-1/2 text-white font-bold text-lg safe-top">Log Meal</h1>
             </div>
 
-            <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-4">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-4 flex flex-col">
               <div className="space-y-2">
                 <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Meal Type</Label>
                 <div className="grid grid-cols-4 gap-2">
@@ -236,6 +236,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                   )}
                 </div>
               )}
+              <div className="flex-1" />
             </div>
 
             <div className="p-4 safe-bottom bg-background border-t border-border/50 flex-shrink-0">

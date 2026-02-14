@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, RotateCcw, Check, ImagePlus, Camera as CameraIcon } from 'lucide-react';
+import { X, RotateCcw, Check, ImagePlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface CameraProps {
@@ -17,7 +17,7 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<'choose' | 'camera' | 'preview'>('choose');
+  const [mode, setMode] = useState<'camera' | 'preview'>('camera');
 
   const startCamera = useCallback(async () => {
     try {
@@ -40,7 +40,6 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
     } catch (err) {
       console.error('Camera error:', err);
       setError('Camera access denied. You can upload a photo instead.');
-      setMode('choose');
     }
   }, [facingMode]);
 
@@ -55,7 +54,7 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
     stopCamera();
     setCapturedPhoto(null);
     setError(null);
-    setMode('choose');
+    setMode('camera');
     onClose();
   }, [stopCamera, onClose]);
 
@@ -108,11 +107,6 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
     setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
   }, [stopCamera]);
 
-  const handleChooseCamera = useCallback(() => {
-    setMode('camera');
-    startCamera();
-  }, [startCamera]);
-
   const handleChooseGallery = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
@@ -124,12 +118,13 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
     }
   }, [facingMode]);
 
-  // Reset when opened
+  // Reset when opened - go directly to camera
   useEffect(() => {
     if (open) {
       setCapturedPhoto(null);
       setError(null);
-      setMode('choose');
+      setMode('camera');
+      startCamera();
     } else {
       stopCamera();
     }
@@ -159,29 +154,18 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
               <X className="w-6 h-6" />
             </Button>
             <h1 className="text-white font-bold text-lg">
-              {mode === 'choose' ? 'Add Photo' : mode === 'camera' ? 'Take a Photo' : 'Preview'}
+              {mode === 'camera' ? 'Take a Photo' : 'Preview'}
             </h1>
             <div className="w-10" />
           </div>
 
           {/* Main content */}
           <div className="flex-1 flex items-center justify-center overflow-hidden">
-            {mode === 'choose' ? (
+            {error && mode === 'camera' ? (
               <div className="text-center p-8 space-y-4">
-                {error && <p className="text-white/80 mb-4">{error}</p>}
-                <p className="text-white/60 text-sm mb-6">Choose how to add your meal photo</p>
-                <Button
-                  onClick={handleChooseCamera}
-                  className="w-64 h-14 rounded-2xl bg-white text-black hover:bg-white/90 font-semibold text-base gap-3"
-                >
-                  <CameraIcon className="w-5 h-5" />
-                  Take a Photo
-                </Button>
-                <Button
-                  onClick={handleChooseGallery}
-                  variant="outline"
-                  className="w-64 h-14 rounded-2xl border-white/30 text-white hover:bg-white/10 font-semibold text-base gap-3"
-                >
+                <p className="text-white/80 mb-4">{error}</p>
+                <Button onClick={handleChooseGallery} variant="outline"
+                  className="w-64 h-14 rounded-2xl border-white/30 text-white hover:bg-white/10 font-semibold text-base gap-3">
                   <ImagePlus className="w-5 h-5" />
                   Choose from Gallery
                 </Button>

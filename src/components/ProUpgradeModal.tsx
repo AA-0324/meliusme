@@ -30,7 +30,7 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] bg-black/98 backdrop-blur-xl flex flex-col items-center justify-center p-6 overflow-hidden"
+          className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 overflow-hidden"
           onClick={onClose}
         >
           <motion.div
@@ -61,21 +61,21 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
                 transition={{ delay: 0.1, type: 'spring', damping: 12 }}
                 className="relative w-16 h-16 mx-auto mb-4"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 rounded-2xl blur-xl opacity-60" />
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 rounded-2xl flex items-center justify-center">
-                  <Crown className="w-8 h-8 text-white drop-shadow-lg" />
+                <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-accent-foreground rounded-2xl blur-xl opacity-60" />
+                <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-accent-foreground rounded-2xl flex items-center justify-center">
+                  <Crown className="w-8 h-8 text-primary-foreground drop-shadow-lg" />
                 </div>
               </motion.div>
               
               <h2 className="text-2xl font-extrabold text-white mb-1">
-                MeliusMe <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Pro</span>
+                MeliusMe <span className="text-primary">Pro</span>
               </h2>
               <p className="text-white/60 text-sm font-medium">Lifetime upgrade</p>
             </div>
 
             {/* Features */}
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 space-y-3 mb-4">
-              {proFeatures.slice(0, 3).map((feature, index) => (
+              {proFeatures.map((feature, index) => (
                 <motion.div
                   key={feature.text}
                   initial={{ opacity: 0, x: -20 }}
@@ -83,8 +83,8 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
                   transition={{ delay: 0.2 + index * 0.05 }}
                   className="flex items-center gap-3"
                 >
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400/20 to-orange-500/20 flex items-center justify-center flex-shrink-0 border border-amber-500/20">
-                    <feature.icon className="w-4 h-4 text-amber-400" />
+                  <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0 border border-primary/30">
+                    <feature.icon className="w-4 h-4 text-primary" />
                   </div>
                   <span className="text-white/90 text-sm font-medium">{feature.text}</span>
                 </motion.div>
@@ -95,9 +95,9 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
             <div className="text-center mb-4">
               <span className="text-4xl font-extrabold text-white">$4.99</span>
               <div className="flex items-center justify-center gap-2 mt-2">
-                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/20 rounded-full border border-amber-500/30">
-                  <InfinityIcon className="w-4 h-4 text-amber-400" />
-                  <span className="text-amber-400 font-bold text-xs uppercase tracking-wide">Lifetime Access</span>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/20 rounded-full border border-primary/30">
+                  <InfinityIcon className="w-4 h-4 text-primary" />
+                  <span className="text-primary font-bold text-xs uppercase tracking-wide">Lifetime Access</span>
                 </div>
               </div>
               <p className="text-white/40 text-xs mt-2 font-medium">One-time • No subscriptions</p>
@@ -106,7 +106,7 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
             {/* CTA */}
             <Button
               onClick={handleUpgrade}
-              className="w-full h-12 text-sm font-bold rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 hover:from-amber-500 hover:via-orange-600 hover:to-rose-600 shadow-2xl shadow-orange-500/40 text-white border-0"
+              className="w-full h-12 text-sm font-bold rounded-2xl bg-primary hover:bg-primary/90 shadow-neon text-primary-foreground border-0"
             >
               Unlock MeliusMe Pro
             </Button>

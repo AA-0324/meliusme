@@ -10,9 +10,9 @@ interface StreakDisplayProps {
 export function StreakDisplay({ streak, compact }: StreakDisplayProps) {
   if (compact) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 rounded-xl border border-orange-500/30">
-        <Flame className="w-5 h-5 text-orange-500" />
-        <span className="text-lg font-bold text-orange-500">{streak.currentStreak}</span>
+      <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-destructive/20 to-destructive/10 rounded-xl border border-destructive/30">
+        <Flame className="w-5 h-5 text-destructive" />
+        <span className="text-lg font-bold text-destructive">{streak.currentStreak}</span>
         <span className="text-xs text-muted-foreground">day streak</span>
       </div>
     );
@@ -27,7 +27,7 @@ export function StreakDisplay({ streak, compact }: StreakDisplayProps) {
       <div className="flex items-center justify-between">
         <div className="min-w-0">
           <p className="text-sm font-semibold">Streak</p>
-          <p className="text-2xl font-extrabold text-primary leading-tight">
+          <p className="text-2xl font-extrabold text-destructive leading-tight">
             {streak.currentStreak} day{streak.currentStreak === 1 ? '' : 's'}
           </p>
         </div>

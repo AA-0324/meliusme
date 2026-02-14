@@ -241,23 +241,26 @@ export default function Profile() {
         {!isPro && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
             <button onClick={() => setShowProModal(true)}
-              className="w-full bg-card rounded-2xl p-5 text-left border border-primary/30 hover:border-primary/50 transition-all group">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-11 h-11 bg-primary/15 rounded-xl flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">Upgrade to Pro</h2>
-                  <p className="text-muted-foreground text-sm">$4.99 • Lifetime access</p>
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                {proFeatures.slice(0, 3).map((feature) => (
-                  <div key={feature} className="flex items-center gap-2 text-muted-foreground text-sm">
-                    <Check className="w-4 h-4 text-primary flex-shrink-0" />
-                    {feature}
+              className="w-full rounded-2xl p-5 text-left transition-all group relative overflow-hidden bg-gradient-to-br from-primary/20 via-card to-accent/30 border border-primary/40 hover:border-primary/60 shadow-soft">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/60 rounded-xl flex items-center justify-center shadow-neon">
+                    <Sparkles className="w-6 h-6 text-primary-foreground" />
                   </div>
-                ))}
+                  <div className="flex-1">
+                    <h2 className="text-lg font-extrabold text-foreground group-hover:text-primary transition-colors">Upgrade to Pro</h2>
+                    <p className="text-primary font-bold text-sm">$4.99 • Lifetime access</p>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  {proFeatures.slice(0, 3).map((feature) => (
+                    <div key={feature} className="flex items-center gap-2 text-muted-foreground text-sm">
+                      <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                      {feature}
+                    </div>
+                  ))}
+                </div>
               </div>
             </button>
           </motion.div>
