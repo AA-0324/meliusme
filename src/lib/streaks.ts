@@ -89,6 +89,77 @@ export const WEEKLY_CHALLENGES = [
   { id: 'healthy_meals', name: 'No warnings week', description: 'Log 10 meals without health warnings', target: 10 },
 ];
 
+// Daily challenge pool - 3 are picked per day based on date seed
+const DAILY_CHALLENGE_POOL = [
+  { id: 'log_3', title: 'Log 3 meals', target: 3, type: 'meals' as const, reward: '🔥 Streak boost' },
+  { id: 'log_2', title: 'Log 2 meals', target: 2, type: 'meals' as const, reward: '⭐ Consistency star' },
+  { id: 'water_full', title: 'Hit your water goal', target: 1, type: 'water_goal' as const, reward: '💧 Hydration badge' },
+  { id: 'water_half', title: 'Drink half your water goal', target: 1, type: 'water_half' as const, reward: '🌊 Halfway there' },
+  { id: 'breakfast', title: 'Log breakfast', target: 1, type: 'breakfast' as const, reward: '🌅 Early bird' },
+  { id: 'dinner', title: 'Log dinner', target: 1, type: 'dinner' as const, reward: '🌙 Night owl' },
+  { id: 'under_cal', title: 'Stay under calorie goal', target: 1, type: 'under_cal' as const, reward: '⚖️ Discipline master' },
+  { id: 'protein_hit', title: 'Hit protein goal', target: 1, type: 'protein_goal' as const, reward: '💪 Protein power' },
+  { id: 'log_snack', title: 'Log a healthy snack', target: 1, type: 'snack' as const, reward: '🍎 Smart snacker' },
+  { id: 'all_meals', title: 'Log all 3 main meals', target: 3, type: 'main_meals' as const, reward: '🏆 Full day champion' },
+];
+
+// Seeded shuffle to get consistent daily challenges
+function seededShuffle<T>(arr: T[], seed: number): T[] {
+  const shuffled = [...arr];
+  let s = seed;
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    s = (s * 1103515245 + 12345) & 0x7fffffff;
+    const j = s % (i + 1);
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+export interface DailyChallenge {
+  id: string;
+  title: string;
+  target: number;
+  progress: number;
+  completed: boolean;
+  reward: string;
+}
+
+export function getDailyChallenges(
+  mealCount: number,
+  waterCount: number,
+  waterGoal: number,
+  goals: { calories?: number; protein?: number; fiber?: number; sugar?: number }
+): DailyChallenge[] {
+  const today = new Date().toISOString().split('T')[0];
+  const seed = today.split('-').reduce((acc, v) => acc * 31 + parseInt(v), 0);
+  const shuffled = seededShuffle(DAILY_CHALLENGE_POOL, seed);
+  const picked = shuffled.slice(0, 3);
+
+  return picked.map((c) => {
+    let progress = 0;
+    switch (c.type) {
+      case 'meals': progress = Math.min(mealCount, c.target); break;
+      case 'water_goal': progress = waterCount >= waterGoal ? 1 : 0; break;
+      case 'water_half': progress = waterCount >= Math.ceil(waterGoal / 2) ? 1 : 0; break;
+      case 'breakfast': progress = mealCount > 0 ? 1 : 0; break; // simplified
+      case 'dinner': progress = mealCount > 0 ? 1 : 0; break;
+      case 'snack': progress = mealCount > 0 ? 1 : 0; break;
+      case 'under_cal': progress = 1; break; // checked at end of day
+      case 'protein_goal': progress = 0; break;
+      case 'main_meals': progress = Math.min(mealCount, 3); break;
+      default: progress = 0;
+    }
+    return {
+      id: c.id,
+      title: c.title,
+      target: c.target,
+      progress: Math.min(progress, c.target),
+      completed: progress >= c.target,
+      reward: c.reward,
+    };
+  });
+}
+
 // Reflection questions - asked weekly
 export const REFLECTION_QUESTIONS = [
   'Which meal this week made you feel best?',

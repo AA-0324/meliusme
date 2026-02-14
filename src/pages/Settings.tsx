@@ -278,6 +278,16 @@ export default function Settings() {
             </div>
           </div>
         </motion.div>
+
+        {/* Copyright */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="text-center py-6"
+        >
+          <p className="text-xs text-muted-foreground/60">© 2026 Melius. All rights reserved.</p>
+        </motion.div>
       </div>
 
       <ProUpgradeModal open={showProModal} onClose={() => setShowProModal(false)} />
