@@ -34,6 +34,7 @@ export interface Settings {
   goals: Goals;
   waterGoal: number;
   use24Hour: boolean;
+  personalizedGoals?: boolean;
 }
 
 // Water tracking (localStorage)

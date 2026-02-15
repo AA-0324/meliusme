@@ -62,25 +62,24 @@ export default function Settings() {
     toast.error('No previous purchase detected');
   };
 
+  const handleToggleNotifications = async () => {
+    if (!notificationsEnabled) {
+      toast.info('Push notifications are not available yet');
+      return;
+    }
+    await toggleNotifications();
+  };
+
   return (
     <div className="min-h-screen pb-24">
       {/* Header */}
       <div className="px-6 pt-8 pb-4 safe-top">
         <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/profile')}
-            className="rounded-xl"
-          >
+          <Button variant="ghost" size="icon" onClick={() => navigate('/profile')} className="rounded-xl">
             <ChevronLeft className="w-5 h-5" />
           </Button>
           <div>
-            <motion.h1
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-2xl font-bold tracking-tight"
-            >
+            <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-2xl font-bold tracking-tight">
               Settings
             </motion.h1>
             <p className="text-muted-foreground text-sm mt-0.5">App configuration</p>
@@ -90,14 +89,9 @@ export default function Settings() {
 
       <div className="px-6 space-y-4">
         {/* Notifications */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="bg-card rounded-2xl p-5 border border-border/50"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+          className="bg-card rounded-2xl p-5 border border-border/50">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Notifications</h2>
-          
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {notificationsEnabled ? (
@@ -112,32 +106,24 @@ export default function Settings() {
             </div>
             <Switch 
               checked={notificationsEnabled} 
-              onCheckedChange={toggleNotifications} 
+              onCheckedChange={handleToggleNotifications} 
             />
           </div>
         </motion.div>
 
         {/* Data Management */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-card rounded-2xl p-5 border border-border/50"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          className="bg-card rounded-2xl p-5 border border-border/50">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Data Management</h2>
           
-          {/* First confirmation */}
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full h-12 rounded-xl justify-start gap-3 font-semibold"
-              >
+              <Button variant="outline" className="w-full h-12 rounded-xl justify-start gap-3 font-semibold">
                 <RotateCcw className="w-5 h-5 text-warning" />
                 <span>Reset Today's Nutrition</span>
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent>
+            <AlertDialogContent className="border-border bg-card">
               <AlertDialogHeader>
                 <AlertDialogTitle>Reset today's nutrition?</AlertDialogTitle>
                 <AlertDialogDescription>
@@ -151,9 +137,8 @@ export default function Settings() {
             </AlertDialogContent>
           </AlertDialog>
 
-          {/* Second (final) confirmation */}
           <AlertDialog open={showFinalConfirm} onOpenChange={setShowFinalConfirm}>
-            <AlertDialogContent>
+            <AlertDialogContent className="border-border bg-card">
               <AlertDialogHeader>
                 <AlertDialogTitle className="flex items-center gap-2">
                   <AlertTriangle className="w-5 h-5 text-destructive" />
@@ -174,12 +159,8 @@ export default function Settings() {
         </motion.div>
 
         {/* Time */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.12 }}
-          className="bg-card rounded-2xl p-5 border border-border/50"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
+          className="bg-card rounded-2xl p-5 border border-border/50">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Time Display</h2>
           <div className="flex items-center justify-between">
             <div>
@@ -191,50 +172,48 @@ export default function Settings() {
         </motion.div>
 
         {/* Account */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="bg-card rounded-2xl p-5 border border-border/50 space-y-3"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+          className="bg-card rounded-2xl p-5 border border-border/50 space-y-3">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Account</h2>
           
           {!isPro && (
-            <Button
-              onClick={() => setShowProModal(true)}
-              className="w-full h-12 rounded-xl justify-start gap-3 font-semibold bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 hover:from-amber-600 hover:via-orange-600 hover:to-rose-600"
-            >
+            <Button onClick={() => setShowProModal(true)}
+              className="w-full h-12 rounded-xl justify-start gap-3 font-semibold bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 hover:from-amber-600 hover:via-orange-600 hover:to-rose-600">
               <Sparkles className="w-5 h-5" />
               <span>Upgrade to MeliusMe Pro</span>
             </Button>
           )}
           
-          <Button
-            onClick={handleManageSubscription}
-            variant="outline"
-            className="w-full h-12 rounded-xl justify-start gap-3 font-semibold"
-          >
+          <Button onClick={handleManageSubscription} variant="outline" className="w-full h-12 rounded-xl justify-start gap-3 font-semibold">
             <CreditCard className="w-5 h-5 text-muted-foreground" />
             <span>Manage Subscription</span>
           </Button>
           
-          <Button
-            onClick={handleRestorePurchase}
-            variant="outline"
-            className="w-full h-12 rounded-xl justify-start gap-3 font-semibold"
-          >
+          <Button onClick={handleRestorePurchase} variant="outline" className="w-full h-12 rounded-xl justify-start gap-3 font-semibold">
             <RefreshCw className="w-5 h-5 text-primary" />
             <span>Restore Pro</span>
           </Button>
         </motion.div>
 
+        {/* Pro status in settings when Pro */}
+        {isPro && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}
+            className="bg-primary/10 rounded-2xl p-5">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 bg-primary/20 rounded-xl flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold">MeliusMe Pro</h2>
+                <p className="text-muted-foreground text-sm">All features unlocked</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Developer */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-card rounded-2xl p-5 border border-dashed border-border/50"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+          className="bg-card rounded-2xl p-5 border border-dashed border-border/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Code2 className="w-5 h-5 text-muted-foreground" />
@@ -248,12 +227,8 @@ export default function Settings() {
         </motion.div>
 
         {/* App Info */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          className="text-center py-4"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+          className="text-center py-4">
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
             <SettingsIcon className="w-4 h-4" />
             <span className="text-sm font-medium">Version {APP_VERSION}</span>
@@ -261,12 +236,8 @@ export default function Settings() {
         </motion.div>
 
         {/* Warning */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-warning/10 border border-warning/20 rounded-2xl p-4"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+          className="bg-warning/10 border border-warning/20 rounded-2xl p-4">
           <div className="flex gap-3">
             <AlertTriangle className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
             <div>
@@ -280,12 +251,8 @@ export default function Settings() {
         </motion.div>
 
         {/* Copyright */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35 }}
-          className="text-center py-6"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
+          className="text-center py-6">
           <p className="text-xs text-muted-foreground/60">© 2026 Melius. All rights reserved.</p>
         </motion.div>
       </div>
