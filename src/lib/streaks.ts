@@ -4,6 +4,7 @@ const STREAK_KEY = 'meliusme-streak';
 const CHALLENGES_KEY = 'meliusme-challenges';
 const BADGES_KEY = 'meliusme-badges';
 const REFLECTION_KEY = 'meliusme-reflection';
+const XP_KEY = 'meliusme-xp';
 
 export interface ReflectionData {
   weekNumber: number;
@@ -16,10 +17,7 @@ export function getLastReflection(): ReflectionData | null {
   if (!stored) return null;
   try {
     const data = JSON.parse(stored);
-    // Convert old format to new
-    if (data.weekStart) {
-      return null;
-    }
+    if (data.weekStart) return null;
     return data;
   } catch {
     return null;
@@ -27,19 +25,15 @@ export function getLastReflection(): ReflectionData | null {
 }
 
 export function saveLastReflection(weekNumber: number, mealId: string): void {
-  const data: ReflectionData = {
-    weekNumber,
-    mealId,
-    answeredAt: Date.now(),
-  };
+  const data: ReflectionData = { weekNumber, mealId, answeredAt: Date.now() };
   localStorage.setItem(REFLECTION_KEY, JSON.stringify(data));
 }
 
 export interface StreakData {
   currentStreak: number;
   longestStreak: number;
-  lastLogDate: string | null; // YYYY-MM-DD
-  streakHistory: string[]; // Array of dates with meals logged
+  lastLogDate: string | null;
+  streakHistory: string[];
 }
 
 export interface Badge {
@@ -53,13 +47,57 @@ export interface Badge {
 export interface Challenge {
   id: string;
   name: string;
-  title: string; // For display
+  title: string;
   description: string;
   target: number;
   progress: number;
   type: 'daily' | 'weekly';
   completed: boolean;
   startDate: string;
+}
+
+// XP System
+export interface XPData {
+  totalXP: number;
+  level: number;
+  xpToNextLevel: number;
+  currentLevelXP: number;
+}
+
+export function getXP(): number {
+  const stored = localStorage.getItem(XP_KEY);
+  return stored ? parseInt(stored, 10) || 0 : 0;
+}
+
+export function addXP(amount: number): XPData {
+  const current = getXP();
+  const newTotal = current + amount;
+  localStorage.setItem(XP_KEY, newTotal.toString());
+  return calculateLevel(newTotal);
+}
+
+export function calculateLevel(totalXP: number): XPData {
+  // Each level requires progressively more XP
+  let level = 1;
+  let xpNeeded = 100; // Level 1 -> 2 needs 100 XP
+  let xpAccumulated = 0;
+
+  while (xpAccumulated + xpNeeded <= totalXP) {
+    xpAccumulated += xpNeeded;
+    level++;
+    xpNeeded = Math.floor(100 * Math.pow(1.3, level - 1));
+  }
+
+  return {
+    totalXP,
+    level,
+    xpToNextLevel: xpNeeded,
+    currentLevelXP: totalXP - xpAccumulated,
+  };
+}
+
+export function getXPData(): XPData {
+  return calculateLevel(getXP());
 }
 
 // Streak milestones
@@ -79,31 +117,33 @@ export const AVAILABLE_BADGES: Badge[] = [
   { id: 'first_meal', name: 'First Step', description: 'Logged your first meal', icon: '🌟' },
 ];
 
-// Weekly challenges - rotates each week
+// Weekly challenges - rotates each week using week number
 export const WEEKLY_CHALLENGES = [
-  { id: 'log_3_daily', name: 'Log 3 meals today', description: 'Log breakfast, lunch, and dinner', target: 3 },
+  { id: 'log_21', name: 'Log 21 meals this week', description: 'Log 3 meals per day for 7 days', target: 21 },
   { id: 'in_range_5', name: 'Stay in calorie range', description: 'Stay within calorie goal for 5 days', target: 5 },
-  { id: 'dinner_week', name: 'Log every dinner', description: 'Log dinner each day this week', target: 7 },
+  { id: 'dinner_week', name: 'Log every dinner', description: 'Log a dinner each day this week', target: 7 },
   { id: 'protein_power', name: 'Protein packed week', description: 'Meet protein goal 5 times', target: 5 },
-  { id: 'hydrate_week', name: 'Hydration hero', description: 'Hit water goal 5 times', target: 5 },
+  { id: 'hydrate_week', name: 'Hydration hero', description: 'Hit water goal 5 times this week', target: 5 },
   { id: 'healthy_meals', name: 'No warnings week', description: 'Log 10 meals without health warnings', target: 10 },
+  { id: 'breakfast_streak', name: 'Breakfast every day', description: 'Log breakfast each day this week', target: 7 },
+  { id: 'log_15', name: 'Active logger', description: 'Log at least 15 meals this week', target: 15 },
 ];
 
 // Daily challenge pool - 3 are picked per day based on date seed
 const DAILY_CHALLENGE_POOL = [
-  { id: 'log_3', title: 'Log 3 meals', target: 3, type: 'meals' as const, reward: '🔥 Streak boost' },
-  { id: 'log_2', title: 'Log 2 meals', target: 2, type: 'meals' as const, reward: '⭐ Consistency star' },
-  { id: 'water_full', title: 'Hit your water goal', target: 1, type: 'water_goal' as const, reward: '💧 Hydration badge' },
-  { id: 'water_half', title: 'Drink half your water goal', target: 1, type: 'water_half' as const, reward: '🌊 Halfway there' },
-  { id: 'breakfast', title: 'Log breakfast', target: 1, type: 'breakfast' as const, reward: '🌅 Early bird' },
-  { id: 'dinner', title: 'Log dinner', target: 1, type: 'dinner' as const, reward: '🌙 Night owl' },
-  { id: 'under_cal', title: 'Stay under calorie goal', target: 1, type: 'under_cal' as const, reward: '⚖️ Discipline master' },
-  { id: 'protein_hit', title: 'Hit protein goal', target: 1, type: 'protein_goal' as const, reward: '💪 Protein power' },
-  { id: 'log_snack', title: 'Log a healthy snack', target: 1, type: 'snack' as const, reward: '🍎 Smart snacker' },
-  { id: 'all_meals', title: 'Log all 3 main meals', target: 3, type: 'main_meals' as const, reward: '🏆 Full day champion' },
+  { id: 'log_3', title: 'Log 3 meals', target: 3, type: 'meals' as const, xp: 30 },
+  { id: 'log_2', title: 'Log 2 meals', target: 2, type: 'meals' as const, xp: 20 },
+  { id: 'water_full', title: 'Hit your water goal', target: 1, type: 'water_goal' as const, xp: 25 },
+  { id: 'water_half', title: 'Drink half your water goal', target: 1, type: 'water_half' as const, xp: 15 },
+  { id: 'breakfast', title: 'Log breakfast', target: 1, type: 'breakfast' as const, xp: 15 },
+  { id: 'dinner', title: 'Log dinner', target: 1, type: 'dinner' as const, xp: 15 },
+  { id: 'under_cal', title: 'Stay under calorie goal', target: 1, type: 'under_cal' as const, xp: 25 },
+  { id: 'protein_hit', title: 'Hit protein goal', target: 1, type: 'protein_goal' as const, xp: 20 },
+  { id: 'log_snack', title: 'Log a snack', target: 1, type: 'snack' as const, xp: 10 },
+  { id: 'all_meals', title: 'Log breakfast, lunch & dinner', target: 3, type: 'main_meals' as const, xp: 40 },
 ];
 
-// Seeded shuffle to get consistent daily challenges
+// Seeded shuffle for consistent daily challenges
 function seededShuffle<T>(arr: T[], seed: number): T[] {
   const shuffled = [...arr];
   let s = seed;
@@ -121,19 +161,28 @@ export interface DailyChallenge {
   target: number;
   progress: number;
   completed: boolean;
-  reward: string;
+  xp: number;
 }
 
 export function getDailyChallenges(
-  mealCount: number,
+  todaysMealTypes: string[],
   waterCount: number,
   waterGoal: number,
-  goals: { calories?: number; protein?: number; fiber?: number; sugar?: number }
+  goals: { calories?: number; protein?: number; fiber?: number; sugar?: number },
+  todayCalories?: number,
+  todayProtein?: number
 ): DailyChallenge[] {
   const today = new Date().toISOString().split('T')[0];
   const seed = today.split('-').reduce((acc, v) => acc * 31 + parseInt(v), 0);
   const shuffled = seededShuffle(DAILY_CHALLENGE_POOL, seed);
   const picked = shuffled.slice(0, 3);
+
+  const mealCount = todaysMealTypes.length;
+  const hasBreakfast = todaysMealTypes.includes('breakfast');
+  const hasLunch = todaysMealTypes.includes('lunch');
+  const hasDinner = todaysMealTypes.includes('dinner');
+  const hasSnack = todaysMealTypes.includes('snack');
+  const mainMealCount = [hasBreakfast, hasLunch, hasDinner].filter(Boolean).length;
 
   return picked.map((c) => {
     let progress = 0;
@@ -141,12 +190,12 @@ export function getDailyChallenges(
       case 'meals': progress = Math.min(mealCount, c.target); break;
       case 'water_goal': progress = waterCount >= waterGoal ? 1 : 0; break;
       case 'water_half': progress = waterCount >= Math.ceil(waterGoal / 2) ? 1 : 0; break;
-      case 'breakfast': progress = mealCount > 0 ? 1 : 0; break; // simplified
-      case 'dinner': progress = mealCount > 0 ? 1 : 0; break;
-      case 'snack': progress = mealCount > 0 ? 1 : 0; break;
-      case 'under_cal': progress = 1; break; // checked at end of day
-      case 'protein_goal': progress = 0; break;
-      case 'main_meals': progress = Math.min(mealCount, 3); break;
+      case 'breakfast': progress = hasBreakfast ? 1 : 0; break;
+      case 'dinner': progress = hasDinner ? 1 : 0; break;
+      case 'snack': progress = hasSnack ? 1 : 0; break;
+      case 'under_cal': progress = (todayCalories !== undefined && goals.calories && todayCalories <= goals.calories) ? 1 : 0; break;
+      case 'protein_goal': progress = (todayProtein !== undefined && goals.protein && todayProtein >= goals.protein) ? 1 : 0; break;
+      case 'main_meals': progress = mainMealCount; break;
       default: progress = 0;
     }
     return {
@@ -155,7 +204,7 @@ export function getDailyChallenges(
       target: c.target,
       progress: Math.min(progress, c.target),
       completed: progress >= c.target,
-      reward: c.reward,
+      xp: c.xp,
     };
   });
 }
@@ -193,95 +242,51 @@ export const INSIGHT_TEMPLATES = [
 // Get streak data
 export function getStreakData(): StreakData {
   const stored = localStorage.getItem(STREAK_KEY);
-  if (!stored) {
-    return { currentStreak: 0, longestStreak: 0, lastLogDate: null, streakHistory: [] };
-  }
-  try {
-    return JSON.parse(stored);
-  } catch {
-    return { currentStreak: 0, longestStreak: 0, lastLogDate: null, streakHistory: [] };
-  }
+  if (!stored) return { currentStreak: 0, longestStreak: 0, lastLogDate: null, streakHistory: [] };
+  try { return JSON.parse(stored); } catch { return { currentStreak: 0, longestStreak: 0, lastLogDate: null, streakHistory: [] }; }
 }
 
-// Save streak data
 export function saveStreakData(data: StreakData): void {
   localStorage.setItem(STREAK_KEY, JSON.stringify(data));
 }
 
-// Update streak when a meal is logged
 export function updateStreak(mealDate: string): StreakData {
   const data = getStreakData();
-  const today = new Date().toISOString().split('T')[0];
-  
-  // Already logged today
-  if (data.streakHistory.includes(mealDate)) {
-    return data;
-  }
-  
-  // Add to history
+  if (data.streakHistory.includes(mealDate)) return data;
   data.streakHistory.push(mealDate);
-  
-  // Calculate streak
   if (data.lastLogDate === null) {
-    // First ever log
     data.currentStreak = 1;
   } else {
     const lastDate = new Date(data.lastLogDate);
     const currentDate = new Date(mealDate);
     const diffDays = Math.floor((currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 1) {
-      // Consecutive day
-      data.currentStreak++;
-    } else if (diffDays === 0) {
-      // Same day, no change
-    } else {
-      // Streak broken
-      data.currentStreak = 1;
-    }
+    if (diffDays === 1) data.currentStreak++;
+    else if (diffDays !== 0) data.currentStreak = 1;
   }
-  
-  // Update longest streak
-  if (data.currentStreak > data.longestStreak) {
-    data.longestStreak = data.currentStreak;
-  }
-  
+  if (data.currentStreak > data.longestStreak) data.longestStreak = data.currentStreak;
   data.lastLogDate = mealDate;
   saveStreakData(data);
-  
-  // Check for streak badges
   checkStreakBadges(data.currentStreak);
-  
   return data;
 }
 
-// Get earned badges
 export function getEarnedBadges(): Badge[] {
   const stored = localStorage.getItem(BADGES_KEY);
   if (!stored) return [];
-  try {
-    return JSON.parse(stored);
-  } catch {
-    return [];
-  }
+  try { return JSON.parse(stored); } catch { return []; }
 }
 
-// Award a badge
 export function awardBadge(badgeId: string): Badge | null {
   const earned = getEarnedBadges();
-  if (earned.some(b => b.id === badgeId)) return null; // Already earned
-  
+  if (earned.some(b => b.id === badgeId)) return null;
   const badge = AVAILABLE_BADGES.find(b => b.id === badgeId);
   if (!badge) return null;
-  
   const earnedBadge = { ...badge, earnedAt: Date.now() };
   earned.push(earnedBadge);
   localStorage.setItem(BADGES_KEY, JSON.stringify(earned));
-  
   return earnedBadge;
 }
 
-// Check and award streak badges
 export function checkStreakBadges(streak: number): Badge | null {
   if (streak >= 100) return awardBadge('streak_100');
   if (streak >= 60) return awardBadge('streak_60');
@@ -292,24 +297,32 @@ export function checkStreakBadges(streak: number): Badge | null {
 }
 
 // Get current week's challenge
-export function getCurrentChallenge(): Challenge {
+export function getCurrentChallenge(meals?: any[]): Challenge {
   const stored = localStorage.getItem(CHALLENGES_KEY);
   const weekStart = getWeekStart();
-  
+
   if (stored) {
     try {
       const challenge = JSON.parse(stored) as Challenge;
       if (challenge.startDate === weekStart) {
+        // Recalculate progress if meals provided
+        if (meals) {
+          const updatedProgress = calculateWeeklyChallengeProgress(challenge.id, meals, weekStart);
+          if (updatedProgress !== challenge.progress) {
+            challenge.progress = updatedProgress;
+            challenge.completed = challenge.progress >= challenge.target;
+            localStorage.setItem(CHALLENGES_KEY, JSON.stringify(challenge));
+          }
+        }
         return challenge;
       }
     } catch {}
   }
-  
-  // Create new challenge for this week
+
   const weekNumber = getWeekNumber();
   const challengeIndex = weekNumber % WEEKLY_CHALLENGES.length;
   const template = WEEKLY_CHALLENGES[challengeIndex];
-  
+
   const challenge: Challenge = {
     id: template.id,
     name: template.name,
@@ -321,12 +334,39 @@ export function getCurrentChallenge(): Challenge {
     completed: false,
     startDate: weekStart,
   };
-  
+
+  if (meals) {
+    challenge.progress = calculateWeeklyChallengeProgress(challenge.id, meals, weekStart);
+    challenge.completed = challenge.progress >= challenge.target;
+  }
+
   localStorage.setItem(CHALLENGES_KEY, JSON.stringify(challenge));
   return challenge;
 }
 
-// Update challenge progress
+function calculateWeeklyChallengeProgress(challengeId: string, meals: any[], weekStart: string): number {
+  const weekStartDate = new Date(weekStart);
+  const weekMeals = meals.filter(m => new Date(m.date) >= weekStartDate);
+
+  switch (challengeId) {
+    case 'log_21':
+    case 'log_15':
+      return weekMeals.length;
+    case 'dinner_week': {
+      const dinnerDays = new Set(weekMeals.filter(m => m.mealType === 'dinner').map(m => m.date));
+      return dinnerDays.size;
+    }
+    case 'breakfast_streak': {
+      const breakfastDays = new Set(weekMeals.filter(m => m.mealType === 'breakfast').map(m => m.date));
+      return breakfastDays.size;
+    }
+    case 'healthy_meals':
+      return weekMeals.length; // simplified - count all meals
+    default:
+      return 0;
+  }
+}
+
 export function updateChallengeProgress(amount: number = 1): Challenge {
   const challenge = getCurrentChallenge();
   challenge.progress = Math.min(challenge.progress + amount, challenge.target);
@@ -335,44 +375,32 @@ export function updateChallengeProgress(amount: number = 1): Challenge {
   return challenge;
 }
 
-// Get week's reflection question
 export function getWeeklyReflectionQuestion(): string {
   const weekNumber = getWeekNumber();
-  const questionIndex = weekNumber % REFLECTION_QUESTIONS.length;
-  return REFLECTION_QUESTIONS[questionIndex];
+  return REFLECTION_QUESTIONS[weekNumber % REFLECTION_QUESTIONS.length];
 }
 
-// Check if reflection was answered this week
 export function wasReflectionAnswered(): boolean {
   const stored = localStorage.getItem(REFLECTION_KEY);
   if (!stored) return false;
   try {
     const data = JSON.parse(stored);
     return data.weekStart === getWeekStart();
-  } catch {
-    return false;
-  }
+  } catch { return false; }
 }
 
-// Save reflection answer
 export function saveReflectionAnswer(mealId: string): void {
-  localStorage.setItem(REFLECTION_KEY, JSON.stringify({
-    weekStart: getWeekStart(),
-    mealId,
-    answeredAt: Date.now(),
-  }));
+  localStorage.setItem(REFLECTION_KEY, JSON.stringify({ weekStart: getWeekStart(), mealId, answeredAt: Date.now() }));
 }
 
-// Helper: Get week start date (Monday)
 function getWeekStart(): string {
   const today = new Date();
   const day = today.getDay();
   const diff = today.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(today.setDate(diff));
+  const monday = new Date(today.getFullYear(), today.getMonth(), diff);
   return monday.toISOString().split('T')[0];
 }
 
-// Helper: Get week number of year
 function getWeekNumber(): number {
   const today = new Date();
   const firstDayOfYear = new Date(today.getFullYear(), 0, 1);
@@ -380,51 +408,53 @@ function getWeekNumber(): number {
   return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
 }
 
-// Generate a micro-insight based on meal data (simplified version)
+// Check if the current week is over (it's a new week now, so last week is done)
+export function isLastWeekOver(): boolean {
+  // The reflection should be for the PREVIOUS week only
+  return true; // Always allow since we track by weekNumber
+}
+
+export function getLastWeekNumber(): number {
+  return getWeekNumber() - 1;
+}
+
+export function getLastWeekStart(): string {
+  const today = new Date();
+  const day = today.getDay();
+  const diff = today.getDate() - day + (day === 0 ? -6 : 1) - 7; // go back one week
+  const lastMonday = new Date(today.getFullYear(), today.getMonth(), diff);
+  return lastMonday.toISOString().split('T')[0];
+}
+
 export function generateInsight(meals: any[]): string | null {
   if (meals.length < 5) return null;
-  
   const insights: string[] = [];
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  
-  // Calculate calories by day of week
   const caloriesByDay: number[] = [0, 0, 0, 0, 0, 0, 0];
   const countByDay: number[] = [0, 0, 0, 0, 0, 0, 0];
   const proteinByDay: number[] = [0, 0, 0, 0, 0, 0, 0];
-  
+
   meals.forEach(meal => {
     const dayOfWeek = new Date(meal.date).getDay();
     caloriesByDay[dayOfWeek] += meal.calories;
     proteinByDay[dayOfWeek] += meal.protein || 0;
     countByDay[dayOfWeek]++;
   });
-  
+
   const avgByDay = caloriesByDay.map((cal, i) => countByDay[i] > 0 ? cal / countByDay[i] : 0);
   const maxCalDay = avgByDay.indexOf(Math.max(...avgByDay.filter(v => v > 0)));
   const maxProteinDay = proteinByDay.indexOf(Math.max(...proteinByDay.filter(v => v > 0)));
-  
-  if (maxCalDay >= 0 && avgByDay[maxCalDay] > 0) {
-    insights.push(`You tend to eat more calories on ${dayNames[maxCalDay]}s.`);
-  }
-  
-  if (maxProteinDay >= 0 && proteinByDay[maxProteinDay] > 0) {
-    insights.push(`Your highest-protein day was ${dayNames[maxProteinDay]}.`);
-  }
-  
-  // Check breakfast consistency
+
+  if (maxCalDay >= 0 && avgByDay[maxCalDay] > 0) insights.push(`You tend to eat more calories on ${dayNames[maxCalDay]}s.`);
+  if (maxProteinDay >= 0 && proteinByDay[maxProteinDay] > 0) insights.push(`Your highest-protein day was ${dayNames[maxProteinDay]}.`);
+
   const breakfastDays = new Set(meals.filter(m => m.mealType === 'breakfast').map(m => m.date)).size;
   const totalDays = new Set(meals.map(m => m.date)).size;
-  if (breakfastDays > totalDays * 0.7) {
-    insights.push('You log breakfast more consistently than other meals. Great habit!');
-  }
-  
-  // Meal count
+  if (breakfastDays > totalDays * 0.7) insights.push('You log breakfast more consistently than other meals. Great habit!');
+
   const avgMeals = meals.length / Math.max(totalDays, 1);
-  if (avgMeals > 0) {
-    insights.push(`You average ${avgMeals.toFixed(1)} meals per day.`);
-  }
-  
-  // Return a random insight
+  if (avgMeals > 0) insights.push(`You average ${avgMeals.toFixed(1)} meals per day.`);
+
   if (insights.length === 0) return null;
   return insights[Math.floor(Math.random() * insights.length)];
 }

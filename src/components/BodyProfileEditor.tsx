@@ -149,7 +149,7 @@ export function BodyProfileEditor({ open, onClose }: BodyProfileEditorProps) {
           <div className="sticky top-0 bg-background/95 backdrop-blur-sm px-6 pt-8 pb-4 safe-top border-b border-border/50 z-10">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold">Body Profile</h1>
+                <h1 className="text-2xl font-bold">Personalized Goals</h1>
                 <p className="text-muted-foreground text-sm">Your physical info for personalized goals</p>
               </div>
               <Button variant="ghost" size="icon" onClick={onClose} className="rounded-xl">

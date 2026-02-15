@@ -178,23 +178,44 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                   onChange={(e) => setCalories(e.target.value)} className="h-12 text-lg rounded-xl bg-secondary/50 border-border/50 font-semibold" />
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
-                <div className="space-y-1.5">
-                  <Label htmlFor="protein" className="text-[10px] font-bold text-muted-foreground uppercase">Protein (g) <span className="text-destructive">*</span></Label>
-                  <Input id="protein" type="number" inputMode="numeric" min="0" max="200" placeholder="0" value={protein}
-                    onChange={(e) => setProtein(e.target.value)} className="h-11 rounded-xl bg-secondary/50 border-border/50" />
+              {/* Protein, Fiber, Sugar - each on its own line when NOT Pro, 3-col when Pro */}
+              {isPro ? (
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="protein" className="text-[10px] font-bold text-muted-foreground uppercase">Protein (g) <span className="text-destructive">*</span></Label>
+                    <Input id="protein" type="number" inputMode="numeric" min="0" max="200" placeholder="0" value={protein}
+                      onChange={(e) => setProtein(e.target.value)} className="h-11 rounded-xl bg-secondary/50 border-border/50" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="fiber" className="text-[10px] font-bold text-muted-foreground uppercase">Fiber (g) <span className="text-destructive">*</span></Label>
+                    <Input id="fiber" type="number" inputMode="numeric" min="0" max="100" placeholder="0" value={fiber}
+                      onChange={(e) => setFiber(e.target.value)} className="h-11 rounded-xl bg-secondary/50 border-border/50" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="sugar" className="text-[10px] font-bold text-muted-foreground uppercase">Sugar (g) <span className="text-destructive">*</span></Label>
+                    <Input id="sugar" type="number" inputMode="numeric" min="0" max="300" placeholder="0" value={sugar}
+                      onChange={(e) => setSugar(e.target.value)} className="h-11 rounded-xl bg-secondary/50 border-border/50" />
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="fiber" className="text-[10px] font-bold text-muted-foreground uppercase">Fiber (g) <span className="text-destructive">*</span></Label>
-                  <Input id="fiber" type="number" inputMode="numeric" min="0" max="100" placeholder="0" value={fiber}
-                    onChange={(e) => setFiber(e.target.value)} className="h-11 rounded-xl bg-secondary/50 border-border/50" />
+              ) : (
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="protein" className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Protein (g) <span className="text-destructive">*</span></Label>
+                    <Input id="protein" type="number" inputMode="numeric" min="0" max="200" placeholder="e.g., 25" value={protein}
+                      onChange={(e) => setProtein(e.target.value)} className="h-12 rounded-xl bg-secondary/50 border-border/50" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="fiber" className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Fiber (g) <span className="text-destructive">*</span></Label>
+                    <Input id="fiber" type="number" inputMode="numeric" min="0" max="100" placeholder="e.g., 5" value={fiber}
+                      onChange={(e) => setFiber(e.target.value)} className="h-12 rounded-xl bg-secondary/50 border-border/50" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="sugar" className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Sugar (g) <span className="text-destructive">*</span></Label>
+                    <Input id="sugar" type="number" inputMode="numeric" min="0" max="300" placeholder="e.g., 10" value={sugar}
+                      onChange={(e) => setSugar(e.target.value)} className="h-12 rounded-xl bg-secondary/50 border-border/50" />
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="sugar" className="text-[10px] font-bold text-muted-foreground uppercase">Sugar (g) <span className="text-destructive">*</span></Label>
-                  <Input id="sugar" type="number" inputMode="numeric" min="0" max="300" placeholder="0" value={sugar}
-                    onChange={(e) => setSugar(e.target.value)} className="h-11 rounded-xl bg-secondary/50 border-border/50" />
-                </div>
-              </div>
+              )}
 
               {sanityValidation && !sanityValidation.valid && (
                 <div className="text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-xl p-3">

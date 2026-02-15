@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Flame, Utensils, ChevronRight, Target, Zap, User } from 'lucide-react';
+import { Plus, Flame, Utensils, ChevronRight, Target, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useApp } from '@/contexts/AppContext';
 import { Camera } from '@/components/Camera';
@@ -75,103 +75,101 @@ export default function Home() {
         </motion.h1>
       </div>
 
-      {/* Streak Display */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="px-6 py-2">
-        <StreakDisplay streak={streak} />
-      </motion.div>
+      <div className="px-6 space-y-3">
+        {/* Streak Display */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+          <StreakDisplay streak={streak} />
+        </motion.div>
 
-      {/* Log Meal Button - Full width */}
-      <div className="px-6 py-3">
+        {/* Log Meal Button */}
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }}>
           <Button onClick={() => setShowCamera(true)} className="w-full h-14 text-base rounded-2xl gradient-primary hover:opacity-90 shadow-neon font-bold">
             <Plus className="w-5 h-5 mr-2" />Log Meal
           </Button>
         </motion.div>
-      </div>
 
-      {/* Current Challenge Preview */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="px-6 py-2">
-        <button onClick={() => navigate('/challenges')} className="w-full bg-card rounded-2xl p-4 border border-border/50 text-left hover:bg-secondary/30 transition-colors">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center">
-              <Zap className="w-5 h-5 text-primary" />
+        {/* Current Challenge Preview */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+          <button onClick={() => navigate('/challenges')} className="w-full bg-card rounded-2xl p-4 border border-border/50 text-left hover:bg-secondary/30 transition-colors">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center">
+                <Zap className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground uppercase font-bold">
+                  {currentChallenge.type === 'daily' ? 'Daily Mission' : 'Weekly Challenge'}
+                </p>
+                <p className="font-semibold truncate">{currentChallenge.title}</p>
+              </div>
+              <div className="text-right">
+                <span className="text-lg font-bold text-primary">{currentChallenge.progress}/{currentChallenge.target}</span>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-muted-foreground uppercase font-bold">
-                {currentChallenge.type === 'daily' ? 'Daily Mission' : 'Weekly Challenge'}
-              </p>
-              <p className="font-semibold truncate">{currentChallenge.title}</p>
-            </div>
-            <div className="text-right">
-              <span className="text-lg font-bold text-primary">{currentChallenge.progress}/{currentChallenge.target}</span>
-            </div>
-          </div>
-        </button>
-      </motion.div>
+          </button>
+        </motion.div>
 
-      {/* Meal Reminder */}
-      <div className="px-6 py-2">
+        {/* Meal Reminder */}
         <MealReminder lastMealTime={lastMealTime} todayMealTypes={todayMealTypes} />
-      </div>
 
-      {/* Progress Ring + Stats */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="px-6 py-3">
-        <div className="glass rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Today's Progress</h2>
-            <button onClick={() => navigate('/dashboard')} className="text-primary text-sm font-semibold flex items-center gap-0.5 hover:gap-1.5 transition-all">
-              Details <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="flex items-center gap-6">
-            <ProgressRing progress={calorieProgress} size={120} strokeWidth={10} showAnimation={calorieProgress >= 100}>
-              <div className="text-center">
-                <div className="text-2xl font-extrabold">{todayStats.calories}</div>
-                <div className="text-[10px] text-muted-foreground font-medium">/ {settings.goals.calories}</div>
-              </div>
-            </ProgressRing>
-            <div className="flex-1 space-y-2">
-              <div className="flex items-center justify-between p-2 bg-secondary/30 rounded-lg">
-                <span className="text-xs text-muted-foreground">Meals</span>
-                <span className="font-bold">{todayStats.mealCount}</span>
-              </div>
-              <div className="flex items-center justify-between p-2 bg-secondary/30 rounded-lg">
-                <span className="text-xs text-muted-foreground">Protein</span>
-                <span className="font-bold">{todayStats.protein}g</span>
-              </div>
-              <div className="flex items-center justify-between p-2 bg-secondary/30 rounded-lg">
-                <span className="text-xs text-muted-foreground">Water</span>
-                <span className="font-bold">{todayWater}/{settings.waterGoal}</span>
+        {/* Progress Ring + Stats */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <div className="glass rounded-2xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Today's Progress</h2>
+              <button onClick={() => navigate('/dashboard')} className="text-primary text-sm font-semibold flex items-center gap-0.5 hover:gap-1.5 transition-all">
+                Details <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex items-center gap-6">
+              <ProgressRing progress={calorieProgress} size={120} strokeWidth={10} showAnimation={calorieProgress >= 100}>
+                <div className="text-center">
+                  <div className="text-2xl font-extrabold">{todayStats.calories}</div>
+                  <div className="text-[10px] text-muted-foreground font-medium">/ {settings.goals.calories}</div>
+                </div>
+              </ProgressRing>
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center justify-between p-2 bg-secondary/30 rounded-lg">
+                  <span className="text-xs text-muted-foreground">Meals</span>
+                  <span className="font-bold">{todayStats.mealCount}</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-secondary/30 rounded-lg">
+                  <span className="text-xs text-muted-foreground">Protein</span>
+                  <span className="font-bold">{todayStats.protein}g</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-secondary/30 rounded-lg">
+                  <span className="text-xs text-muted-foreground">Water</span>
+                  <span className="font-bold">{todayWater}/{settings.waterGoal}</span>
+                </div>
               </div>
             </div>
-          </div>
-          {goalStatus === 'destructive' && (
-            <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
-              className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-xl flex items-center gap-2">
-              <Flame className="w-4 h-4 text-destructive" />
-              <span className="text-xs font-semibold text-destructive">You've exceeded your calorie goal</span>
-            </motion.div>
-          )}
-        </div>
-      </motion.div>
-
-      {/* Insight */}
-      {insight && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="px-6 py-2">
-          <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl p-4 border border-primary/20">
-            <p className="text-sm font-medium text-primary">{insight}</p>
+            {goalStatus === 'destructive' && (
+              <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
+                className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-xl flex items-center gap-2">
+                <Flame className="w-4 h-4 text-destructive" />
+                <span className="text-xs font-semibold text-destructive">You've exceeded your calorie goal</span>
+              </motion.div>
+            )}
           </div>
         </motion.div>
-      )}
 
-      {/* Water Tracker */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="px-6 py-3">
-        <WaterTracker glasses={todayWater} goal={settings.waterGoal} onIncrement={incrementWater} />
-      </motion.div>
+        {/* Insight */}
+        {insight && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+            <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl p-4 border border-primary/20">
+              <p className="text-sm font-medium text-primary">{insight}</p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Water Tracker */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <WaterTracker glasses={todayWater} goal={settings.waterGoal} onIncrement={incrementWater} />
+        </motion.div>
+      </div>
 
       {/* Today's Meals Carousel */}
       {todaysMeals.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="py-3">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="mt-3">
           <div className="px-6 mb-3">
             <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Today's Meals</h2>
           </div>

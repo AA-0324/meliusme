@@ -3,7 +3,7 @@ import { Meal, Settings, getSettings, saveSettings, getAllMeals, addMeal, delete
 import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/userProfile';
 import { getBodyProfile, saveBodyProfile, BodyProfile } from '@/lib/bodyGoals';
 import { requestNotificationPermission, areNotificationsSupported } from '@/lib/notifications';
-import { getStreakData, updateStreak, StreakData, getCurrentChallenge, updateChallengeProgress, Challenge, getEarnedBadges, Badge, awardBadge } from '@/lib/streaks';
+import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge, getEarnedBadges, Badge, awardBadge, addXP } from '@/lib/streaks';
 
 type ToastVariant = 'primary' | 'success' | 'warning' | 'destructive';
 
@@ -11,11 +11,7 @@ const goalToastKey = (date: string) => `meliusme-goal-toasts-${date}`;
 const getGoalToastFlags = (date: string): Record<string, boolean> => {
   const stored = localStorage.getItem(goalToastKey(date));
   if (!stored) return {};
-  try {
-    return JSON.parse(stored);
-  } catch {
-    return {};
-  }
+  try { return JSON.parse(stored); } catch { return {}; }
 };
 
 const setGoalToastFlag = (date: string, key: string) => {
@@ -40,31 +36,19 @@ interface AppContextType {
   meals: Meal[];
   isLoading: boolean;
   isPro: boolean;
-  
-  // User profile
   userProfile: UserProfile | null;
   setUserName: (name: string) => void;
   setUserAvatar: (avatar: string) => void;
-  
-  // Body profile
   bodyProfile: BodyProfile | null;
   updateBodyProfile: (profile: Partial<BodyProfile>) => void;
-  
-  // Streak & gamification
   streak: StreakData;
   currentChallenge: Challenge;
   badges: Badge[];
   refreshStreak: () => void;
-  
-  // Water tracking
   todayWater: number;
   incrementWater: () => void;
-  
-  // Notifications
   notificationsEnabled: boolean;
   toggleNotifications: () => Promise<void>;
-  
-  // Settings actions
   setDevMode: (enabled: boolean) => void;
   setDarkMode: (enabled: boolean) => void;
   setPro: (enabled: boolean) => void;
@@ -73,13 +57,9 @@ interface AppContextType {
   updateUserGoals: (goals: Partial<Goals>) => void;
   setWaterGoal: (glasses: number) => void;
   resetDailyData: () => void;
-  
-  // Meal actions
   refreshMeals: () => Promise<void>;
   logMeal: (meal: Omit<Meal, 'id' | 'createdAt'>) => Promise<Meal>;
   removeMeal: (id: string) => Promise<void>;
-
-  // Bottom toast notifications
   bottomToast: { open: boolean; message: string; variant: ToastVariant };
   showBottomToast: (message: string, variant?: ToastVariant) => void;
   hideBottomToast: () => void;
@@ -98,48 +78,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [currentChallenge, setCurrentChallenge] = useState<Challenge>(() => getCurrentChallenge());
   const [badges, setBadges] = useState<Badge[]>(() => getEarnedBadges());
 
-  const [bottomToast, setBottomToast] = useState<AppContextType['bottomToast']>({
-    open: false,
-    message: '',
-    variant: 'primary',
-  });
+  const [bottomToast, setBottomToast] = useState<AppContextType['bottomToast']>({ open: false, message: '', variant: 'primary' });
   const toastQueueRef = useRef<Array<{ message: string; variant: ToastVariant }>>([]);
   
   const today = new Date().toISOString().split('T')[0];
   const [todayWater, setTodayWater] = useState(() => getWaterIntake(today));
 
-  // Derived state: Pro status
   const isPro = settings.proStatus || settings.devMode;
 
-  // Apply dark mode and theme
   useEffect(() => {
     const root = document.documentElement;
-    
-    if (settings.darkMode) {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-    
+    if (settings.darkMode) root.classList.add('dark');
+    else root.classList.remove('dark');
     root.classList.remove('theme-ocean', 'theme-sunset', 'theme-berry', 'theme-midnight', 'theme-cyber');
-    if (isPro && settings.theme && settings.theme !== 'default') {
-      root.classList.add(`theme-${settings.theme}`);
-    }
+    if (isPro && settings.theme && settings.theme !== 'default') root.classList.add(`theme-${settings.theme}`);
   }, [settings.darkMode, settings.theme, isPro]);
 
-  // Check notification permission on load
   useEffect(() => {
-    if (areNotificationsSupported() && Notification.permission === 'granted') {
-      setNotificationsEnabled(true);
-    }
+    if (areNotificationsSupported() && Notification.permission === 'granted') setNotificationsEnabled(true);
   }, []);
 
-  // Load initial data
   useEffect(() => {
     const loadData = async () => {
       try {
         const allMeals = await getAllMeals();
         setMeals(allMeals);
+        // Recalculate weekly challenge with actual meals
+        setCurrentChallenge(getCurrentChallenge(allMeals));
       } catch (error) {
         console.error('Failed to load meals:', error);
       } finally {
@@ -222,22 +187,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const resetDailyData = useCallback(() => {
     const todayStr = new Date().toISOString().split('T')[0];
-
-    // Reset water
     setTodayWater(0);
     setWaterIntake(todayStr, 0);
     sessionStorage.removeItem(`melius-confetti-${todayStr}`);
-
-    // Remove today's meals
     setMeals((prev) => prev.filter((m) => m.date !== todayStr));
     void deleteMealsByDate(todayStr);
   }, []);
 
   const toggleNotifications = useCallback(async () => {
-    if (!areNotificationsSupported()) {
-      return;
-    }
-    
+    if (!areNotificationsSupported()) return;
     if (notificationsEnabled) {
       setNotificationsEnabled(false);
     } else {
@@ -259,9 +217,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const hideBottomToast = useCallback(() => {
     setBottomToast((prev) => {
       const next = toastQueueRef.current.shift();
-      if (next) {
-        return { open: true, message: next.message, variant: next.variant };
-      }
+      if (next) return { open: true, message: next.message, variant: next.variant };
       return { ...prev, open: false };
     });
   }, []);
@@ -270,8 +226,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const newValue = todayWater + 1;
     setTodayWater(newValue);
     setWaterIntake(today, newValue);
-
-    // Notify on completion (once per day)
     if (newValue >= settings.waterGoal) {
       const key = `water_complete_${today}`;
       const flags = getGoalToastFlags(today);
@@ -284,26 +238,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const logMeal = useCallback(async (meal: Omit<Meal, 'id' | 'createdAt'>) => {
     const prevTotals = getDailyTotals(meals, meal.date);
-
     const newMeal = await addMeal(meal);
-    setMeals((prev) => [newMeal, ...prev]);
+    const updatedMeals = [newMeal, ...meals];
+    setMeals(updatedMeals);
     
-    // Update streak
     const updatedStreak = updateStreak(meal.date);
     setStreak(updatedStreak);
     
-    // Update challenge progress (legacy single challenge)
-    const updatedChallenge = updateChallengeProgress(1);
+    // Update weekly challenge with actual meal data for accurate tracking
+    const updatedChallenge = getCurrentChallenge(updatedMeals);
     setCurrentChallenge(updatedChallenge);
     
-    // Check for first meal badge
+    // Award XP for logging
+    addXP(10);
+    
     const currentBadges = getEarnedBadges();
     if (!currentBadges.some(b => b.id === 'first_meal')) {
       awardBadge('first_meal');
       setBadges(getEarnedBadges());
     }
     
-    // Check for triple threat badge (3 meals in one day)
     const todayStr = new Date().toISOString().split('T')[0];
     const todayMeals = meals.filter(m => m.date === todayStr);
     if (todayMeals.length >= 2 && !currentBadges.some(b => b.id === 'meals_3')) {
@@ -311,10 +265,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setBadges(getEarnedBadges());
     }
     
-    // Bottom notifications (queued)
     showBottomToast('Meal logged!', 'primary');
 
-    // Goal completion notifications (once per day per goal)
     const nextTotals = {
       calories: prevTotals.calories + newMeal.calories,
       protein: prevTotals.protein + (newMeal.protein || 0),
@@ -330,7 +282,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setGoalToastFlag(dateKey, 'calories_done');
       showBottomToast('Daily calorie goal completed!', 'success');
     }
-
     if (!flags.calories_over && prevTotals.calories <= calGoal && nextTotals.calories > calGoal) {
       setGoalToastFlag(dateKey, 'calories_over');
       showBottomToast("You're over your calorie goal — consider a lighter choice.", 'warning');
@@ -343,7 +294,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         showBottomToast('Protein goal completed!', 'success');
       }
     }
-
     if (isPro && settings.goals.fiber) {
       const g = settings.goals.fiber;
       if (!flags.fiber_done && prevTotals.fiber < g && nextTotals.fiber >= g) {
@@ -351,9 +301,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         showBottomToast('Fiber goal completed!', 'success');
       }
     }
-
     if (isPro && settings.goals.sugar) {
-      // Sugar is a limit, not a target — warn once when crossing limit
       const g = settings.goals.sugar;
       if (!flags.sugar_over && prevTotals.sugar <= g && nextTotals.sugar > g) {
         setGoalToastFlag(dateKey, 'sugar_over');
@@ -372,37 +320,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   return (
     <AppContext.Provider
       value={{
-        settings,
-        meals,
-        isLoading,
-        isPro,
-        userProfile,
-        setUserName,
-        setUserAvatar,
-        bodyProfile,
-        updateBodyProfile,
-        streak,
-        currentChallenge,
-        badges,
-        refreshStreak,
-        todayWater,
-        incrementWater,
-        notificationsEnabled,
-        toggleNotifications,
-        setDevMode,
-        setDarkMode,
-        setPro,
-        setTheme,
-        setUse24Hour,
-        updateUserGoals,
-        setWaterGoal,
-        resetDailyData,
-        refreshMeals,
-        logMeal,
-        removeMeal,
-        bottomToast,
-        showBottomToast,
-        hideBottomToast,
+        settings, meals, isLoading, isPro,
+        userProfile, setUserName, setUserAvatar,
+        bodyProfile, updateBodyProfile,
+        streak, currentChallenge, badges, refreshStreak,
+        todayWater, incrementWater,
+        notificationsEnabled, toggleNotifications,
+        setDevMode, setDarkMode, setPro, setTheme, setUse24Hour,
+        updateUserGoals, setWaterGoal, resetDailyData,
+        refreshMeals, logMeal, removeMeal,
+        bottomToast, showBottomToast, hideBottomToast,
       }}
     >
       {children}
@@ -412,8 +339,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
 export function useApp() {
   const context = useContext(AppContext);
-  if (!context) {
-    throw new Error('useApp must be used within AppProvider');
-  }
+  if (!context) throw new Error('useApp must be used within AppProvider');
   return context;
 }
