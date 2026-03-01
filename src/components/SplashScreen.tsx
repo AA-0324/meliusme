@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import logo from '@/assets/meliusme-logo.png';
+import logo from '@/assets/meliusme-logo-new.png';
 
 interface SplashScreenProps {
   show: boolean;
@@ -44,47 +44,28 @@ export function SplashScreen({ show, onComplete }: SplashScreenProps) {
               {/* Glow */}
               <motion.div
                 animate={{ 
-                  scale: [1, 1.2, 1],
-                  opacity: [0.5, 0.8, 0.5],
+                  scale: [1, 1.3, 1],
+                  opacity: [0.4, 0.7, 0.4],
                 }}
                 transition={{ 
                   duration: 2,
                   repeat: Infinity,
                   ease: 'easeInOut',
                 }}
-                className="absolute inset-0 bg-primary/30 rounded-3xl blur-2xl"
+                className="absolute inset-[-20px] bg-primary/30 rounded-full blur-3xl"
               />
-              {/* Icon */}
-              <div className="relative w-20 h-20 bg-card/40 rounded-3xl flex items-center justify-center shadow-glow border border-border/50">
-                <img src={logo} alt="MeliusMe logo" className="w-12 h-12" />
+              {/* Logo Image */}
+              <div className="relative w-28 h-28 flex items-center justify-center">
+                <img src={logo} alt="MeliusMe logo" className="w-24 h-24 drop-shadow-[0_0_20px_hsl(var(--primary)/0.6)]" />
               </div>
             </motion.div>
-
-            {/* Text */}
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="text-4xl font-extrabold tracking-tight text-glow"
-            >
-              MeliusMe
-            </motion.h1>
-            
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="text-muted-foreground mt-2 text-sm font-medium"
-            >
-              Track better. Live better.
-            </motion.p>
 
             {/* Loading indicator */}
             <motion.div
               initial={{ opacity: 0, scaleX: 0 }}
               animate={{ opacity: 1, scaleX: 1 }}
               transition={{ delay: 0.8 }}
-              className="mt-8 w-32 h-1 bg-secondary rounded-full overflow-hidden"
+              className="mt-4 w-32 h-1 bg-secondary rounded-full overflow-hidden"
             >
               <motion.div
                 initial={{ x: '-100%' }}

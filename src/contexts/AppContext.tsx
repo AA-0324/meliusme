@@ -84,6 +84,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const today = new Date().toISOString().split('T')[0];
   const [todayWater, setTodayWater] = useState(() => getWaterIntake(today));
 
+  // Reset Pro for all users (one-time migration v1.1)
+  useEffect(() => {
+    const migrated = localStorage.getItem('meliusme-pro-reset-v1.1');
+    if (!migrated && settings.proStatus) {
+      const updated = saveSettings({ proStatus: false, theme: 'default' });
+      setSettingsState(updated);
+      localStorage.setItem('meliusme-pro-reset-v1.1', 'true');
+    } else if (!migrated) {
+      localStorage.setItem('meliusme-pro-reset-v1.1', 'true');
+    }
+  }, []);
+
   const isPro = settings.proStatus || settings.devMode;
 
   useEffect(() => {
