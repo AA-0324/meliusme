@@ -9,6 +9,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { ProfileButton } from "@/components/ProfileButton";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { SplashScreen } from "@/components/SplashScreen";
+import { Onboarding } from "@/components/Onboarding";
 import { MealLoggedToast } from "@/components/MealLoggedToast";
 import Home from "./pages/Home";
 import Log from "./pages/Log";
@@ -38,6 +39,16 @@ const GlobalBottomToast = () => {
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+    // Check if user has been onboarded
+    const onboarded = localStorage.getItem('meliusme-onboarded');
+    if (!onboarded) {
+      setShowOnboarding(true);
+    }
+  };
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -45,7 +56,8 @@ const App = () => {
         <AppProvider>
           <Toaster />
           <Sonner />
-          <SplashScreen show={showSplash} onComplete={() => setShowSplash(false)} />
+          <SplashScreen show={showSplash} onComplete={handleSplashComplete} />
+          {showOnboarding && <Onboarding onComplete={() => setShowOnboarding(false)} />}
           <GlobalBottomToast />
           <BrowserRouter>
             <ForceHomeOnLoad />

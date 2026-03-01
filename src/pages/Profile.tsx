@@ -1,12 +1,11 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Moon, Sun, Sparkles, Download, Settings, Target, Check, Lock, Droplets, Palette, User, Scale, AlertTriangle, Camera } from 'lucide-react';
+import { Moon, Sun, Sparkles, Download, Settings, Target, Check, Lock, Droplets, Palette, User, Scale, AlertTriangle, Camera, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useApp } from '@/contexts/AppContext';
-import { ProBadge } from '@/components/ProBadge';
 import { ProUpgradeModal } from '@/components/ProUpgradeModal';
 import { BodyProfileEditor } from '@/components/BodyProfileEditor';
 import { exportMealsToCSV } from '@/lib/db';
@@ -15,23 +14,9 @@ import { validateName } from '@/lib/validation';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-
-const proFeatures = [
-  'Track protein, fiber & sugar goals',
-  'Advanced nutrition charts',
-  'Beautiful custom themes',
-  'Export all data to CSV',
-  'Custom meal tags',
-];
 
 const themes = [
   { id: 'default', name: 'Forest', color: 'hsl(152, 76%, 36%)' },
@@ -40,6 +25,9 @@ const themes = [
   { id: 'berry', name: 'Berry', color: 'hsl(280, 65%, 55%)' },
   { id: 'midnight', name: 'Midnight', color: 'hsl(230, 70%, 55%)' },
 ];
+
+// Gold glow style for Pro-locked features
+const proGoldBorder = 'ring-1 ring-amber-500/50 shadow-[0_0_12px_-3px_hsl(43_96%_50%/0.4)]';
 
 export default function Profile() {
   const { settings, isPro, setDarkMode, updateUserGoals, setWaterGoal, setTheme, userProfile, setUserName, setUserAvatar, bodyProfile } = useApp();
@@ -89,13 +77,9 @@ export default function Profile() {
     const newSugar = isPro && sugarGoal ? parseInt(sugarGoal, 10) : undefined;
     const oldSugar = settings.goals.sugar;
     if (newSugar !== undefined && oldSugar !== undefined) {
-      if (newSugar < oldSugar) {
-        toast.success('Great job lowering your sugar limit! Your body will thank you.');
-      } else if (newSugar > oldSugar) {
-        toast.warning('Increasing your sugar limit may affect your health goals.');
-      }
+      if (newSugar < oldSugar) toast.success('Great job lowering your sugar limit!');
+      else if (newSugar > oldSugar) toast.warning('Increasing your sugar limit may affect your health goals.');
     }
-
     updateUserGoals({
       calories: parseInt(calorieGoal, 10) || 2000,
       protein: isPro && proteinGoal ? parseInt(proteinGoal, 10) : undefined,
@@ -107,10 +91,7 @@ export default function Profile() {
   }, [calorieGoal, proteinGoal, fiberGoal, sugarGoal, waterGoalInput, isPro, settings.goals.sugar, updateUserGoals, setWaterGoal]);
 
   const handleSaveGoals = () => {
-    if (hasBulkingConflict) {
-      setShowGoalConfirm(true);
-      return;
-    }
+    if (hasBulkingConflict) { setShowGoalConfirm(true); return; }
     doSaveGoals();
   };
 
@@ -158,14 +139,8 @@ export default function Profile() {
 
   const handleTogglePersonalizedGoals = (checked: boolean) => {
     if (!isPro) { setShowProModal(true); return; }
-    if (!checked && personalizedGoalsEnabled) {
-      setShowDisablePersonalized(true);
-      return;
-    }
+    if (!checked && personalizedGoalsEnabled) { setShowDisablePersonalized(true); return; }
     setPersonalizedGoalsEnabled(checked);
-    // Save to settings
-    const updated = { ...settings, personalizedGoals: checked };
-    // We don't have a direct setter, so we use localStorage
     const stored = localStorage.getItem('meliusme-settings');
     if (stored) {
       const s = JSON.parse(stored);
@@ -194,7 +169,7 @@ export default function Profile() {
       </div>
 
       <div className="px-6 space-y-4">
-        {/* User Profile with Avatar */}
+        {/* User Profile */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
           className="bg-card rounded-2xl p-5 border border-border/50">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Your Profile</h2>
@@ -229,20 +204,50 @@ export default function Profile() {
           </div>
         </motion.div>
 
-        {/* Personalized Goals Toggle (Pro) */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }}
-          className="bg-card rounded-2xl p-5 border border-border/50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Scale className="w-5 h-5 text-primary" />
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold">Personalized Goals</span>
-                  {!isPro && <ProBadge />}
+        {/* Upgrade to Pro - prominent, glowing */}
+        {!isPro && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }}>
+            <motion.button 
+              onClick={() => setShowProModal(true)}
+              animate={{ boxShadow: ['0 0 15px hsl(43 96% 50% / 0.2)', '0 0 25px hsl(43 96% 50% / 0.4)', '0 0 15px hsl(43 96% 50% / 0.2)'] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="w-full rounded-2xl p-5 text-left relative overflow-hidden bg-gradient-to-br from-amber-500/15 via-card to-orange-500/15 border border-amber-500/40 hover:border-amber-500/60"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <Crown className="w-6 h-6 text-white" />
                 </div>
-                <p className="text-xs text-muted-foreground">Auto-generate goals from body profile</p>
+                <div className="flex-1">
+                  <h2 className="text-lg font-extrabold">Upgrade to Pro</h2>
+                  <p className="text-amber-500 font-bold text-sm">$9.99 • One-time • Lifetime</p>
+                </div>
               </div>
-            </div>
+            </motion.button>
+          </motion.div>
+        )}
+
+        {/* Personalized Goals + Body Profile in one row */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
+          className={`bg-card rounded-2xl p-4 border border-border/50 ${!isPro ? proGoldBorder : ''}`}>
+          <div className="flex items-center gap-3">
+            <Button 
+              onClick={() => {
+                if (!personalizedGoalsEnabled && isPro) { toast.info('Enable the toggle to use Personalized Goals'); return; }
+                if (!isPro) { setShowProModal(true); return; }
+                setShowBodyProfile(true);
+              }} 
+              variant="ghost"
+              className={`flex-1 h-auto p-0 justify-start gap-3 font-semibold hover:bg-transparent ${!personalizedGoalsEnabled ? 'opacity-60' : ''}`}
+            >
+              <Scale className="w-5 h-5 text-primary flex-shrink-0" />
+              <div className="text-left">
+                <span className="block text-sm font-semibold">Personalized Goals</span>
+                <span className="text-xs text-muted-foreground font-normal">
+                  {bodyProfile?.goal ? `${bodyProfile.goal.charAt(0).toUpperCase() + bodyProfile.goal.slice(1)}` : 'Set up'}
+                  {bodyProfile?.weightKg ? ` • ${Math.round(bodyProfile.weightKg)}kg` : ''}
+                </span>
+              </div>
+            </Button>
             <Switch 
               checked={personalizedGoalsEnabled} 
               onCheckedChange={handleTogglePersonalizedGoals}
@@ -251,36 +256,8 @@ export default function Profile() {
           </div>
         </motion.div>
 
-        {/* Body Profile */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
-          <Button 
-            onClick={() => {
-              if (!personalizedGoalsEnabled && isPro) {
-                toast.info('Enable Personalized Goals above to use this feature');
-                return;
-              }
-              if (!isPro) {
-                setShowProModal(true);
-                return;
-              }
-              setShowBodyProfile(true);
-            }} 
-            variant="outline" 
-            className={`w-full h-14 rounded-2xl justify-start gap-3 font-semibold ${!personalizedGoalsEnabled ? 'opacity-60' : ''}`}
-          >
-            <Scale className="w-5 h-5 text-primary" />
-            <div className="text-left flex-1">
-              <span className="block">Personalized Goals</span>
-              <span className="text-xs text-muted-foreground font-normal">
-                {bodyProfile?.goal ? `${bodyProfile.goal.charAt(0).toUpperCase() + bodyProfile.goal.slice(1)} • ` : ''}
-                {bodyProfile?.weightKg ? `${Math.round(bodyProfile.weightKg)}kg` : 'Set up your profile'}
-              </span>
-            </div>
-          </Button>
-        </motion.div>
-
         {/* Appearance */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
           className="bg-card rounded-2xl p-5 border border-border/50">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Appearance</h2>
           <div className="flex items-center justify-between mb-4">
@@ -290,11 +267,10 @@ export default function Profile() {
             </div>
             <Switch checked={settings.darkMode} onCheckedChange={setDarkMode} />
           </div>
-          <div className="pt-3 border-t border-border/50">
+          <div className={`pt-3 border-t border-border/50 ${!isPro ? 'rounded-xl p-3 ' + proGoldBorder : ''}`}>
             <div className="flex items-center gap-2 mb-3">
               <Palette className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm font-semibold">Theme</span>
-              {!isPro && <ProBadge />}
             </div>
             <div className="flex gap-2">
               {themes.map((theme) => (
@@ -311,7 +287,7 @@ export default function Profile() {
         </motion.div>
 
         {/* Goals */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
           className="bg-card rounded-2xl p-5 border border-border/50">
           <div className="flex items-center gap-2 mb-4">
             <Target className="w-4 h-4 text-primary" />
@@ -338,52 +314,43 @@ export default function Profile() {
                 <Label htmlFor="water-goal" className="text-sm font-semibold">Water Goal (glasses)</Label>
               </div>
               <Input id="water-goal" type="number" inputMode="numeric" value={waterGoalInput}
-                onChange={(e) => setWaterGoalInput(e.target.value)} placeholder="e.g., 8" className="h-11 rounded-xl bg-secondary border-0" />
+                onChange={(e) => setWaterGoalInput(e.target.value)} className="h-11 rounded-xl bg-secondary border-0" />
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="protein-goal" className="text-sm font-semibold">Protein Goal (g)</Label>
-                {!isPro && <ProBadge />}
-              </div>
+            <div className={`space-y-2 ${!isPro ? 'rounded-xl p-3 ' + proGoldBorder : ''}`}>
+              <Label htmlFor="protein-goal" className="text-sm font-semibold">Protein Goal (g)</Label>
               {isPro ? (
                 <Input id="protein-goal" type="number" inputMode="numeric" value={proteinGoal}
-                  onChange={(e) => setProteinGoal(e.target.value)} placeholder="e.g., 50" className="h-11 rounded-xl bg-secondary border-0" />
+                  onChange={(e) => setProteinGoal(e.target.value)} className="h-11 rounded-xl bg-secondary border-0" />
               ) : (
                 <button onClick={() => setShowProModal(true)}
-                  className="w-full h-11 rounded-xl border-2 border-dashed border-border flex items-center justify-center gap-2 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors">
+                  className="w-full h-11 rounded-xl border-2 border-dashed border-amber-500/30 flex items-center justify-center gap-2 text-amber-500/70 hover:border-amber-500/50 hover:text-amber-500 transition-colors">
                   <Lock className="w-4 h-4" /><span className="text-sm font-medium">Unlock with Pro</span>
                 </button>
               )}
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="fiber-goal" className="text-sm font-semibold">Fiber Goal (g)</Label>
-                {!isPro && <ProBadge />}
-              </div>
+            <div className={`space-y-2 ${!isPro ? 'rounded-xl p-3 ' + proGoldBorder : ''}`}>
+              <Label htmlFor="fiber-goal" className="text-sm font-semibold">Fiber Goal (g)</Label>
               {isPro ? (
                 <Input id="fiber-goal" type="number" inputMode="numeric" value={fiberGoal}
-                  onChange={(e) => setFiberGoal(e.target.value)} placeholder="e.g., 25" className="h-11 rounded-xl bg-secondary border-0" />
+                  onChange={(e) => setFiberGoal(e.target.value)} className="h-11 rounded-xl bg-secondary border-0" />
               ) : (
                 <button onClick={() => setShowProModal(true)}
-                  className="w-full h-11 rounded-xl border-2 border-dashed border-border flex items-center justify-center gap-2 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors">
+                  className="w-full h-11 rounded-xl border-2 border-dashed border-amber-500/30 flex items-center justify-center gap-2 text-amber-500/70 hover:border-amber-500/50 hover:text-amber-500 transition-colors">
                   <Lock className="w-4 h-4" /><span className="text-sm font-medium">Unlock with Pro</span>
                 </button>
               )}
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="sugar-goal" className="text-sm font-semibold">Sugar Limit (g)</Label>
-                {!isPro && <ProBadge />}
-              </div>
+            <div className={`space-y-2 ${!isPro ? 'rounded-xl p-3 ' + proGoldBorder : ''}`}>
+              <Label htmlFor="sugar-goal" className="text-sm font-semibold">Sugar Limit (g)</Label>
               {isPro ? (
                 <Input id="sugar-goal" type="number" inputMode="numeric" value={sugarGoal}
-                  onChange={(e) => setSugarGoal(e.target.value)} placeholder="e.g., 50" className="h-11 rounded-xl bg-secondary border-0" />
+                  onChange={(e) => setSugarGoal(e.target.value)} className="h-11 rounded-xl bg-secondary border-0" />
               ) : (
                 <button onClick={() => setShowProModal(true)}
-                  className="w-full h-11 rounded-xl border-2 border-dashed border-border flex items-center justify-center gap-2 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors">
+                  className="w-full h-11 rounded-xl border-2 border-dashed border-amber-500/30 flex items-center justify-center gap-2 text-amber-500/70 hover:border-amber-500/50 hover:text-amber-500 transition-colors">
                   <Lock className="w-4 h-4" /><span className="text-sm font-medium">Unlock with Pro</span>
                 </button>
               )}
@@ -396,46 +363,16 @@ export default function Profile() {
         </motion.div>
 
         {/* Export */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-          <Button onClick={handleExport} variant="outline" className="w-full h-12 rounded-xl justify-between font-semibold">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <Button onClick={handleExport} variant="outline" className={`w-full h-12 rounded-xl justify-between font-semibold ${!isPro ? proGoldBorder : ''}`}>
             <div className="flex items-center gap-3">
               <Download className="w-5 h-5" /><span>Export Data (CSV)</span>
             </div>
-            {!isPro && <ProBadge />}
           </Button>
         </motion.div>
-
-        {/* Pro Status - show at bottom when Pro */}
-        {!isPro && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
-            <button onClick={() => setShowProModal(true)}
-              className="w-full rounded-2xl p-5 text-left transition-all group relative overflow-hidden bg-gradient-to-br from-primary/20 via-card to-accent/30 border border-primary/40 hover:border-primary/60 shadow-soft">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="relative">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/60 rounded-xl flex items-center justify-center shadow-neon">
-                    <Sparkles className="w-6 h-6 text-primary-foreground" />
-                  </div>
-                  <div className="flex-1">
-                    <h2 className="text-lg font-extrabold text-foreground group-hover:text-primary transition-colors">Upgrade to Pro</h2>
-                    <p className="text-primary font-bold text-sm">$4.99 • Lifetime access</p>
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  {proFeatures.slice(0, 3).map((feature) => (
-                    <div key={feature} className="flex items-center gap-2 text-muted-foreground text-sm">
-                      <Check className="w-4 h-4 text-primary flex-shrink-0" />
-                      {feature}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </button>
-          </motion.div>
-        )}
       </div>
 
-      {/* Goal conflict confirmation dialog */}
+      {/* Goal conflict confirmation */}
       <AlertDialog open={showGoalConfirm} onOpenChange={setShowGoalConfirm}>
         <AlertDialogContent className="border-border bg-card">
           <AlertDialogHeader>
@@ -444,14 +381,12 @@ export default function Profile() {
               Conflicting with Bulking Goals
             </AlertDialogTitle>
             <AlertDialogDescription>
-              You're reducing your calorie goal while your body profile is set to bulking. This may slow your progress. Are you sure you want to save these goals?
+              You're reducing your calorie goal while your body profile is set to bulking. This may slow your progress.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { setShowGoalConfirm(false); doSaveGoals(); }}>
-              Save Anyway
-            </AlertDialogAction>
+            <AlertDialogAction onClick={() => { setShowGoalConfirm(false); doSaveGoals(); }}>Save Anyway</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -465,7 +400,7 @@ export default function Profile() {
               Disable Personalized Goals?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This will stop auto-generating goals based on your body profile. Your current goals will remain, but won't update automatically.
+              Your current goals will remain, but won't update automatically based on your body profile.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

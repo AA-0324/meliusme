@@ -12,7 +12,7 @@ const navItems = [
 export function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border safe-bottom">
-      <div className="grid grid-cols-4 h-16 max-w-lg mx-auto items-center">
+      <div className="grid grid-cols-4 h-16 max-w-lg mx-auto">
         {navItems.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
@@ -28,8 +28,8 @@ export function BottomNav() {
           >
             {({ isActive }) => (
               <>
-                <Icon className={cn('w-6 h-6 transition-transform duration-200', isActive && 'scale-110')} strokeWidth={isActive ? 2.5 : 2} />
-                <span className={cn('text-xs mt-1 font-medium', isActive && 'font-semibold')}>{label}</span>
+                <Icon className={cn('w-5 h-5 transition-transform duration-200', isActive && 'scale-110')} strokeWidth={isActive ? 2.5 : 2} />
+                <span className={cn('text-[10px] mt-1 font-medium', isActive && 'font-semibold')}>{label}</span>
               </>
             )}
           </NavLink>

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Flame, Utensils, ChevronRight, Target, Zap } from 'lucide-react';
+import { Plus, Flame, Utensils, ChevronRight, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useApp } from '@/contexts/AppContext';
 import { Camera } from '@/components/Camera';
@@ -66,6 +66,9 @@ export default function Home() {
     return <div className="min-h-screen flex items-center justify-center"><div className="animate-pulse text-muted-foreground">Loading...</div></div>;
   }
 
+  const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
+  const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
+
   return (
     <div className="min-h-screen pb-24">
       {/* Header */}
@@ -75,26 +78,31 @@ export default function Home() {
         </motion.h1>
       </div>
 
-      <div className="px-6 space-y-3">
+      <motion.div variants={stagger} initial="hidden" animate="show" className="px-6 space-y-4">
         {/* Streak Display */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+        <motion.div variants={fadeUp}>
           <StreakDisplay streak={streak} />
         </motion.div>
 
         {/* Log Meal Button */}
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }}>
-          <Button onClick={() => setShowCamera(true)} className="w-full h-14 text-base rounded-2xl gradient-primary hover:opacity-90 shadow-neon font-bold">
-            <Plus className="w-5 h-5 mr-2" />Log Meal
-          </Button>
+        <motion.div variants={fadeUp}>
+          <motion.div whileTap={{ scale: 0.97 }}>
+            <Button onClick={() => setShowCamera(true)} className="w-full h-14 text-base rounded-2xl gradient-primary hover:opacity-90 shadow-neon font-bold">
+              <Plus className="w-5 h-5 mr-2" />Log Meal
+            </Button>
+          </motion.div>
         </motion.div>
 
         {/* Current Challenge Preview */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-          <button onClick={() => navigate('/challenges')} className="w-full bg-card rounded-2xl p-4 border border-border/50 text-left hover:bg-secondary/30 transition-colors">
+        <motion.div variants={fadeUp}>
+          <motion.button whileTap={{ scale: 0.98 }} onClick={() => navigate('/challenges')} className="w-full bg-card rounded-2xl p-4 border border-border/50 text-left hover:bg-secondary/30 transition-colors">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center">
+              <motion.div 
+                animate={{ rotate: [0, 10, -10, 0] }}
+                transition={{ duration: 0.5, delay: 1, repeat: Infinity, repeatDelay: 5 }}
+                className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center">
                 <Zap className="w-5 h-5 text-primary" />
-              </div>
+              </motion.div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-muted-foreground uppercase font-bold">
                   {currentChallenge.type === 'daily' ? 'Daily Mission' : 'Weekly Challenge'}
@@ -105,14 +113,14 @@ export default function Home() {
                 <span className="text-lg font-bold text-primary">{currentChallenge.progress}/{currentChallenge.target}</span>
               </div>
             </div>
-          </button>
+          </motion.button>
         </motion.div>
 
         {/* Meal Reminder */}
         <MealReminder lastMealTime={lastMealTime} todayMealTypes={todayMealTypes} />
 
         {/* Progress Ring + Stats */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+        <motion.div variants={fadeUp}>
           <div className="glass rounded-2xl p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Today's Progress</h2>
@@ -128,18 +136,19 @@ export default function Home() {
                 </div>
               </ProgressRing>
               <div className="flex-1 space-y-2">
-                <div className="flex items-center justify-between p-2 bg-secondary/30 rounded-lg">
-                  <span className="text-xs text-muted-foreground">Meals</span>
-                  <span className="font-bold">{todayStats.mealCount}</span>
-                </div>
-                <div className="flex items-center justify-between p-2 bg-secondary/30 rounded-lg">
-                  <span className="text-xs text-muted-foreground">Protein</span>
-                  <span className="font-bold">{todayStats.protein}g</span>
-                </div>
-                <div className="flex items-center justify-between p-2 bg-secondary/30 rounded-lg">
-                  <span className="text-xs text-muted-foreground">Water</span>
-                  <span className="font-bold">{todayWater}/{settings.waterGoal}</span>
-                </div>
+                {[
+                  { label: 'Meals', value: todayStats.mealCount.toString() },
+                  { label: 'Protein', value: `${todayStats.protein}g` },
+                  { label: 'Water', value: `${todayWater}/${settings.waterGoal}` },
+                ].map((stat) => (
+                  <motion.div key={stat.label} 
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex items-center justify-between p-2 bg-secondary/30 rounded-lg">
+                    <span className="text-xs text-muted-foreground">{stat.label}</span>
+                    <span className="font-bold">{stat.value}</span>
+                  </motion.div>
+                ))}
               </div>
             </div>
             {goalStatus === 'destructive' && (
@@ -154,7 +163,7 @@ export default function Home() {
 
         {/* Insight */}
         {insight && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+          <motion.div variants={fadeUp}>
             <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl p-4 border border-primary/20">
               <p className="text-sm font-medium text-primary">{insight}</p>
             </div>
@@ -162,14 +171,14 @@ export default function Home() {
         )}
 
         {/* Water Tracker */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+        <motion.div variants={fadeUp}>
           <WaterTracker glasses={todayWater} goal={settings.waterGoal} onIncrement={incrementWater} />
         </motion.div>
-      </div>
+      </motion.div>
 
-      {/* Today's Meals Carousel */}
+      {/* Today's Meals */}
       {todaysMeals.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="mt-3">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="mt-4">
           <div className="px-6 mb-3">
             <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Today's Meals</h2>
           </div>
@@ -182,10 +191,13 @@ export default function Home() {
       )}
 
       {todaysMeals.length === 0 && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }} className="px-6 py-10 text-center">
-          <div className="w-16 h-16 bg-secondary/50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-border/50">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="px-6 py-10 text-center">
+          <motion.div 
+            animate={{ y: [0, -5, 0] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            className="w-16 h-16 bg-secondary/50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-border/50">
             <Utensils className="w-8 h-8 text-muted-foreground" />
-          </div>
+          </motion.div>
           <p className="text-muted-foreground font-semibold">No meals logged today</p>
           <p className="text-sm text-muted-foreground/70 mt-1">Tap the button above to get started</p>
         </motion.div>

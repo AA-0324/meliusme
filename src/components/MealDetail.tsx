@@ -74,8 +74,9 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
             {/* Header image */}
             <div className="relative flex-shrink-0">
               <img src={meal.photo} alt={mealTypeLabels[meal.mealType]} className="w-full aspect-video object-cover" />
-              <Button variant="ghost" size="icon" onClick={onClose} className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white rounded-full safe-top">
-                <X className="w-5 h-5" />
+              <Button variant="ghost" size="icon" onClick={onClose} 
+                className="absolute top-4 right-4 w-9 h-9 bg-black/60 hover:bg-black/80 text-white rounded-full safe-top flex items-center justify-center">
+                <X className="w-4 h-4" />
               </Button>
             </div>
 
@@ -96,28 +97,21 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
               <HealthPositive calories={meal.calories} protein={meal.protein} fiber={meal.fiber} sugar={meal.sugar} mealType={meal.mealType} userGoals={userGoals} />
 
               <div className="grid grid-cols-2 gap-3">
-                <div className={`rounded-xl p-4 border ${getNutritionColor('calories', meal.calories, meal.mealType, { calories: meal.calories, protein: meal.protein, fiber: meal.fiber, sugar: meal.sugar }, userGoals)}`}>
-                  <div className="flex items-center gap-2 mb-1"><Flame className="w-4 h-4" /><span className="font-semibold text-sm">Calories</span></div>
-                  <p className="text-3xl font-bold">{meal.calories}</p>
-                </div>
-                {meal.protein !== undefined && (
-                  <div className={`rounded-xl p-4 border ${getNutritionColor('protein', meal.protein, meal.mealType, { calories: meal.calories, protein: meal.protein, fiber: meal.fiber, sugar: meal.sugar }, userGoals)}`}>
-                    <div className="flex items-center gap-2 mb-1"><Beef className="w-4 h-4" /><span className="font-semibold text-sm">Protein</span></div>
-                    <p className="text-3xl font-bold">{meal.protein}g</p>
-                  </div>
-                )}
-                {meal.fiber !== undefined && (
-                  <div className={`rounded-xl p-4 border ${getNutritionColor('fiber', meal.fiber, meal.mealType, { calories: meal.calories, protein: meal.protein, fiber: meal.fiber, sugar: meal.sugar }, userGoals)}`}>
-                    <div className="flex items-center gap-2 mb-1"><Apple className="w-4 h-4" /><span className="font-semibold text-sm">Fiber</span></div>
-                    <p className="text-3xl font-bold">{meal.fiber}g</p>
-                  </div>
-                )}
-                {meal.sugar !== undefined && (
-                  <div className={`rounded-xl p-4 border ${getNutritionColor('sugar', meal.sugar, meal.mealType, { calories: meal.calories, protein: meal.protein, fiber: meal.fiber, sugar: meal.sugar }, userGoals)}`}>
-                    <div className="flex items-center gap-2 mb-1"><Candy className="w-4 h-4" /><span className="font-semibold text-sm">Sugar</span></div>
-                    <p className="text-3xl font-bold">{meal.sugar}g</p>
-                  </div>
-                )}
+                {[
+                  { type: 'calories' as const, icon: Flame, label: 'Calories', value: meal.calories, unit: '' },
+                  { type: 'protein' as const, icon: Beef, label: 'Protein', value: meal.protein, unit: 'g' },
+                  { type: 'fiber' as const, icon: Apple, label: 'Fiber', value: meal.fiber, unit: 'g' },
+                  { type: 'sugar' as const, icon: Candy, label: 'Sugar', value: meal.sugar, unit: 'g' },
+                ].filter(item => item.value !== undefined).map((item) => (
+                  <motion.div key={item.type}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.1 }}
+                    className={`rounded-xl p-4 border ${getNutritionColor(item.type, item.value!, meal.mealType, { calories: meal.calories, protein: meal.protein, fiber: meal.fiber, sugar: meal.sugar }, userGoals)}`}>
+                    <div className="flex items-center gap-2 mb-1"><item.icon className="w-4 h-4" /><span className="font-semibold text-sm">{item.label}</span></div>
+                    <p className="text-3xl font-bold">{item.value}{item.unit}</p>
+                  </motion.div>
+                ))}
               </div>
 
               {meal.tags && meal.tags.length > 0 && (
@@ -137,7 +131,7 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
                     <Trash2 className="w-5 h-5 mr-2" />Delete Meal
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent className="border-border bg-card">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete this meal?</AlertDialogTitle>
                     <AlertDialogDescription>This will permanently remove this log from your device.</AlertDialogDescription>

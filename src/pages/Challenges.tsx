@@ -1,27 +1,23 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Target, Trophy, CheckCircle2, Circle, Award, ChevronRight, Zap } from 'lucide-react';
+import { Target, Trophy, CheckCircle2, Circle, ChevronRight, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { REFLECTION_QUESTIONS, saveLastReflection, getLastReflection, getDailyChallenges, getXPData, getLastWeekNumber, getLastWeekStart } from '@/lib/streaks';
 import { useApp } from '@/contexts/AppContext';
 
 export default function Challenges() {
-  const { currentChallenge, badges, meals, todayWater, settings } = useApp();
+  const { currentChallenge, meals, todayWater, settings } = useApp();
   const [showReflection, setShowReflection] = useState(false);
 
-  // XP data
   const xpData = getXPData();
 
-  // Weekly reflection should only be for LAST week
-  const currentWeekNumber = Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000));
   const lastWeekNumber = getLastWeekNumber();
   const lastWeekStart = getLastWeekStart();
   const reflectionQuestion = REFLECTION_QUESTIONS[lastWeekNumber % REFLECTION_QUESTIONS.length];
   const lastReflection = getLastReflection();
   const hasReflectedLastWeek = lastReflection && lastReflection.weekNumber === lastWeekNumber;
 
-  // Get LAST week's meals for reflection
   const lastWeekStartDate = new Date(lastWeekStart);
   const thisWeekStartDate = new Date();
   const day = thisWeekStartDate.getDay();
@@ -42,7 +38,6 @@ export default function Challenges() {
     protein: todaysMeals.reduce((sum, m) => sum + (m.protein || 0), 0),
   }), [todaysMeals]);
 
-  // Get 3 randomized daily challenges with proper meal type tracking
   const dailyChallenges = useMemo(() => {
     return getDailyChallenges(todaysMealTypes, todayWater, settings.waterGoal, settings.goals, todayStats.calories, todayStats.protein);
   }, [todaysMealTypes, todayWater, settings.waterGoal, settings.goals, todayStats.calories, todayStats.protein]);
@@ -52,9 +47,10 @@ export default function Challenges() {
     setShowReflection(false);
   };
 
+  const xpPercent = (xpData.currentLevelXP / xpData.xpToNextLevel) * 100;
+
   return (
     <div className="min-h-screen pb-24">
-      {/* Header */}
       <div className="px-6 pt-8 pb-4 safe-top">
         <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-3xl font-bold">
           Challenges
@@ -68,9 +64,12 @@ export default function Challenges() {
           className="bg-card rounded-2xl p-4 border border-border/50">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+              <motion.div 
+                animate={{ rotate: [0, 10, -10, 0] }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+                className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
                 <Zap className="w-4 h-4 text-primary" />
-              </div>
+              </motion.div>
               <div>
                 <p className="text-sm font-bold">Level {xpData.level}</p>
                 <p className="text-[10px] text-muted-foreground">{xpData.totalXP} XP total</p>
@@ -78,7 +77,14 @@ export default function Challenges() {
             </div>
             <span className="text-xs text-muted-foreground">{xpData.currentLevelXP}/{xpData.xpToNextLevel} XP</span>
           </div>
-          <Progress value={(xpData.currentLevelXP / xpData.xpToNextLevel) * 100} className="h-2" />
+          <div className="relative h-2 bg-secondary rounded-full overflow-hidden">
+            <motion.div 
+              initial={{ width: 0 }}
+              animate={{ width: `${xpPercent}%` }}
+              transition={{ duration: 0.8, ease: 'easeOut', delay: 0.3 }}
+              className="h-full bg-primary rounded-full"
+            />
+          </div>
         </motion.div>
 
         {/* Weekly Challenge */}
@@ -95,7 +101,14 @@ export default function Challenges() {
               <span className="text-muted-foreground">Progress</span>
               <span className="font-bold">{currentChallenge.progress} / {currentChallenge.target}</span>
             </div>
-            <Progress value={(currentChallenge.progress / currentChallenge.target) * 100} className="h-3" />
+            <div className="relative h-3 bg-secondary rounded-full overflow-hidden">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.min((currentChallenge.progress / currentChallenge.target) * 100, 100)}%` }}
+                transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}
+                className="h-full bg-primary rounded-full"
+              />
+            </div>
           </div>
           {currentChallenge.completed && (
             <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
@@ -114,29 +127,43 @@ export default function Challenges() {
             <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Daily Challenges</h2>
           </div>
           <div className="space-y-3">
-            {dailyChallenges.map((challenge) => (
-              <div key={challenge.id} className="p-3 bg-secondary/30 rounded-xl">
+            {dailyChallenges.map((challenge, i) => (
+              <motion.div key={challenge.id} 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.15 + i * 0.05 }}
+                className="p-3 bg-secondary/30 rounded-xl">
                 <div className="flex items-center gap-3">
-                  {challenge.completed ? (
-                    <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
-                  ) : (
-                    <Circle className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                  )}
-                  <p className="font-medium text-sm flex-1">{challenge.title}</p>
+                  <motion.div
+                    animate={challenge.completed ? { scale: [1, 1.2, 1] } : {}}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {challenge.completed ? (
+                      <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
+                    ) : (
+                      <Circle className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                    )}
+                  </motion.div>
+                  <p className={`font-medium text-sm flex-1 ${challenge.completed ? 'line-through text-muted-foreground' : ''}`}>{challenge.title}</p>
                   <div className="text-right flex-shrink-0">
                     <span className="text-sm font-bold">{challenge.progress}/{challenge.target}</span>
                     <p className="text-[10px] text-primary font-semibold">+{challenge.xp} XP</p>
                   </div>
                 </div>
-                <div className="mt-2">
-                  <Progress value={(challenge.progress / challenge.target) * 100} className="h-2" />
+                <div className="mt-2 relative h-2 bg-secondary rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min((challenge.progress / challenge.target) * 100, 100)}%` }}
+                    transition={{ duration: 0.5, ease: 'easeOut', delay: 0.3 + i * 0.05 }}
+                    className="h-full bg-primary rounded-full"
+                  />
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </motion.div>
 
-        {/* Weekly Reflection - only available after the week is over */}
+        {/* Weekly Reflection */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
           className="bg-card rounded-2xl p-5 border border-border/50">
           <div className="flex items-center gap-2 mb-4">
@@ -145,10 +172,11 @@ export default function Challenges() {
           </div>
           <p className="font-medium mb-4">{reflectionQuestion}</p>
           {hasReflectedLastWeek ? (
-            <div className="flex items-center gap-2 text-primary bg-primary/10 rounded-xl px-4 py-3">
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }}
+              className="flex items-center gap-2 text-primary bg-primary/10 rounded-xl px-4 py-3">
               <CheckCircle2 className="w-5 h-5" />
               <span className="font-semibold">Reflected on last week</span>
-            </div>
+            </motion.div>
           ) : lastWeekMeals.length > 0 ? (
             <Button onClick={() => setShowReflection(true)} variant="outline" className="w-full rounded-xl">
               <span>Choose a meal from last week</span>
@@ -158,31 +186,9 @@ export default function Challenges() {
             <p className="text-sm text-muted-foreground">No meals logged last week to reflect on</p>
           )}
         </motion.div>
-
-        {/* Earned Badges */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-          className="bg-card rounded-2xl p-5 border border-border/50">
-          <div className="flex items-center gap-2 mb-4">
-            <Award className="w-5 h-5 text-amber-500" />
-            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Your Badges</h2>
-          </div>
-          {badges.length > 0 ? (
-            <div className="grid grid-cols-3 gap-3">
-              {badges.map((badge) => (
-                <div key={badge.id}
-                  className="flex flex-col items-center text-center p-3 bg-gradient-to-br from-amber-500/10 to-orange-500/10 rounded-xl border border-amber-500/20">
-                  <span className="text-2xl mb-1">{badge.icon}</span>
-                  <span className="text-xs font-semibold">{badge.name}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">Complete challenges to earn badges!</p>
-          )}
-        </motion.div>
       </div>
 
-      {/* Reflection Modal - shows LAST week's meals */}
+      {/* Reflection Modal */}
       <AnimatePresence>
         {showReflection && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}

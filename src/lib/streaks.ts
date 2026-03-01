@@ -141,6 +141,7 @@ const DAILY_CHALLENGE_POOL = [
   { id: 'protein_hit', title: 'Hit protein goal', target: 1, type: 'protein_goal' as const, xp: 20 },
   { id: 'log_snack', title: 'Log a snack', target: 1, type: 'snack' as const, xp: 10 },
   { id: 'all_meals', title: 'Log breakfast, lunch & dinner', target: 3, type: 'main_meals' as const, xp: 40 },
+  { id: 'lunch', title: 'Log lunch', target: 1, type: 'lunch' as const, xp: 15 },
 ];
 
 // Seeded shuffle for consistent daily challenges
@@ -186,15 +187,18 @@ export function getDailyChallenges(
 
   return picked.map((c) => {
     let progress = 0;
+    // For 'under_cal', only count if user has actually logged meals today
+    const hasLoggedMeals = mealCount > 0;
     switch (c.type) {
       case 'meals': progress = Math.min(mealCount, c.target); break;
       case 'water_goal': progress = waterCount >= waterGoal ? 1 : 0; break;
       case 'water_half': progress = waterCount >= Math.ceil(waterGoal / 2) ? 1 : 0; break;
       case 'breakfast': progress = hasBreakfast ? 1 : 0; break;
+      case 'lunch': progress = hasLunch ? 1 : 0; break;
       case 'dinner': progress = hasDinner ? 1 : 0; break;
       case 'snack': progress = hasSnack ? 1 : 0; break;
-      case 'under_cal': progress = (todayCalories !== undefined && goals.calories && todayCalories <= goals.calories) ? 1 : 0; break;
-      case 'protein_goal': progress = (todayProtein !== undefined && goals.protein && todayProtein >= goals.protein) ? 1 : 0; break;
+      case 'under_cal': progress = (hasLoggedMeals && todayCalories !== undefined && goals.calories && todayCalories <= goals.calories) ? 1 : 0; break;
+      case 'protein_goal': progress = (hasLoggedMeals && todayProtein !== undefined && goals.protein && todayProtein >= goals.protein) ? 1 : 0; break;
       case 'main_meals': progress = mainMealCount; break;
       default: progress = 0;
     }

@@ -151,7 +151,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
             </div>
 
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-4 flex flex-col">
-              <div className="space-y-2">
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
                 <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Meal Type</Label>
                 <div className="grid grid-cols-4 gap-2">
                   {mealTypes.map(({ value, label }) => {
@@ -168,53 +168,52 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                     );
                   })}
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="space-y-2">
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="space-y-2">
                 <Label htmlFor="calories" className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                   Calories <span className="text-destructive">*</span>
                 </Label>
-                <Input id="calories" type="number" inputMode="numeric" min="0" max="5000" placeholder="e.g., 450" value={calories}
+                <Input id="calories" type="number" inputMode="numeric" min="0" max="5000" value={calories}
                   onChange={(e) => setCalories(e.target.value)} className="h-12 text-lg rounded-xl bg-secondary/50 border-border/50 font-semibold" />
-              </div>
+              </motion.div>
 
-              {/* Protein, Fiber, Sugar - each on its own line when NOT Pro, 3-col when Pro */}
               {isPro ? (
-                <div className="grid grid-cols-3 gap-2">
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-3 gap-2">
                   <div className="space-y-1.5">
                     <Label htmlFor="protein" className="text-[10px] font-bold text-muted-foreground uppercase">Protein (g) <span className="text-destructive">*</span></Label>
-                    <Input id="protein" type="number" inputMode="numeric" min="0" max="200" placeholder="0" value={protein}
+                    <Input id="protein" type="number" inputMode="numeric" min="0" max="200" value={protein}
                       onChange={(e) => setProtein(e.target.value)} className="h-11 rounded-xl bg-secondary/50 border-border/50" />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="fiber" className="text-[10px] font-bold text-muted-foreground uppercase">Fiber (g) <span className="text-destructive">*</span></Label>
-                    <Input id="fiber" type="number" inputMode="numeric" min="0" max="100" placeholder="0" value={fiber}
+                    <Input id="fiber" type="number" inputMode="numeric" min="0" max="100" value={fiber}
                       onChange={(e) => setFiber(e.target.value)} className="h-11 rounded-xl bg-secondary/50 border-border/50" />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="sugar" className="text-[10px] font-bold text-muted-foreground uppercase">Sugar (g) <span className="text-destructive">*</span></Label>
-                    <Input id="sugar" type="number" inputMode="numeric" min="0" max="300" placeholder="0" value={sugar}
+                    <Input id="sugar" type="number" inputMode="numeric" min="0" max="300" value={sugar}
                       onChange={(e) => setSugar(e.target.value)} className="h-11 rounded-xl bg-secondary/50 border-border/50" />
                   </div>
-                </div>
+                </motion.div>
               ) : (
-                <div className="space-y-3">
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="space-y-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="protein" className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Protein (g) <span className="text-destructive">*</span></Label>
-                    <Input id="protein" type="number" inputMode="numeric" min="0" max="200" placeholder="e.g., 25" value={protein}
+                    <Input id="protein" type="number" inputMode="numeric" min="0" max="200" value={protein}
                       onChange={(e) => setProtein(e.target.value)} className="h-12 rounded-xl bg-secondary/50 border-border/50" />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="fiber" className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Fiber (g) <span className="text-destructive">*</span></Label>
-                    <Input id="fiber" type="number" inputMode="numeric" min="0" max="100" placeholder="e.g., 5" value={fiber}
+                    <Input id="fiber" type="number" inputMode="numeric" min="0" max="100" value={fiber}
                       onChange={(e) => setFiber(e.target.value)} className="h-12 rounded-xl bg-secondary/50 border-border/50" />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="sugar" className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Sugar (g) <span className="text-destructive">*</span></Label>
-                    <Input id="sugar" type="number" inputMode="numeric" min="0" max="300" placeholder="e.g., 10" value={sugar}
+                    <Input id="sugar" type="number" inputMode="numeric" min="0" max="300" value={sugar}
                       onChange={(e) => setSugar(e.target.value)} className="h-12 rounded-xl bg-secondary/50 border-border/50" />
                   </div>
-                </div>
+                </motion.div>
               )}
 
               {sanityValidation && !sanityValidation.valid && (
@@ -235,7 +234,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
               )}
 
               {isPro && (
-                <div className="space-y-2">
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="space-y-2">
                   <Label className="text-[10px] font-bold text-muted-foreground uppercase">Custom Tags</Label>
                   <div className="flex gap-2">
                     <Input placeholder="Add a tag..." value={tagInput} onChange={(e) => setTagInput(e.target.value)}
@@ -255,7 +254,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                       ))}
                     </div>
                   )}
-                </div>
+                </motion.div>
               )}
               <div className="flex-1" />
             </div>
