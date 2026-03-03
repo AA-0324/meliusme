@@ -1,21 +1,25 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, Trophy, CheckCircle2, Circle, ChevronRight, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { REFLECTION_QUESTIONS, saveLastReflection, getLastReflection, getDailyChallenges, getXPData, getLastWeekNumber, getLastWeekStart } from '@/lib/streaks';
+import { REFLECTION_QUESTIONS, saveLastReflection, getLastReflection, getDailyChallenges, getXPData, getLastWeekNumber, getLastWeekStart, XPData, ReflectionData } from '@/lib/streaks';
 import { useApp } from '@/contexts/AppContext';
 
 export default function Challenges() {
   const { currentChallenge, meals, todayWater, settings } = useApp();
   const [showReflection, setShowReflection] = useState(false);
-
-  const xpData = getXPData();
+  const [xpData, setXpData] = useState<XPData>({ totalXP: 0, level: 1, xpToNextLevel: 100, currentLevelXP: 0 });
+  const [lastReflection, setLastReflection] = useState<ReflectionData | null>(null);
 
   const lastWeekNumber = getLastWeekNumber();
   const lastWeekStart = getLastWeekStart();
   const reflectionQuestion = REFLECTION_QUESTIONS[lastWeekNumber % REFLECTION_QUESTIONS.length];
-  const lastReflection = getLastReflection();
+
+  useEffect(() => {
+    getXPData().then(setXpData);
+    getLastReflection().then(setLastReflection);
+  }, [meals]);
+
   const hasReflectedLastWeek = lastReflection && lastReflection.weekNumber === lastWeekNumber;
 
   const lastWeekStartDate = new Date(lastWeekStart);
@@ -42,12 +46,13 @@ export default function Challenges() {
     return getDailyChallenges(todaysMealTypes, todayWater, settings.waterGoal, settings.goals, todayStats.calories, todayStats.protein);
   }, [todaysMealTypes, todayWater, settings.waterGoal, settings.goals, todayStats.calories, todayStats.protein]);
 
-  const handleReflectionSelect = (mealId: string) => {
-    saveLastReflection(lastWeekNumber, mealId);
+  const handleReflectionSelect = async (mealId: string) => {
+    await saveLastReflection(lastWeekNumber, mealId);
+    setLastReflection({ weekNumber: lastWeekNumber, mealId, answeredAt: Date.now() });
     setShowReflection(false);
   };
 
-  const xpPercent = (xpData.currentLevelXP / xpData.xpToNextLevel) * 100;
+  const xpPercent = xpData.xpToNextLevel > 0 ? (xpData.currentLevelXP / xpData.xpToNextLevel) * 100 : 0;
 
   return (
     <div className="min-h-screen pb-24">
@@ -64,7 +69,7 @@ export default function Challenges() {
           className="bg-card rounded-2xl p-4 border border-border/50">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <motion.div 
+              <motion.div
                 animate={{ rotate: [0, 10, -10, 0] }}
                 transition={{ duration: 0.5, delay: 0.5 }}
                 className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
@@ -78,7 +83,7 @@ export default function Challenges() {
             <span className="text-xs text-muted-foreground">{xpData.currentLevelXP}/{xpData.xpToNextLevel} XP</span>
           </div>
           <div className="relative h-2 bg-secondary rounded-full overflow-hidden">
-            <motion.div 
+            <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${xpPercent}%` }}
               transition={{ duration: 0.8, ease: 'easeOut', delay: 0.3 }}
@@ -102,7 +107,7 @@ export default function Challenges() {
               <span className="font-bold">{currentChallenge.progress} / {currentChallenge.target}</span>
             </div>
             <div className="relative h-3 bg-secondary rounded-full overflow-hidden">
-              <motion.div 
+              <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.min((currentChallenge.progress / currentChallenge.target) * 100, 100)}%` }}
                 transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}
@@ -128,16 +133,13 @@ export default function Challenges() {
           </div>
           <div className="space-y-3">
             {dailyChallenges.map((challenge, i) => (
-              <motion.div key={challenge.id} 
+              <motion.div key={challenge.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.15 + i * 0.05 }}
                 className="p-3 bg-secondary/30 rounded-xl">
                 <div className="flex items-center gap-3">
-                  <motion.div
-                    animate={challenge.completed ? { scale: [1, 1.2, 1] } : {}}
-                    transition={{ duration: 0.3 }}
-                  >
+                  <motion.div animate={challenge.completed ? { scale: [1, 1.2, 1] } : {}} transition={{ duration: 0.3 }}>
                     {challenge.completed ? (
                       <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
                     ) : (
@@ -151,7 +153,7 @@ export default function Challenges() {
                   </div>
                 </div>
                 <div className="mt-2 relative h-2 bg-secondary rounded-full overflow-hidden">
-                  <motion.div 
+                  <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${Math.min((challenge.progress / challenge.target) * 100, 100)}%` }}
                     transition={{ duration: 0.5, ease: 'easeOut', delay: 0.3 + i * 0.05 }}

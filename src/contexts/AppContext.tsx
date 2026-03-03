@@ -4,12 +4,16 @@ import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/userProfile'
 import { getBodyProfile, saveBodyProfile, BodyProfile } from '@/lib/bodyGoals';
 import { requestNotificationPermission, areNotificationsSupported } from '@/lib/notifications';
 import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge, getEarnedBadges, Badge, awardBadge, addXP } from '@/lib/streaks';
+import { initEncryption } from '@/lib/crypto';
+import { migrateAllToEncrypted } from '@/lib/encryptedStorage';
 
 type ToastVariant = 'primary' | 'success' | 'warning' | 'destructive';
 
 const goalToastKey = (date: string) => `meliusme-goal-toasts-${date}`;
+
+// Goal toast flags use sessionStorage (ephemeral, no sensitive data)
 const getGoalToastFlags = (date: string): Record<string, boolean> => {
-  const stored = localStorage.getItem(goalToastKey(date));
+  const stored = sessionStorage.getItem(goalToastKey(date));
   if (!stored) return {};
   try { return JSON.parse(stored); } catch { return {}; }
 };
@@ -18,7 +22,7 @@ const setGoalToastFlag = (date: string, key: string) => {
   const flags = getGoalToastFlags(date);
   if (flags[key]) return;
   flags[key] = true;
-  localStorage.setItem(goalToastKey(date), JSON.stringify(flags));
+  sessionStorage.setItem(goalToastKey(date), JSON.stringify(flags));
 };
 
 const getDailyTotals = (allMeals: Meal[], date: string) => {
@@ -29,6 +33,17 @@ const getDailyTotals = (allMeals: Meal[], date: string) => {
     fiber: dayMeals.reduce((sum, m) => sum + (m.fiber || 0), 0),
     sugar: dayMeals.reduce((sum, m) => sum + (m.sugar || 0), 0),
   };
+};
+
+const DEFAULT_SETTINGS: Settings = {
+  proStatus: false, devMode: false, darkMode: false, theme: 'default',
+  goals: { calories: 2000 }, waterGoal: 8, use24Hour: false,
+};
+
+const DEFAULT_STREAK: StreakData = { currentStreak: 0, longestStreak: 0, lastLogDate: null, streakHistory: [] };
+
+const DEFAULT_CHALLENGE: Challenge = {
+  id: '', name: '', title: '', description: '', target: 1, progress: 0, type: 'weekly', completed: false, startDate: '',
 };
 
 interface AppContextType {
@@ -68,36 +83,74 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettingsState] = useState<Settings>(() => getSettings());
+  const [settings, setSettingsState] = useState<Settings>(DEFAULT_SETTINGS);
   const [meals, setMeals] = useState<Meal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(() => getUserProfile());
-  const [bodyProfile, setBodyProfile] = useState<BodyProfile | null>(() => getBodyProfile());
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [bodyProfile, setBodyProfile] = useState<BodyProfile | null>(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [streak, setStreak] = useState<StreakData>(() => getStreakData());
-  const [currentChallenge, setCurrentChallenge] = useState<Challenge>(() => getCurrentChallenge());
-  const [badges, setBadges] = useState<Badge[]>(() => getEarnedBadges());
+  const [streak, setStreak] = useState<StreakData>(DEFAULT_STREAK);
+  const [currentChallenge, setCurrentChallenge] = useState<Challenge>(DEFAULT_CHALLENGE);
+  const [badges, setBadges] = useState<Badge[]>([]);
 
   const [bottomToast, setBottomToast] = useState<AppContextType['bottomToast']>({ open: false, message: '', variant: 'primary' });
   const toastQueueRef = useRef<Array<{ message: string; variant: ToastVariant }>>([]);
-  
-  const today = new Date().toISOString().split('T')[0];
-  const [todayWater, setTodayWater] = useState(() => getWaterIntake(today));
 
-  // Reset Pro for all users (one-time migration v1.1)
-  useEffect(() => {
-    const migrated = localStorage.getItem('meliusme-pro-reset-v1.1');
-    if (!migrated && settings.proStatus) {
-      const updated = saveSettings({ proStatus: false, theme: 'default' });
-      setSettingsState(updated);
-      localStorage.setItem('meliusme-pro-reset-v1.1', 'true');
-    } else if (!migrated) {
-      localStorage.setItem('meliusme-pro-reset-v1.1', 'true');
-    }
-  }, []);
+  const today = new Date().toISOString().split('T')[0];
+  const [todayWater, setTodayWater] = useState(0);
 
   const isPro = settings.proStatus || settings.devMode;
 
+  // ─── Async init: encryption → load all data ──────────────────────
+  useEffect(() => {
+    const init = async () => {
+      try {
+        // 1. Init encryption key
+        await initEncryption();
+        // 2. Migrate plaintext → encrypted
+        await migrateAllToEncrypted();
+        // 3. Load all state in parallel
+        const [s, profile, body, streakD, challenge, bdgs, allMeals, water] = await Promise.all([
+          getSettings(),
+          getUserProfile(),
+          getBodyProfile(),
+          getStreakData(),
+          getCurrentChallenge(),
+          getEarnedBadges(),
+          getAllMeals(),
+          getWaterIntake(today),
+        ]);
+
+        setSettingsState(s);
+        setUserProfile(profile);
+        setBodyProfile(body);
+        setStreak(streakD);
+        setBadges(bdgs);
+        setMeals(allMeals);
+        setTodayWater(water);
+
+        // Recalculate weekly challenge with meals
+        const updatedChallenge = await getCurrentChallenge(allMeals);
+        setCurrentChallenge(updatedChallenge);
+
+        // Pro reset migration
+        const migrated = localStorage.getItem('meliusme-pro-reset-v1.1');
+        if (!migrated && s.proStatus) {
+          const updated = await saveSettings({ proStatus: false, theme: 'default' });
+          setSettingsState(updated);
+        }
+        if (!migrated) localStorage.setItem('meliusme-pro-reset-v1.1', 'true');
+
+      } catch (error) {
+        console.error('Failed to initialize app:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    init();
+  }, []);
+
+  // Dark mode / theme effect
   useEffect(() => {
     const root = document.documentElement;
     if (settings.darkMode) root.classList.add('dark');
@@ -110,97 +163,82 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (areNotificationsSupported() && Notification.permission === 'granted') setNotificationsEnabled(true);
   }, []);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const allMeals = await getAllMeals();
-        setMeals(allMeals);
-        // Recalculate weekly challenge with actual meals
-        setCurrentChallenge(getCurrentChallenge(allMeals));
-      } catch (error) {
-        console.error('Failed to load meals:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadData();
-  }, []);
-
   const refreshMeals = useCallback(async () => {
     const allMeals = await getAllMeals();
     setMeals(allMeals);
   }, []);
 
-  const refreshStreak = useCallback(() => {
-    setStreak(getStreakData());
-    setCurrentChallenge(getCurrentChallenge());
-    setBadges(getEarnedBadges());
+  const refreshStreak = useCallback(async () => {
+    const [s, c, b] = await Promise.all([getStreakData(), getCurrentChallenge(), getEarnedBadges()]);
+    setStreak(s);
+    setCurrentChallenge(c);
+    setBadges(b);
   }, []);
 
-  const setUserName = useCallback((name: string) => {
-    const updated = saveUserProfile({ name });
+  const setUserName = useCallback(async (name: string) => {
+    const updated = await saveUserProfile({ name });
     setUserProfile(updated);
   }, []);
 
-  const setUserAvatar = useCallback((avatar: string) => {
-    const updated = saveUserProfile({ avatar });
+  const setUserAvatar = useCallback(async (avatar: string) => {
+    const updated = await saveUserProfile({ avatar });
     setUserProfile(updated);
   }, []);
 
-  const updateBodyProfile = useCallback((profile: Partial<BodyProfile>) => {
-    const updated = saveBodyProfile(profile);
+  const updateBodyProfileCb = useCallback(async (profile: Partial<BodyProfile>) => {
+    const updated = await saveBodyProfile(profile);
     setBodyProfile(updated);
   }, []);
 
-  const setDevMode = useCallback((enabled: boolean) => {
+  const setDevMode = useCallback(async (enabled: boolean) => {
     if (!enabled && !settings.proStatus) {
-      const updated = saveSettings({ devMode: enabled, theme: 'default' });
+      const updated = await saveSettings({ devMode: enabled, theme: 'default' });
       setSettingsState(updated);
     } else {
-      const updated = saveSettings({ devMode: enabled });
+      const updated = await saveSettings({ devMode: enabled });
       setSettingsState(updated);
     }
   }, [settings.proStatus]);
 
-  const setDarkMode = useCallback((enabled: boolean) => {
-    const updated = saveSettings({ darkMode: enabled });
+  const setDarkMode = useCallback(async (enabled: boolean) => {
+    const updated = await saveSettings({ darkMode: enabled });
     setSettingsState(updated);
   }, []);
 
-  const setPro = useCallback((enabled: boolean) => {
+  const setPro = useCallback(async (enabled: boolean) => {
     if (!enabled) {
-      const updated = saveSettings({ proStatus: enabled, theme: 'default' });
+      const updated = await saveSettings({ proStatus: enabled, theme: 'default' });
       setSettingsState(updated);
     } else {
-      const updated = saveSettings({ proStatus: enabled });
+      const updated = await saveSettings({ proStatus: enabled });
       setSettingsState(updated);
     }
   }, []);
 
-  const setTheme = useCallback((theme: string) => {
-    const updated = saveSettings({ theme });
+  const setTheme = useCallback(async (theme: string) => {
+    const updated = await saveSettings({ theme });
     setSettingsState(updated);
   }, []);
 
-  const setUse24Hour = useCallback((use24Hour: boolean) => {
-    const updated = saveSettings({ use24Hour });
+  const setUse24Hour = useCallback(async (use24Hour: boolean) => {
+    const updated = await saveSettings({ use24Hour });
     setSettingsState(updated);
   }, []);
 
-  const updateUserGoals = useCallback((goals: Partial<Goals>) => {
-    const updated = updateGoals(goals);
+  const updateUserGoals = useCallback(async (goals: Partial<Goals>) => {
+    const updated = await updateGoals(goals);
     setSettingsState(updated);
   }, []);
 
-  const setWaterGoal = useCallback((glasses: number) => {
-    const updated = saveSettings({ waterGoal: glasses });
+  const setWaterGoalCb = useCallback(async (glasses: number) => {
+    const updated = await saveSettings({ waterGoal: glasses });
     setSettingsState(updated);
   }, []);
 
-  const resetDailyData = useCallback(() => {
+  const resetDailyData = useCallback(async () => {
     const todayStr = new Date().toISOString().split('T')[0];
     setTodayWater(0);
-    setWaterIntake(todayStr, 0);
+    await setWaterIntake(todayStr, 0);
     sessionStorage.removeItem(`melius-confetti-${todayStr}`);
     setMeals((prev) => prev.filter((m) => m.date !== todayStr));
     void deleteMealsByDate(todayStr);
@@ -234,10 +272,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const incrementWater = useCallback(() => {
+  const incrementWater = useCallback(async () => {
     const newValue = todayWater + 1;
     setTodayWater(newValue);
-    setWaterIntake(today, newValue);
+    await setWaterIntake(today, newValue);
     if (newValue >= settings.waterGoal) {
       const key = `water_complete_${today}`;
       const flags = getGoalToastFlags(today);
@@ -253,30 +291,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const newMeal = await addMeal(meal);
     const updatedMeals = [newMeal, ...meals];
     setMeals(updatedMeals);
-    
-    const updatedStreak = updateStreak(meal.date);
+
+    const updatedStreak = await updateStreak(meal.date);
     setStreak(updatedStreak);
-    
-    // Update weekly challenge with actual meal data for accurate tracking
-    const updatedChallenge = getCurrentChallenge(updatedMeals);
+
+    const updatedChallenge = await getCurrentChallenge(updatedMeals);
     setCurrentChallenge(updatedChallenge);
-    
-    // Award XP for logging
-    addXP(10);
-    
-    const currentBadges = getEarnedBadges();
+
+    await addXP(10);
+
+    const currentBadges = await getEarnedBadges();
     if (!currentBadges.some(b => b.id === 'first_meal')) {
-      awardBadge('first_meal');
-      setBadges(getEarnedBadges());
+      await awardBadge('first_meal');
+      setBadges(await getEarnedBadges());
     }
-    
+
     const todayStr = new Date().toISOString().split('T')[0];
     const todayMeals = meals.filter(m => m.date === todayStr);
     if (todayMeals.length >= 2 && !currentBadges.some(b => b.id === 'meals_3')) {
-      awardBadge('meals_3');
-      setBadges(getEarnedBadges());
+      await awardBadge('meals_3');
+      setBadges(await getEarnedBadges());
     }
-    
+
     showBottomToast('Meal logged!', 'primary');
 
     const nextTotals = {
@@ -320,7 +356,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         showBottomToast("You've exceeded your sugar limit today.", 'warning');
       }
     }
-    
+
     return newMeal;
   }, [meals, settings.goals, showBottomToast, isPro]);
 
@@ -334,12 +370,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       value={{
         settings, meals, isLoading, isPro,
         userProfile, setUserName, setUserAvatar,
-        bodyProfile, updateBodyProfile,
+        bodyProfile, updateBodyProfile: updateBodyProfileCb,
         streak, currentChallenge, badges, refreshStreak,
         todayWater, incrementWater,
         notificationsEnabled, toggleNotifications,
         setDevMode, setDarkMode, setPro, setTheme, setUse24Hour,
-        updateUserGoals, setWaterGoal, resetDailyData,
+        updateUserGoals, setWaterGoal: setWaterGoalCb, resetDailyData,
         refreshMeals, logMeal, removeMeal,
         bottomToast, showBottomToast, hideBottomToast,
       }}
