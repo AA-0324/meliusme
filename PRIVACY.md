@@ -1,6 +1,8 @@
 Privacy Policy
 
-Last Updated: January 30, 2026
+Last Updated: March 3, 2026
+
+MeliusMe is a local-first application. All user data is stored only on the user's device and encrypted locally using browser-native cryptography. No personal data is transmitted to external servers.
 
 We believe that your health and nutritional data is some of the most private information you own. Our privacy "policy" is simple: We don't want your data. 
 MeliusMe is designed to function without accounts, profiles, or cloud synchronization. 
@@ -8,7 +10,7 @@ MeliusMe is designed to function without accounts, profiles, or cloud synchroniz
  - We do not use third-party tracking scripts, heatmaps, or telemetry to monitor your behavior.
  - There are zero third-party ad SDKs in MeliusMe, meaning no data is harvested for targeted advertising.
 
-All data generated within the app—including meal logs, weight history, and nutritional goals—is stored strictly on the user's device using local storage method such as indexedDB and LocalStorage.
+All data generated within the app—including meal logs, weight history, and nutritional goals—is encrypted using AES-GCM 256-bit encryption via the browser's Web Crypto API before being stored locally. The encryption key is generated per-device and stored securely in IndexedDB.
 MeliusMe has no central database. If you delete the app or clear your browser data, your data is gone forever because there was never a copy of it.
 
 We believe in full user ownership.

@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { AlertTriangle, CheckCircle, Info } from 'lucide-react';
 import { Goals } from '@/lib/db';
-import { BodyProfile, getBodyProfile } from '@/lib/bodyGoals';
+import { BodyProfile } from '@/lib/bodyGoals';
 
 export interface HealthWarnings {
   // Negative warnings
@@ -53,11 +53,11 @@ const DEFAULT_DAILY_TARGETS = {
 // Get thresholds based on meal type, time, user goals, and body profile
 function getThresholds(
   mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack',
-  userGoals?: Goals
+  userGoals?: Goals,
+  bodyProfile?: BodyProfile | null
 ) {
   const hour = new Date().getHours();
-  const bodyProfile = getBodyProfile();
-  const goal = bodyProfile?.goal; // 'bulking' | 'cutting' | 'maintain'
+  const goal = bodyProfile?.goal;
   
   // Use user goals if available, otherwise defaults
   const dailyCalories = userGoals?.calories || DEFAULT_DAILY_TARGETS.calories;
@@ -132,9 +132,10 @@ export function getHealthWarnings(
   fiber: number | undefined,
   sugar: number | undefined,
   mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack',
-  userGoals?: Goals
+  userGoals?: Goals,
+  bodyProfile?: BodyProfile | null
 ): HealthWarnings {
-  const { thresholds, goal } = getThresholds(mealType, userGoals);
+  const { thresholds, goal } = getThresholds(mealType, userGoals, bodyProfile);
   const warnings: HealthWarnings = {
     messages: [],
     positiveMessages: [],

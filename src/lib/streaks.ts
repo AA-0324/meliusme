@@ -1,32 +1,38 @@
-// Streak and Gamification System for MeliusMe
+// Streak and Gamification System for MeliusMe — encrypted storage
 
-const STREAK_KEY = 'meliusme-streak';
-const CHALLENGES_KEY = 'meliusme-challenges';
-const BADGES_KEY = 'meliusme-badges';
-const REFLECTION_KEY = 'meliusme-reflection';
-const XP_KEY = 'meliusme-xp';
+import { encrypt, decrypt, isEncrypted } from './crypto';
+
+const STREAK_KEY = 'melius-streak';
+const CHALLENGES_KEY = 'melius-challenges';
+const BADGES_KEY = 'melius-badges';
+const REFLECTION_KEY = 'melius-reflection';
+const XP_KEY = 'melius-xp';
+
+// ─── Encrypted helpers ─────────────────────────────────────────────
+
+async function readEncLS<T>(key: string, fallback: T): Promise<T> {
+  const raw = localStorage.getItem(key);
+  if (!raw) return fallback;
+  let plaintext = raw;
+  if (isEncrypted(raw)) {
+    try { plaintext = await decrypt(raw); } catch { return fallback; }
+  } else {
+    try { localStorage.setItem(key, await encrypt(raw)); } catch {}
+  }
+  try { return JSON.parse(plaintext) as T; } catch { return fallback; }
+}
+
+async function writeEncLS(key: string, value: unknown): Promise<void> {
+  const json = JSON.stringify(value);
+  try { localStorage.setItem(key, await encrypt(json)); } catch { localStorage.setItem(key, json); }
+}
+
+// ─── Interfaces ────────────────────────────────────────────────────
 
 export interface ReflectionData {
   weekNumber: number;
   mealId: string;
   answeredAt: number;
-}
-
-export function getLastReflection(): ReflectionData | null {
-  const stored = localStorage.getItem(REFLECTION_KEY);
-  if (!stored) return null;
-  try {
-    const data = JSON.parse(stored);
-    if (data.weekStart) return null;
-    return data;
-  } catch {
-    return null;
-  }
-}
-
-export function saveLastReflection(weekNumber: number, mealId: string): void {
-  const data: ReflectionData = { weekNumber, mealId, answeredAt: Date.now() };
-  localStorage.setItem(REFLECTION_KEY, JSON.stringify(data));
 }
 
 export interface StreakData {
@@ -56,7 +62,8 @@ export interface Challenge {
   startDate: string;
 }
 
-// XP System
+// ─── XP System ─────────────────────────────────────────────────────
+
 export interface XPData {
   totalXP: number;
   level: number;
@@ -64,46 +71,43 @@ export interface XPData {
   currentLevelXP: number;
 }
 
-export function getXP(): number {
-  const stored = localStorage.getItem(XP_KEY);
-  return stored ? parseInt(stored, 10) || 0 : 0;
+export async function getXP(): Promise<number> {
+  const raw = localStorage.getItem(XP_KEY);
+  if (!raw) return 0;
+  let plaintext = raw;
+  if (isEncrypted(raw)) {
+    try { plaintext = await decrypt(raw); } catch { return 0; }
+  } else {
+    try { localStorage.setItem(XP_KEY, await encrypt(raw)); } catch {}
+  }
+  return parseInt(plaintext, 10) || 0;
 }
 
-export function addXP(amount: number): XPData {
-  const current = getXP();
+export async function addXP(amount: number): Promise<XPData> {
+  const current = await getXP();
   const newTotal = current + amount;
-  localStorage.setItem(XP_KEY, newTotal.toString());
+  try { localStorage.setItem(XP_KEY, await encrypt(newTotal.toString())); } catch { localStorage.setItem(XP_KEY, newTotal.toString()); }
   return calculateLevel(newTotal);
 }
 
 export function calculateLevel(totalXP: number): XPData {
-  // Each level requires progressively more XP
   let level = 1;
-  let xpNeeded = 100; // Level 1 -> 2 needs 100 XP
+  let xpNeeded = 100;
   let xpAccumulated = 0;
-
   while (xpAccumulated + xpNeeded <= totalXP) {
     xpAccumulated += xpNeeded;
     level++;
     xpNeeded = Math.floor(100 * Math.pow(1.3, level - 1));
   }
-
-  return {
-    totalXP,
-    level,
-    xpToNextLevel: xpNeeded,
-    currentLevelXP: totalXP - xpAccumulated,
-  };
+  return { totalXP, level, xpToNextLevel: xpNeeded, currentLevelXP: totalXP - xpAccumulated };
 }
 
-export function getXPData(): XPData {
-  return calculateLevel(getXP());
+export async function getXPData(): Promise<XPData> {
+  return calculateLevel(await getXP());
 }
 
-// Streak milestones
-export const STREAK_MILESTONES = [7, 14, 30, 60, 100];
+// ─── Badges ────────────────────────────────────────────────────────
 
-// Available badges
 export const AVAILABLE_BADGES: Badge[] = [
   { id: 'streak_7', name: '7 Day Streak', description: 'Logged meals 7 days in a row', icon: '🔥' },
   { id: 'streak_14', name: '2 Week Warrior', description: 'Logged meals 14 days in a row', icon: '⚡' },
@@ -117,7 +121,88 @@ export const AVAILABLE_BADGES: Badge[] = [
   { id: 'first_meal', name: 'First Step', description: 'Logged your first meal', icon: '🌟' },
 ];
 
-// Weekly challenges - rotates each week using week number
+export const STREAK_MILESTONES = [7, 14, 30, 60, 100];
+
+export async function getEarnedBadges(): Promise<Badge[]> {
+  return readEncLS<Badge[]>(BADGES_KEY, []);
+}
+
+export async function awardBadge(badgeId: string): Promise<Badge | null> {
+  const earned = await getEarnedBadges();
+  if (earned.some(b => b.id === badgeId)) return null;
+  const badge = AVAILABLE_BADGES.find(b => b.id === badgeId);
+  if (!badge) return null;
+  const earnedBadge = { ...badge, earnedAt: Date.now() };
+  earned.push(earnedBadge);
+  await writeEncLS(BADGES_KEY, earned);
+  return earnedBadge;
+}
+
+export async function checkStreakBadges(streak: number): Promise<Badge | null> {
+  if (streak >= 100) return awardBadge('streak_100');
+  if (streak >= 60) return awardBadge('streak_60');
+  if (streak >= 30) return awardBadge('streak_30');
+  if (streak >= 14) return awardBadge('streak_14');
+  if (streak >= 7) return awardBadge('streak_7');
+  return null;
+}
+
+// ─── Streak ────────────────────────────────────────────────────────
+
+const DEFAULT_STREAK: StreakData = { currentStreak: 0, longestStreak: 0, lastLogDate: null, streakHistory: [] };
+
+export async function getStreakData(): Promise<StreakData> {
+  return readEncLS<StreakData>(STREAK_KEY, DEFAULT_STREAK);
+}
+
+export async function saveStreakData(data: StreakData): Promise<void> {
+  await writeEncLS(STREAK_KEY, data);
+}
+
+export async function updateStreak(mealDate: string): Promise<StreakData> {
+  const data = await getStreakData();
+  if (data.streakHistory.includes(mealDate)) return data;
+  data.streakHistory.push(mealDate);
+  if (data.lastLogDate === null) {
+    data.currentStreak = 1;
+  } else {
+    const lastDate = new Date(data.lastLogDate);
+    const currentDate = new Date(mealDate);
+    const diffDays = Math.floor((currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays === 1) data.currentStreak++;
+    else if (diffDays !== 0) data.currentStreak = 1;
+  }
+  if (data.currentStreak > data.longestStreak) data.longestStreak = data.currentStreak;
+  data.lastLogDate = mealDate;
+  await saveStreakData(data);
+  await checkStreakBadges(data.currentStreak);
+  return data;
+}
+
+// ─── Reflection ────────────────────────────────────────────────────
+
+export async function getLastReflection(): Promise<ReflectionData | null> {
+  const data = await readEncLS<any>(REFLECTION_KEY, null);
+  if (!data || data.weekStart) return null;
+  return data;
+}
+
+export async function saveLastReflection(weekNumber: number, mealId: string): Promise<void> {
+  await writeEncLS(REFLECTION_KEY, { weekNumber, mealId, answeredAt: Date.now() } as ReflectionData);
+}
+
+export async function wasReflectionAnswered(): Promise<boolean> {
+  const data = await readEncLS<any>(REFLECTION_KEY, null);
+  if (!data) return false;
+  return data.weekStart === getWeekStart();
+}
+
+export async function saveReflectionAnswer(mealId: string): Promise<void> {
+  await writeEncLS(REFLECTION_KEY, { weekStart: getWeekStart(), mealId, answeredAt: Date.now() });
+}
+
+// ─── Weekly Challenges ─────────────────────────────────────────────
+
 export const WEEKLY_CHALLENGES = [
   { id: 'log_21', name: 'Log 21 meals this week', description: 'Log 3 meals per day for 7 days', target: 21 },
   { id: 'in_range_5', name: 'Stay in calorie range', description: 'Stay within calorie goal for 5 days', target: 5 },
@@ -129,7 +214,36 @@ export const WEEKLY_CHALLENGES = [
   { id: 'log_15', name: 'Active logger', description: 'Log at least 15 meals this week', target: 15 },
 ];
 
-// Daily challenge pool - 3 are picked per day based on date seed
+export const REFLECTION_QUESTIONS = [
+  'Which meal this week made you feel best?',
+  'What was your healthiest meal this week?',
+  'Which meal was the most satisfying?',
+  'What meal would you want to have again?',
+  'Which meal gave you the most energy?',
+  'What was your favorite breakfast this week?',
+  'What was your most balanced meal?',
+  'Which meal are you most proud of?',
+  'What healthy choice surprised you this week?',
+  'Which meal made you happiest?',
+  'What would you eat differently next week?',
+  'Which meal was the most colorful?',
+  'What was your best homemade meal?',
+  'Which snack was the smartest choice?',
+];
+
+export const INSIGHT_TEMPLATES = [
+  { id: 'high_cal_day', template: 'You tend to eat more calories on {day}s.' },
+  { id: 'high_protein', template: 'Your highest-protein day was {day}.' },
+  { id: 'breakfast_lover', template: 'You log breakfast more consistently than other meals.' },
+  { id: 'dinner_heavy', template: 'Your dinners average {calories} more calories than lunch.' },
+  { id: 'weekend_splurge', template: 'You eat about {percent}% more on weekends.' },
+  { id: 'water_champ', template: 'You hit your water goal {count} times this week!' },
+  { id: 'consistent', template: "You've logged meals {count} days in a row. Keep it up!" },
+  { id: 'meal_count', template: 'You average {count} meals per day.' },
+];
+
+// ─── Daily Challenges ──────────────────────────────────────────────
+
 const DAILY_CHALLENGE_POOL = [
   { id: 'log_3', title: 'Log 3 meals', target: 3, type: 'meals' as const, xp: 30 },
   { id: 'log_2', title: 'Log 2 meals', target: 2, type: 'meals' as const, xp: 20 },
@@ -144,7 +258,6 @@ const DAILY_CHALLENGE_POOL = [
   { id: 'lunch', title: 'Log lunch', target: 1, type: 'lunch' as const, xp: 15 },
 ];
 
-// Seeded shuffle for consistent daily challenges
 function seededShuffle<T>(arr: T[], seed: number): T[] {
   const shuffled = [...arr];
   let s = seed;
@@ -187,7 +300,6 @@ export function getDailyChallenges(
 
   return picked.map((c) => {
     let progress = 0;
-    // For 'under_cal', only count if user has actually logged meals today
     const hasLoggedMeals = mealCount > 0;
     switch (c.type) {
       case 'meals': progress = Math.min(mealCount, c.target); break;
@@ -203,180 +315,11 @@ export function getDailyChallenges(
       default: progress = 0;
     }
     return {
-      id: c.id,
-      title: c.title,
-      target: c.target,
+      id: c.id, title: c.title, target: c.target,
       progress: Math.min(progress, c.target),
-      completed: progress >= c.target,
-      xp: c.xp,
+      completed: progress >= c.target, xp: c.xp,
     };
   });
-}
-
-// Reflection questions - asked weekly
-export const REFLECTION_QUESTIONS = [
-  'Which meal this week made you feel best?',
-  'What was your healthiest meal this week?',
-  'Which meal was the most satisfying?',
-  'What meal would you want to have again?',
-  'Which meal gave you the most energy?',
-  'What was your favorite breakfast this week?',
-  'What was your most balanced meal?',
-  'Which meal are you most proud of?',
-  'What healthy choice surprised you this week?',
-  'Which meal made you happiest?',
-  'What would you eat differently next week?',
-  'Which meal was the most colorful?',
-  'What was your best homemade meal?',
-  'Which snack was the smartest choice?',
-];
-
-// Micro insights templates
-export const INSIGHT_TEMPLATES = [
-  { id: 'high_cal_day', template: 'You tend to eat more calories on {day}s.' },
-  { id: 'high_protein', template: 'Your highest-protein day was {day}.' },
-  { id: 'breakfast_lover', template: 'You log breakfast more consistently than other meals.' },
-  { id: 'dinner_heavy', template: 'Your dinners average {calories} more calories than lunch.' },
-  { id: 'weekend_splurge', template: 'You eat about {percent}% more on weekends.' },
-  { id: 'water_champ', template: 'You hit your water goal {count} times this week!' },
-  { id: 'consistent', template: "You've logged meals {count} days in a row. Keep it up!" },
-  { id: 'meal_count', template: 'You average {count} meals per day.' },
-];
-
-// Get streak data
-export function getStreakData(): StreakData {
-  const stored = localStorage.getItem(STREAK_KEY);
-  if (!stored) return { currentStreak: 0, longestStreak: 0, lastLogDate: null, streakHistory: [] };
-  try { return JSON.parse(stored); } catch { return { currentStreak: 0, longestStreak: 0, lastLogDate: null, streakHistory: [] }; }
-}
-
-export function saveStreakData(data: StreakData): void {
-  localStorage.setItem(STREAK_KEY, JSON.stringify(data));
-}
-
-export function updateStreak(mealDate: string): StreakData {
-  const data = getStreakData();
-  if (data.streakHistory.includes(mealDate)) return data;
-  data.streakHistory.push(mealDate);
-  if (data.lastLogDate === null) {
-    data.currentStreak = 1;
-  } else {
-    const lastDate = new Date(data.lastLogDate);
-    const currentDate = new Date(mealDate);
-    const diffDays = Math.floor((currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays === 1) data.currentStreak++;
-    else if (diffDays !== 0) data.currentStreak = 1;
-  }
-  if (data.currentStreak > data.longestStreak) data.longestStreak = data.currentStreak;
-  data.lastLogDate = mealDate;
-  saveStreakData(data);
-  checkStreakBadges(data.currentStreak);
-  return data;
-}
-
-export function getEarnedBadges(): Badge[] {
-  const stored = localStorage.getItem(BADGES_KEY);
-  if (!stored) return [];
-  try { return JSON.parse(stored); } catch { return []; }
-}
-
-export function awardBadge(badgeId: string): Badge | null {
-  const earned = getEarnedBadges();
-  if (earned.some(b => b.id === badgeId)) return null;
-  const badge = AVAILABLE_BADGES.find(b => b.id === badgeId);
-  if (!badge) return null;
-  const earnedBadge = { ...badge, earnedAt: Date.now() };
-  earned.push(earnedBadge);
-  localStorage.setItem(BADGES_KEY, JSON.stringify(earned));
-  return earnedBadge;
-}
-
-export function checkStreakBadges(streak: number): Badge | null {
-  if (streak >= 100) return awardBadge('streak_100');
-  if (streak >= 60) return awardBadge('streak_60');
-  if (streak >= 30) return awardBadge('streak_30');
-  if (streak >= 14) return awardBadge('streak_14');
-  if (streak >= 7) return awardBadge('streak_7');
-  return null;
-}
-
-// Get current week's challenge
-export function getCurrentChallenge(meals?: any[]): Challenge {
-  const stored = localStorage.getItem(CHALLENGES_KEY);
-  const weekStart = getWeekStart();
-
-  if (stored) {
-    try {
-      const challenge = JSON.parse(stored) as Challenge;
-      if (challenge.startDate === weekStart) {
-        // Recalculate progress if meals provided
-        if (meals) {
-          const updatedProgress = calculateWeeklyChallengeProgress(challenge.id, meals, weekStart);
-          if (updatedProgress !== challenge.progress) {
-            challenge.progress = updatedProgress;
-            challenge.completed = challenge.progress >= challenge.target;
-            localStorage.setItem(CHALLENGES_KEY, JSON.stringify(challenge));
-          }
-        }
-        return challenge;
-      }
-    } catch {}
-  }
-
-  const weekNumber = getWeekNumber();
-  const challengeIndex = weekNumber % WEEKLY_CHALLENGES.length;
-  const template = WEEKLY_CHALLENGES[challengeIndex];
-
-  const challenge: Challenge = {
-    id: template.id,
-    name: template.name,
-    title: template.name,
-    description: template.description,
-    target: template.target,
-    progress: 0,
-    type: 'weekly',
-    completed: false,
-    startDate: weekStart,
-  };
-
-  if (meals) {
-    challenge.progress = calculateWeeklyChallengeProgress(challenge.id, meals, weekStart);
-    challenge.completed = challenge.progress >= challenge.target;
-  }
-
-  localStorage.setItem(CHALLENGES_KEY, JSON.stringify(challenge));
-  return challenge;
-}
-
-function calculateWeeklyChallengeProgress(challengeId: string, meals: any[], weekStart: string): number {
-  const weekStartDate = new Date(weekStart);
-  const weekMeals = meals.filter(m => new Date(m.date) >= weekStartDate);
-
-  switch (challengeId) {
-    case 'log_21':
-    case 'log_15':
-      return weekMeals.length;
-    case 'dinner_week': {
-      const dinnerDays = new Set(weekMeals.filter(m => m.mealType === 'dinner').map(m => m.date));
-      return dinnerDays.size;
-    }
-    case 'breakfast_streak': {
-      const breakfastDays = new Set(weekMeals.filter(m => m.mealType === 'breakfast').map(m => m.date));
-      return breakfastDays.size;
-    }
-    case 'healthy_meals':
-      return weekMeals.length; // simplified - count all meals
-    default:
-      return 0;
-  }
-}
-
-export function updateChallengeProgress(amount: number = 1): Challenge {
-  const challenge = getCurrentChallenge();
-  challenge.progress = Math.min(challenge.progress + amount, challenge.target);
-  challenge.completed = challenge.progress >= challenge.target;
-  localStorage.setItem(CHALLENGES_KEY, JSON.stringify(challenge));
-  return challenge;
 }
 
 export function getWeeklyReflectionQuestion(): string {
@@ -384,17 +327,70 @@ export function getWeeklyReflectionQuestion(): string {
   return REFLECTION_QUESTIONS[weekNumber % REFLECTION_QUESTIONS.length];
 }
 
-export function wasReflectionAnswered(): boolean {
-  const stored = localStorage.getItem(REFLECTION_KEY);
-  if (!stored) return false;
-  try {
-    const data = JSON.parse(stored);
-    return data.weekStart === getWeekStart();
-  } catch { return false; }
+function calculateWeeklyChallengeProgress(challengeId: string, meals: any[], weekStart: string): number {
+  const weekStartDate = new Date(weekStart);
+  const weekMeals = meals.filter(m => new Date(m.date) >= weekStartDate);
+  switch (challengeId) {
+    case 'log_21': case 'log_15': return weekMeals.length;
+    case 'dinner_week': return new Set(weekMeals.filter(m => m.mealType === 'dinner').map(m => m.date)).size;
+    case 'breakfast_streak': return new Set(weekMeals.filter(m => m.mealType === 'breakfast').map(m => m.date)).size;
+    case 'healthy_meals': return weekMeals.length;
+    default: return 0;
+  }
 }
 
-export function saveReflectionAnswer(mealId: string): void {
-  localStorage.setItem(REFLECTION_KEY, JSON.stringify({ weekStart: getWeekStart(), mealId, answeredAt: Date.now() }));
+export async function getCurrentChallenge(meals?: any[]): Promise<Challenge> {
+  const stored = await readEncLS<Challenge | null>(CHALLENGES_KEY, null);
+  const weekStart = getWeekStart();
+
+  if (stored && stored.startDate === weekStart) {
+    if (meals) {
+      const updatedProgress = calculateWeeklyChallengeProgress(stored.id, meals, weekStart);
+      if (updatedProgress !== stored.progress) {
+        stored.progress = updatedProgress;
+        stored.completed = stored.progress >= stored.target;
+        await writeEncLS(CHALLENGES_KEY, stored);
+      }
+    }
+    return stored;
+  }
+
+  const weekNumber = getWeekNumber();
+  const challengeIndex = weekNumber % WEEKLY_CHALLENGES.length;
+  const template = WEEKLY_CHALLENGES[challengeIndex];
+
+  const challenge: Challenge = {
+    id: template.id, name: template.name, title: template.name,
+    description: template.description, target: template.target,
+    progress: 0, type: 'weekly', completed: false, startDate: weekStart,
+  };
+
+  if (meals) {
+    challenge.progress = calculateWeeklyChallengeProgress(challenge.id, meals, weekStart);
+    challenge.completed = challenge.progress >= challenge.target;
+  }
+
+  await writeEncLS(CHALLENGES_KEY, challenge);
+  return challenge;
+}
+
+export async function updateChallengeProgress(amount: number = 1): Promise<Challenge> {
+  const challenge = await getCurrentChallenge();
+  challenge.progress = Math.min(challenge.progress + amount, challenge.target);
+  challenge.completed = challenge.progress >= challenge.target;
+  await writeEncLS(CHALLENGES_KEY, challenge);
+  return challenge;
+}
+
+export function isLastWeekOver(): boolean { return true; }
+export function getLastWeekNumber(): number { return getWeekNumber() - 1; }
+
+export function getLastWeekStart(): string {
+  const today = new Date();
+  const day = today.getDay();
+  const diff = today.getDate() - day + (day === 0 ? -6 : 1) - 7;
+  const lastMonday = new Date(today.getFullYear(), today.getMonth(), diff);
+  return lastMonday.toISOString().split('T')[0];
 }
 
 function getWeekStart(): string {
@@ -412,40 +408,20 @@ function getWeekNumber(): number {
   return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
 }
 
-// Check if the current week is over (it's a new week now, so last week is done)
-export function isLastWeekOver(): boolean {
-  // The reflection should be for the PREVIOUS week only
-  return true; // Always allow since we track by weekNumber
-}
-
-export function getLastWeekNumber(): number {
-  return getWeekNumber() - 1;
-}
-
-export function getLastWeekStart(): string {
-  const today = new Date();
-  const day = today.getDay();
-  const diff = today.getDate() - day + (day === 0 ? -6 : 1) - 7; // go back one week
-  const lastMonday = new Date(today.getFullYear(), today.getMonth(), diff);
-  return lastMonday.toISOString().split('T')[0];
-}
-
 export function generateInsight(meals: any[]): string | null {
   if (meals.length < 5) return null;
   const insights: string[] = [];
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const caloriesByDay: number[] = [0, 0, 0, 0, 0, 0, 0];
-  const countByDay: number[] = [0, 0, 0, 0, 0, 0, 0];
-  const proteinByDay: number[] = [0, 0, 0, 0, 0, 0, 0];
+  const caloriesByDay = [0, 0, 0, 0, 0, 0, 0];
+  const countByDay = [0, 0, 0, 0, 0, 0, 0];
+  const proteinByDay = [0, 0, 0, 0, 0, 0, 0];
 
   meals.forEach(meal => {
-    const dayOfWeek = new Date(meal.date).getDay();
-    caloriesByDay[dayOfWeek] += meal.calories;
-    proteinByDay[dayOfWeek] += meal.protein || 0;
-    countByDay[dayOfWeek]++;
+    const d = new Date(meal.date).getDay();
+    caloriesByDay[d] += meal.calories; proteinByDay[d] += meal.protein || 0; countByDay[d]++;
   });
 
-  const avgByDay = caloriesByDay.map((cal, i) => countByDay[i] > 0 ? cal / countByDay[i] : 0);
+  const avgByDay = caloriesByDay.map((c, i) => countByDay[i] > 0 ? c / countByDay[i] : 0);
   const maxCalDay = avgByDay.indexOf(Math.max(...avgByDay.filter(v => v > 0)));
   const maxProteinDay = proteinByDay.indexOf(Math.max(...proteinByDay.filter(v => v > 0)));
 

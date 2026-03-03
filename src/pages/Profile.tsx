@@ -137,16 +137,13 @@ export default function Profile() {
     setTheme(themeId);
   };
 
-  const handleTogglePersonalizedGoals = (checked: boolean) => {
+  const handleTogglePersonalizedGoals = async (checked: boolean) => {
     if (!isPro) { setShowProModal(true); return; }
     if (!checked && personalizedGoalsEnabled) { setShowDisablePersonalized(true); return; }
     setPersonalizedGoalsEnabled(checked);
-    const stored = localStorage.getItem('meliusme-settings');
-    if (stored) {
-      const s = JSON.parse(stored);
-      s.personalizedGoals = checked;
-      localStorage.setItem('meliusme-settings', JSON.stringify(s));
-    }
+    // Use the saveSettings from db.ts (already encrypted)
+    const { saveSettings: saveSett } = await import('@/lib/db');
+    await saveSett({ personalizedGoals: checked });
   };
 
   return (
