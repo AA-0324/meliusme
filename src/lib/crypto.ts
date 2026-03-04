@@ -34,8 +34,7 @@ async function storeKey(key: CryptoKey): Promise<void> {
   const db = await openKeyDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(KEY_STORE, 'readwrite');
-    // We can't store a non-extractable key directly, so we use extractable for storage
-    // Actually, IndexedDB supports storing CryptoKey objects via structured clone
+    // IndexedDB supports storing non-extractable CryptoKey objects via structured clone (defense-in-depth)
     tx.objectStore(KEY_STORE).put({ id: KEY_ID, key });
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);

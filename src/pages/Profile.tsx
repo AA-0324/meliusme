@@ -402,14 +402,10 @@ export default function Profile() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
+            <AlertDialogAction onClick={async () => {
               setPersonalizedGoalsEnabled(false);
-              const stored = localStorage.getItem('meliusme-settings');
-              if (stored) {
-                const s = JSON.parse(stored);
-                s.personalizedGoals = false;
-                localStorage.setItem('meliusme-settings', JSON.stringify(s));
-              }
+              const { saveSettings: saveSett } = await import('@/lib/db');
+              await saveSett({ personalizedGoals: false });
               setShowDisablePersonalized(false);
               toast.success('Personalized goals disabled');
             }}>
