@@ -27,7 +27,6 @@ MeliusMe was developed using an iterative, AI-assisted vibe-coding workflow. Doi
 I did not start this project half-baked. I researched for around 3 weeks, using articles, forums, videos, and real-life examples to see what to do and what not to do. While doing this, I came across Zero-Trust review processes. I decided to implement an altered version of them into my use of vibe-coding, so now I continuously perform manual 'audits' of all AI-generated logic.
 
 ## Roadmap
-- [ ] Set up Gemini 2.5 Flash Lite API for AI-powered food image scans
 - [ ] Update logo
 - [ ] Update example prices for MeliusMe Pro and AI-scan subscription
 - [ ] Fix multiple formatting issues plaguing this current prototype
