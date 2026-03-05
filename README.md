@@ -13,7 +13,6 @@
 ## Stack
 - **Frontend:** TypeScript, CSS
 - **Backend:** IndexedDB, localStorage
-- **API:** Gemini 2.5 Flash Lite (soon to be implemented)
 - **Payments Provider:** RevenueCat (soon to be implemented)
 - **Prototyping:** Iterative Vibe-Coding
 - **Scripting:** TypeScript, CSS (might be updated as MeliusMe continues to develop)
