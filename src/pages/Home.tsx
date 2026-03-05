@@ -12,10 +12,13 @@ import { MealReminder } from '@/components/MealReminder';
 import { ProgressRing } from '@/components/ProgressRing';
 import { StreakDisplay } from '@/components/StreakDisplay';
 import { DayCompleteModal } from '@/components/DayCompleteModal';
+import { AnimatedNumber } from '@/components/AnimatedNumber';
+import { PageTransition } from '@/components/PageTransition';
 import { Meal } from '@/lib/db';
 import { getGreeting } from '@/lib/userProfile';
 import { generateInsight } from '@/lib/streaks';
 import { useNavigate } from 'react-router-dom';
+import { staggerContainer, fadeUp } from '@/lib/motion';
 
 export default function Home() {
   const { meals, settings, isLoading, todayWater, incrementWater, userProfile, streak, currentChallenge } = useApp();
@@ -63,14 +66,19 @@ export default function Home() {
   };
 
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center"><div className="animate-pulse text-muted-foreground">Loading...</div></div>;
+    return (
+      <div className="min-h-screen pb-24 px-6 pt-10 space-y-4">
+        <div className="h-8 w-48 shimmer rounded-lg" />
+        <div className="h-20 shimmer rounded-2xl" />
+        <div className="h-14 shimmer rounded-2xl" />
+        <div className="h-24 shimmer rounded-2xl" />
+        <div className="h-48 shimmer rounded-2xl" />
+      </div>
+    );
   }
 
-  const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
-  const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
-
   return (
-    <div className="min-h-screen pb-24">
+    <PageTransition className="min-h-screen pb-24">
       {/* Header */}
       <div className="px-6 pt-10 pb-2 safe-top">
         <motion.h1 initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="text-xl font-bold text-foreground">
@@ -78,7 +86,7 @@ export default function Home() {
         </motion.h1>
       </div>
 
-      <motion.div variants={stagger} initial="hidden" animate="show" className="px-6 space-y-4">
+      <motion.div variants={staggerContainer()} initial="hidden" animate="show" className="px-6 space-y-4">
         {/* Streak Display */}
         <motion.div variants={fadeUp}>
           <StreakDisplay streak={streak} />
@@ -86,8 +94,8 @@ export default function Home() {
 
         {/* Log Meal Button */}
         <motion.div variants={fadeUp}>
-          <motion.div whileTap={{ scale: 0.97 }}>
-            <Button onClick={() => setShowCamera(true)} className="w-full h-14 text-base rounded-2xl gradient-primary hover:opacity-90 shadow-neon font-bold">
+          <motion.div whileTap={{ scale: 0.96 }} whileHover={{ scale: 1.01 }} transition={{ type: 'spring', damping: 20, stiffness: 300 }}>
+            <Button onClick={() => setShowCamera(true)} className="w-full h-14 text-base rounded-2xl gradient-primary hover:opacity-90 shadow-neon cta-glow font-bold">
               <Plus className="w-5 h-5 mr-2" />Log Meal
             </Button>
           </motion.div>
@@ -95,7 +103,13 @@ export default function Home() {
 
         {/* Current Challenge Preview */}
         <motion.div variants={fadeUp}>
-          <motion.button whileTap={{ scale: 0.98 }} onClick={() => navigate('/challenges')} className="w-full bg-card rounded-2xl p-4 border border-border/50 text-left hover:bg-secondary/30 transition-colors">
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            whileHover={{ y: -2 }}
+            transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+            onClick={() => navigate('/challenges')}
+            className="w-full bg-card rounded-2xl p-4 border border-border/50 text-left card-interactive"
+          >
             <div className="flex items-center gap-3">
               <motion.div 
                 animate={{ rotate: [0, 10, -10, 0] }}
@@ -110,7 +124,9 @@ export default function Home() {
                 <p className="font-semibold truncate">{currentChallenge.title}</p>
               </div>
               <div className="text-right">
-                <span className="text-lg font-bold text-primary">{currentChallenge.progress}/{currentChallenge.target}</span>
+                <span className="text-lg font-bold text-primary">
+                  <AnimatedNumber value={currentChallenge.progress} />/{currentChallenge.target}
+                </span>
               </div>
             </div>
           </motion.button>
@@ -124,14 +140,20 @@ export default function Home() {
           <div className="glass rounded-2xl p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Today's Progress</h2>
-              <button onClick={() => navigate('/dashboard')} className="text-primary text-sm font-semibold flex items-center gap-0.5 hover:gap-1.5 transition-all">
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate('/dashboard')}
+                className="text-primary text-sm font-semibold flex items-center gap-0.5 hover:gap-1.5 transition-all"
+              >
                 Details <ChevronRight className="w-4 h-4" />
-              </button>
+              </motion.button>
             </div>
             <div className="flex items-center gap-6">
               <ProgressRing progress={calorieProgress} size={120} strokeWidth={10} showAnimation={calorieProgress >= 100}>
                 <div className="text-center">
-                  <div className="text-2xl font-extrabold">{todayStats.calories}</div>
+                  <div className="text-2xl font-extrabold">
+                    <AnimatedNumber value={todayStats.calories} />
+                  </div>
                   <div className="text-[10px] text-muted-foreground font-medium">/ {settings.goals.calories}</div>
                 </div>
               </ProgressRing>
@@ -140,10 +162,11 @@ export default function Home() {
                   { label: 'Meals', value: todayStats.mealCount.toString() },
                   { label: 'Protein', value: `${todayStats.protein}g` },
                   { label: 'Water', value: `${todayWater}/${settings.waterGoal}` },
-                ].map((stat) => (
+                ].map((stat, i) => (
                   <motion.div key={stat.label} 
                     initial={{ opacity: 0, x: 10 }}
                     animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + i * 0.08, duration: 0.3 }}
                     className="flex items-center justify-between p-2 bg-secondary/30 rounded-lg">
                     <span className="text-xs text-muted-foreground">{stat.label}</span>
                     <span className="font-bold">{stat.value}</span>
@@ -183,8 +206,15 @@ export default function Home() {
             <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Today's Meals</h2>
           </div>
           <div className="flex gap-3 overflow-x-auto px-6 pb-2 scrollbar-hide">
-            {todaysMeals.map((meal) => (
-              <MealCard key={meal.id} meal={meal} compact onClick={() => setSelectedMeal(meal)} />
+            {todaysMeals.map((meal, i) => (
+              <motion.div
+                key={meal.id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.4 + i * 0.06, type: 'spring', damping: 20 }}
+              >
+                <MealCard meal={meal} compact onClick={() => setSelectedMeal(meal)} />
+              </motion.div>
             ))}
           </div>
         </motion.div>
@@ -207,6 +237,6 @@ export default function Home() {
       <MealForm open={showMealForm} photo={capturedPhoto} onClose={() => { setShowMealForm(false); setCapturedPhoto(null); }} onSuccess={handleMealLogged} />
       <MealDetail meal={selectedMeal} onClose={() => setSelectedMeal(null)} />
       <DayCompleteModal open={showDayComplete} onClose={() => setShowDayComplete(false)} totalCalories={todayStats.calories} totalMeals={todayStats.mealCount} />
-    </div>
+    </PageTransition>
   );
 }

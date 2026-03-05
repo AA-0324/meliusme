@@ -41,15 +41,13 @@ export function MealCard({ meal, onClick, compact }: MealCardProps) {
   if (compact) {
     return (
       <motion.button
-        whileTap={{ scale: 0.95 }}
+        whileTap={{ scale: 0.92 }}
+        whileHover={{ scale: 1.05 }}
+        transition={{ type: 'spring', damping: 15, stiffness: 300 }}
         onClick={onClick}
         className="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden relative border border-border/50"
       >
-        <img
-          src={meal.photo}
-          alt={mealTypeLabels[meal.mealType]}
-          className="w-full h-full object-cover"
-        />
+        <img src={meal.photo} alt={mealTypeLabels[meal.mealType]} className="w-full h-full object-cover" />
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-1.5">
           <span className="text-white text-xs font-bold">{meal.calories}</span>
         </div>
@@ -65,15 +63,13 @@ export function MealCard({ meal, onClick, compact }: MealCardProps) {
   return (
     <motion.button
       whileTap={{ scale: 0.98 }}
+      whileHover={{ y: -3 }}
+      transition={{ type: 'spring', damping: 20, stiffness: 300 }}
       onClick={onClick}
-      className="w-full glass rounded-xl overflow-hidden text-left"
+      className="w-full glass rounded-xl overflow-hidden text-left card-interactive"
     >
       <div className="aspect-video relative">
-        <img
-          src={meal.photo}
-          alt={mealTypeLabels[meal.mealType]}
-          className="w-full h-full object-cover"
-        />
+        <img src={meal.photo} alt={mealTypeLabels[meal.mealType]} className="w-full h-full object-cover" />
         <div className="absolute top-3 left-3">
           <span className={cn(
             'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border border-border/60',

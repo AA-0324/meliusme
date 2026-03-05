@@ -3,8 +3,10 @@ import { motion } from 'framer-motion';
 import { useApp } from '@/contexts/AppContext';
 import { MealCard } from '@/components/MealCard';
 import { MealDetail } from '@/components/MealDetail';
+import { PageTransition } from '@/components/PageTransition';
 import { Meal } from '@/lib/db';
 import { Calendar } from 'lucide-react';
+import { staggerContainer, fadeUp } from '@/lib/motion';
 
 export default function Log() {
   const { meals } = useApp();
@@ -37,7 +39,7 @@ export default function Log() {
   });
 
   return (
-    <div className="min-h-screen pb-24 flex flex-col">
+    <PageTransition className="min-h-screen pb-24 flex flex-col">
       {/* Header */}
       <div className="px-6 pt-8 pb-4 safe-top">
         <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-3xl font-bold">
@@ -49,43 +51,46 @@ export default function Log() {
       {/* Timeline */}
       <div className="px-6 space-y-8 flex-1">
         {sortedDates.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex flex-col items-center justify-center flex-1 min-h-[50vh]"
-          >
-            <div className="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: 'spring', damping: 20 }}
+            className="flex flex-col items-center justify-center flex-1 min-h-[50vh]">
+            <motion.div
+              animate={{ y: [0, -6, 0] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+              className="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
               <Calendar className="w-10 h-10 text-muted-foreground" />
-            </div>
+            </motion.div>
             <p className="text-muted-foreground">No meals logged yet</p>
             <p className="text-sm text-muted-foreground mt-1">Start by logging your first meal</p>
           </motion.div>
         ) : (
-          sortedDates.map((date, index) => {
-            const dateMeals = mealsByDate[date];
-            const totals = getDayTotals(dateMeals);
-            return (
-              <motion.div key={date} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="text-lg font-semibold">{formatDate(date)}</h2>
-                    <p className="text-sm text-muted-foreground">
-                      {totals.count} meal{totals.count !== 1 ? 's' : ''} • {totals.calories} cal
-                    </p>
+          <motion.div variants={staggerContainer(0.08)} initial="hidden" animate="show">
+            {sortedDates.map((date) => {
+              const dateMeals = mealsByDate[date];
+              const totals = getDayTotals(dateMeals);
+              return (
+                <motion.div key={date} variants={fadeUp} className="mb-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className="text-lg font-semibold">{formatDate(date)}</h2>
+                      <p className="text-sm text-muted-foreground">
+                        {totals.count} meal{totals.count !== 1 ? 's' : ''} • {totals.calories} cal
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-3">
-                  {dateMeals.map((meal) => (
-                    <MealCard key={meal.id} meal={meal} onClick={() => setSelectedMeal(meal)} />
-                  ))}
-                </div>
-              </motion.div>
-            );
-          })
+                  <div className="space-y-3">
+                    {dateMeals.map((meal) => (
+                      <MealCard key={meal.id} meal={meal} onClick={() => setSelectedMeal(meal)} />
+                    ))}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
         )}
       </div>
 
       <MealDetail meal={selectedMeal} onClose={() => setSelectedMeal(null)} />
-    </div>
+    </PageTransition>
   );
 }
