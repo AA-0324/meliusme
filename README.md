@@ -26,14 +26,4 @@ Developing Methodology
 MeliusMe was developed using an iterative, AI-assisted vibe-coding workflow. Doing this allowed me to focus on high-level system architecture, product logic, and user experience while utilizing AI agents like Lovable to handle the frontend scaffolding. This modern development cycle allows for much faster prototyping and makes sure that the focus remains on solving nutritional data challenges rather than boilerplate syntax.
 I did not start this project half-baked. I researched for around 3 weeks, using articles, forums, videos, and real-life examples to see what to do and what not to do. While doing this, I came across Zero-Trust review processes. I decided to implement an altered version of them into my use of vibe-coding, so now I continuously perform manual 'audits' of all AI-generated logic.
 
-## Roadmap
-- [ ] Update logo
-- [ ] Update example prices for MeliusMe Pro and AI-scan subscription
-- [ ] Fix multiple formatting issues plaguing this current prototype
-- [ ] Fix multiple animation errors/Add multiple planned animations
-- [ ] Add advanced bulking/cutting goals
-- [ ] Fix minor glitches (white border around "account deletion" and "reset daily nutrition", horizontal scrolling when logging a meal, outdated version number, etc)
-- [ ] Add the ability to access the user's photo gallery *only* when logging meals
-- [ ] Implement RevenueCat for micro transactions (much later)
-- [ ] More will come as the prototype continues to develop
-- [ ] **Ideal Deadline: December 31, 2026**
+**Ideal Deadline: December 31, 2026**
