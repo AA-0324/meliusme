@@ -20,7 +20,6 @@ We believe in full user ownership.
 
 MeliusMe only asks for access to your photo gallery for meal logging/altering your profile picture and for permission to send you notifications so you can stay on top of your goals (none of these are necessary). It does not access any other part of your system.
 
-The only external connection MeliusMe makes is to the Gemini API for AI-powered food recognition (if enabled) and to RevenueCat to handle in-app purchases.
-Note: Images sent for analysis are processed according to those companies' respective privacy standards and are not stored by MeliusMe.
+The only external connection MeliusMe makes is to RevenueCat to handle in-app purchases.
 
 If you have questions about our privacy-first architecture, please reach out via the contact information provided in the SECURITY.md file.
