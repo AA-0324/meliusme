@@ -5,42 +5,35 @@ import {
   RotateCcw, 
   Code2, 
   CreditCard, 
-  Sparkles, 
   ChevronLeft,
   AlertTriangle,
   RefreshCw,
   Bell,
-  BellOff
+  BellOff,
+  Sparkles,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useApp } from '@/contexts/AppContext';
 import { ProUpgradeModal } from '@/components/ProUpgradeModal';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { staggerContainer, fadeUp } from '@/lib/motion';
+import logo from '@/assets/meliusme-logo-new.png';
 
 const APP_VERSION = '1.0.0';
 
 export default function Settings() {
   const { 
-    settings, 
-    isPro, 
-    setDevMode,
-    resetDailyData,
-    notificationsEnabled,
-    toggleNotifications,
-    setUse24Hour,
+    settings, isPro, setDevMode, resetDailyData,
+    notificationsEnabled, toggleNotifications,
+    setUse24Hour, animationsEnabled, setAnimationsEnabled,
   } = useApp();
   const navigate = useNavigate();
   const [showProModal, setShowProModal] = useState(false);
@@ -75,11 +68,15 @@ export default function Settings() {
       {/* Header */}
       <div className="px-6 pt-8 pb-4 safe-top">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/profile')} className="rounded-xl">
-            <ChevronLeft className="w-5 h-5" />
-          </Button>
+          <motion.div whileTap={{ scale: 0.85 }}>
+            <Button variant="ghost" size="icon" onClick={() => navigate('/profile')} className="rounded-xl">
+              <ChevronLeft className="w-5 h-5" />
+            </Button>
+          </motion.div>
           <div>
-            <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-2xl font-bold tracking-tight">
+            <motion.h1 initial={{ opacity: 0, y: -15 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              className="text-2xl font-bold tracking-tight">
               Settings
             </motion.h1>
             <p className="text-muted-foreground text-sm mt-0.5">App configuration</p>
@@ -87,9 +84,32 @@ export default function Settings() {
         </div>
       </div>
 
-      <div className="px-6 space-y-4">
+      <motion.div variants={staggerContainer(0.06)} initial="hidden" animate="show" className="px-6 space-y-4">
+        {/* Animations toggle (#13) */}
+        <motion.div variants={fadeUp}
+          className="bg-card rounded-2xl p-5 border border-border/50">
+          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Accessibility</h2>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {animationsEnabled ? (
+                <Eye className="w-5 h-5 text-primary" />
+              ) : (
+                <EyeOff className="w-5 h-5 text-muted-foreground" />
+              )}
+              <div>
+                <span className="font-semibold">Animations</span>
+                <p className="text-xs text-muted-foreground">Disable for reduced motion</p>
+              </div>
+            </div>
+            <Switch
+              checked={animationsEnabled}
+              onCheckedChange={setAnimationsEnabled}
+            />
+          </div>
+        </motion.div>
+
         {/* Notifications */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+        <motion.div variants={fadeUp}
           className="bg-card rounded-2xl p-5 border border-border/50">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Notifications</h2>
           <div className="flex items-center justify-between">
@@ -112,16 +132,18 @@ export default function Settings() {
         </motion.div>
 
         {/* Data Management */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+        <motion.div variants={fadeUp}
           className="bg-card rounded-2xl p-5 border border-border/50">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Data Management</h2>
           
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" className="w-full h-12 rounded-xl justify-start gap-3 font-semibold">
-                <RotateCcw className="w-5 h-5 text-warning" />
-                <span>Reset Today's Nutrition</span>
-              </Button>
+              <motion.div whileTap={{ scale: 0.97 }}>
+                <Button variant="outline" className="w-full h-12 rounded-xl justify-start gap-3 font-semibold">
+                  <RotateCcw className="w-5 h-5 text-warning" />
+                  <span>Reset Today's Nutrition</span>
+                </Button>
+              </motion.div>
             </AlertDialogTrigger>
             <AlertDialogContent className="border-border bg-card">
               <AlertDialogHeader>
@@ -159,7 +181,7 @@ export default function Settings() {
         </motion.div>
 
         {/* Time */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
+        <motion.div variants={fadeUp}
           className="bg-card rounded-2xl p-5 border border-border/50">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Time Display</h2>
           <div className="flex items-center justify-between">
@@ -172,36 +194,42 @@ export default function Settings() {
         </motion.div>
 
         {/* Account */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+        <motion.div variants={fadeUp}
           className="bg-card rounded-2xl p-5 border border-border/50 space-y-3">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Account</h2>
           
           {!isPro && (
-            <Button onClick={() => setShowProModal(true)}
-              className="w-full h-12 rounded-xl justify-start gap-3 font-semibold bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 hover:from-amber-600 hover:via-orange-600 hover:to-rose-600">
-              <Sparkles className="w-5 h-5" />
-              <span>Upgrade to MeliusMe Pro</span>
-            </Button>
+            <motion.div whileTap={{ scale: 0.97 }}>
+              <Button onClick={() => setShowProModal(true)}
+                className="w-full h-12 rounded-xl justify-start gap-3 font-semibold bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 hover:from-amber-600 hover:via-orange-600 hover:to-rose-600">
+                <img src={logo} alt="" className="w-5 h-5" />
+                <span>Upgrade to MeliusMe Pro</span>
+              </Button>
+            </motion.div>
           )}
           
-          <Button onClick={handleManageSubscription} variant="outline" className="w-full h-12 rounded-xl justify-start gap-3 font-semibold">
-            <CreditCard className="w-5 h-5 text-muted-foreground" />
-            <span>Manage Subscription</span>
-          </Button>
+          <motion.div whileTap={{ scale: 0.97 }}>
+            <Button onClick={handleManageSubscription} variant="outline" className="w-full h-12 rounded-xl justify-start gap-3 font-semibold">
+              <CreditCard className="w-5 h-5 text-muted-foreground" />
+              <span>Manage Subscription</span>
+            </Button>
+          </motion.div>
           
-          <Button onClick={handleRestorePurchase} variant="outline" className="w-full h-12 rounded-xl justify-start gap-3 font-semibold">
-            <RefreshCw className="w-5 h-5 text-primary" />
-            <span>Restore Pro</span>
-          </Button>
+          <motion.div whileTap={{ scale: 0.97 }}>
+            <Button onClick={handleRestorePurchase} variant="outline" className="w-full h-12 rounded-xl justify-start gap-3 font-semibold">
+              <RefreshCw className="w-5 h-5 text-primary" />
+              <span>Restore Pro</span>
+            </Button>
+          </motion.div>
         </motion.div>
 
-        {/* Pro status in settings when Pro */}
+        {/* Pro status when Pro */}
         {isPro && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}
+          <motion.div variants={fadeUp}
             className="bg-primary/10 rounded-2xl p-5">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 bg-primary/20 rounded-xl flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-primary" />
+              <div className="w-11 h-11 bg-primary/20 rounded-xl flex items-center justify-center overflow-hidden">
+                <img src={logo} alt="" className="w-7 h-7" />
               </div>
               <div>
                 <h2 className="text-lg font-bold">MeliusMe Pro</h2>
@@ -212,7 +240,7 @@ export default function Settings() {
         )}
 
         {/* Developer */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+        <motion.div variants={fadeUp}
           className="bg-card rounded-2xl p-5 border border-dashed border-border/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -227,8 +255,7 @@ export default function Settings() {
         </motion.div>
 
         {/* App Info */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-          className="text-center py-4">
+        <motion.div variants={fadeUp} className="text-center py-4">
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
             <SettingsIcon className="w-4 h-4" />
             <span className="text-sm font-medium">Version {APP_VERSION}</span>
@@ -236,7 +263,7 @@ export default function Settings() {
         </motion.div>
 
         {/* Warning */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+        <motion.div variants={fadeUp}
           className="bg-warning/10 border border-warning/20 rounded-2xl p-4">
           <div className="flex gap-3">
             <AlertTriangle className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
@@ -251,11 +278,10 @@ export default function Settings() {
         </motion.div>
 
         {/* Copyright */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
-          className="text-center py-6">
+        <motion.div variants={fadeUp} className="text-center py-6">
           <p className="text-xs text-muted-foreground/60">© 2026 Melius. All rights reserved.</p>
         </motion.div>
-      </div>
+      </motion.div>
 
       <ProUpgradeModal open={showProModal} onClose={() => setShowProModal(false)} />
     </div>
