@@ -15,7 +15,7 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-lg border-t border-border safe-bottom">
-      <div className="grid grid-cols-4 h-16 max-w-lg mx-auto relative">
+      <div className="grid grid-cols-4 h-[68px] max-w-lg mx-auto relative">
         {navItems.map(({ to, icon: Icon, label }) => {
           const isActive = to === '/' ? location.pathname === '/' : location.pathname.startsWith(to);
           return (
@@ -23,32 +23,32 @@ export function BottomNav() {
               key={to}
               to={to}
               end={to === '/'}
-              className="flex flex-col items-center justify-center h-full relative"
+              className="flex items-center justify-center h-full relative"
             >
               <motion.div
-                className="flex flex-col items-center justify-center"
-                whileTap={{ scale: 0.85 }}
-                transition={{ type: 'spring', damping: 15, stiffness: 300 }}
+                className="flex flex-col items-center justify-center gap-1"
+                whileTap={{ scale: 0.82 }}
+                transition={{ type: 'spring', damping: 15, stiffness: 400 }}
               >
-                <div className="relative">
+                <div className="relative flex items-center justify-center">
                   {isActive && (
                     <motion.div
                       layoutId="nav-indicator"
-                      className="absolute -inset-2 bg-primary/15 rounded-xl"
-                      transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                      className="absolute -inset-2.5 bg-primary/15 rounded-xl"
+                      transition={{ type: 'spring', damping: 22, stiffness: 350 }}
                     />
                   )}
                   <Icon
                     className={cn(
-                      'w-5 h-5 relative z-10 transition-colors duration-200',
+                      'w-[22px] h-[22px] relative z-10 transition-colors duration-200',
                       isActive ? 'text-primary' : 'text-muted-foreground'
                     )}
-                    strokeWidth={isActive ? 2.5 : 2}
+                    strokeWidth={isActive ? 2.5 : 1.8}
                   />
                 </div>
                 <span className={cn(
-                  'text-[10px] mt-1 font-medium transition-colors duration-200',
-                  isActive ? 'text-primary font-semibold' : 'text-muted-foreground'
+                  'text-[10px] font-medium transition-colors duration-200 leading-none',
+                  isActive ? 'text-primary font-bold' : 'text-muted-foreground'
                 )}>
                   {label}
                 </span>

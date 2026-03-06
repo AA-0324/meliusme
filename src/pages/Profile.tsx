@@ -13,6 +13,8 @@ import { getGreeting, formatMemberSince } from '@/lib/userProfile';
 import { validateName } from '@/lib/validation';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { staggerContainer, fadeUp } from '@/lib/motion';
+import logo from '@/assets/meliusme-logo-new.png';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -26,7 +28,6 @@ const themes = [
   { id: 'midnight', name: 'Midnight', color: 'hsl(230, 70%, 55%)' },
 ];
 
-// Gold glow style for Pro-locked features
 const proGoldBorder = 'ring-1 ring-amber-500/50 shadow-[0_0_12px_-3px_hsl(43_96%_50%/0.4)]';
 
 export default function Profile() {
@@ -42,6 +43,7 @@ export default function Profile() {
   const [nameInput, setNameInput] = useState(userProfile?.name || '');
   const [isEditingName, setIsEditingName] = useState(false);
   const [showGoalConfirm, setShowGoalConfirm] = useState(false);
+  const [showBodyGoalWarning, setShowBodyGoalWarning] = useState(false);
   const [personalizedGoalsEnabled, setPersonalizedGoalsEnabled] = useState(settings.personalizedGoals ?? false);
   const [showDisablePersonalized, setShowDisablePersonalized] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -73,13 +75,24 @@ export default function Profile() {
     return newCal < settings.goals.calories;
   }, [bodyProfile?.goal, calorieGoal, settings.goals.calories]);
 
+  // Check if user has body profile set and personalized goals enabled
+  const hasBodyGoalsSet = useMemo(() => {
+    return personalizedGoalsEnabled && bodyProfile?.goal;
+  }, [personalizedGoalsEnabled, bodyProfile]);
+
   const doSaveGoals = useCallback(() => {
     const newSugar = isPro && sugarGoal ? parseInt(sugarGoal, 10) : undefined;
     const oldSugar = settings.goals.sugar;
+
+    // Show sugar feedback BEFORE "Goals saved" with a delay
     if (newSugar !== undefined && oldSugar !== undefined) {
-      if (newSugar < oldSugar) toast.success('Great job lowering your sugar limit!');
-      else if (newSugar > oldSugar) toast.warning('Increasing your sugar limit may affect your health goals.');
+      if (newSugar < oldSugar) {
+        toast.success('Great job lowering your sugar limit!');
+      } else if (newSugar > oldSugar) {
+        toast.warning('Increasing your sugar limit may affect your health goals.');
+      }
     }
+
     updateUserGoals({
       calories: parseInt(calorieGoal, 10) || 2000,
       protein: isPro && proteinGoal ? parseInt(proteinGoal, 10) : undefined,
@@ -87,18 +100,22 @@ export default function Profile() {
       sugar: isPro && sugarGoal ? parseInt(sugarGoal, 10) : undefined,
     });
     setWaterGoal(parseInt(waterGoalInput, 10) || 8);
-    toast.success('Goals saved!');
+
+    // Delay "Goals saved" so sugar toast is visible first
+    setTimeout(() => toast.success('Goals saved!'), 800);
   }, [calorieGoal, proteinGoal, fiberGoal, sugarGoal, waterGoalInput, isPro, settings.goals.sugar, updateUserGoals, setWaterGoal]);
 
   const handleSaveGoals = () => {
     if (hasBulkingConflict) { setShowGoalConfirm(true); return; }
+    // If user has body profile goals, warn them
+    if (hasBodyGoalsSet) { setShowBodyGoalWarning(true); return; }
     doSaveGoals();
   };
 
-  const handleSaveName = () => {
+  const handleSaveName = async () => {
     const validation = validateName(nameInput);
     if (!validation.valid) { toast.error(validation.error); return; }
-    setUserName(nameInput.trim());
+    await setUserName(nameInput.trim());
     setIsEditingName(false);
     toast.success('Profile updated!');
   };
@@ -141,9 +158,12 @@ export default function Profile() {
     if (!isPro) { setShowProModal(true); return; }
     if (!checked && personalizedGoalsEnabled) { setShowDisablePersonalized(true); return; }
     setPersonalizedGoalsEnabled(checked);
-    // Use the saveSettings from db.ts (already encrypted)
     const { saveSettings: saveSett } = await import('@/lib/db');
     await saveSett({ personalizedGoals: checked });
+    // If turning on and no body profile set, auto-open editor
+    if (checked && !bodyProfile?.goal) {
+      setTimeout(() => setShowBodyProfile(true), 300);
+    }
   };
 
   return (
@@ -152,27 +172,32 @@ export default function Profile() {
       <div className="px-6 pt-8 pb-4 safe-top">
         <div className="flex items-center justify-between">
           <div>
-            <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-2xl font-bold tracking-tight">
+            <motion.h1 initial={{ opacity: 0, y: -15 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              className="text-2xl font-bold tracking-tight">
               {getGreeting(userProfile?.name)}
             </motion.h1>
             {userProfile?.createdAt && (
-              <p className="text-muted-foreground text-sm mt-0.5">{formatMemberSince(userProfile.createdAt)}</p>
+              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}
+                className="text-muted-foreground text-sm mt-0.5">{formatMemberSince(userProfile.createdAt)}</motion.p>
             )}
           </div>
-          <Button variant="ghost" size="icon" onClick={() => navigate('/settings')} className="rounded-xl">
-            <Settings className="w-5 h-5" />
-          </Button>
+          <motion.div whileTap={{ scale: 0.9 }} transition={{ type: 'spring', damping: 15 }}>
+            <Button variant="ghost" size="icon" onClick={() => navigate('/settings')} className="rounded-xl">
+              <Settings className="w-5 h-5" />
+            </Button>
+          </motion.div>
         </div>
       </div>
 
-      <div className="px-6 space-y-4">
+      <motion.div variants={staggerContainer(0.06)} initial="hidden" animate="show" className="px-6 space-y-4">
         {/* User Profile */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+        <motion.div variants={fadeUp}
           className="bg-card rounded-2xl p-5 border border-border/50">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Your Profile</h2>
           <div className="flex items-center gap-4">
             <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
-            <button onClick={() => avatarInputRef.current?.click()} className="relative group flex-shrink-0 cursor-pointer" title="Change profile picture">
+            <motion.button whileTap={{ scale: 0.9 }} onClick={() => avatarInputRef.current?.click()} className="relative group flex-shrink-0 cursor-pointer" title="Change profile picture">
               {userProfile?.avatar ? (
                 <img src={userProfile.avatar} alt="Avatar" className="w-16 h-16 rounded-2xl object-cover" />
               ) : (
@@ -183,7 +208,7 @@ export default function Profile() {
               <div className="absolute inset-0 rounded-2xl bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <Camera className="w-5 h-5 text-white" />
               </div>
-            </button>
+            </motion.button>
             <div className="flex-1">
               {isEditingName ? (
                 <div className="flex gap-2">
@@ -192,27 +217,28 @@ export default function Profile() {
                   <Button onClick={handleSaveName} size="sm" className="rounded-xl">Save</Button>
                 </div>
               ) : (
-                <button onClick={() => setIsEditingName(true)} className="text-left w-full group">
+                <motion.button whileTap={{ scale: 0.97 }} onClick={() => setIsEditingName(true)} className="text-left w-full group">
                   <p className="font-bold text-lg group-hover:text-primary transition-colors">{userProfile?.name || 'Set your name'}</p>
                   <p className="text-sm text-muted-foreground">Tap to edit</p>
-                </button>
+                </motion.button>
               )}
             </div>
           </div>
         </motion.div>
 
-        {/* Upgrade to Pro - prominent, glowing */}
+        {/* Upgrade to Pro */}
         {!isPro && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }}>
+          <motion.div variants={fadeUp}>
             <motion.button 
               onClick={() => setShowProModal(true)}
-              animate={{ boxShadow: ['0 0 15px hsl(43 96% 50% / 0.2)', '0 0 25px hsl(43 96% 50% / 0.4)', '0 0 15px hsl(43 96% 50% / 0.2)'] }}
-              transition={{ duration: 2, repeat: Infinity }}
+              whileTap={{ scale: 0.97 }}
+              animate={{ boxShadow: ['0 0 15px hsl(43 96% 50% / 0.2)', '0 0 30px hsl(43 96% 50% / 0.4)', '0 0 15px hsl(43 96% 50% / 0.2)'] }}
+              transition={{ duration: 2.5, repeat: Infinity }}
               className="w-full rounded-2xl p-5 text-left relative overflow-hidden bg-gradient-to-br from-amber-500/15 via-card to-orange-500/15 border border-amber-500/40 hover:border-amber-500/60"
             >
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <Crown className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
+                  <img src={logo} alt="" className="w-8 h-8" />
                 </div>
                 <div className="flex-1">
                   <h2 className="text-lg font-extrabold">Upgrade to Pro</h2>
@@ -223,13 +249,17 @@ export default function Profile() {
           </motion.div>
         )}
 
-        {/* Personalized Goals + Body Profile in one row */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
+        {/* Personalized Goals */}
+        <motion.div variants={fadeUp}
           className={`bg-card rounded-2xl p-4 border border-border/50 ${!isPro ? proGoldBorder : ''}`}>
           <div className="flex items-center gap-3">
             <Button 
               onClick={() => {
-                if (!personalizedGoalsEnabled && isPro) { toast.info('Enable the toggle to use Personalized Goals'); return; }
+                if (!personalizedGoalsEnabled && isPro) {
+                  // Auto-enable and open
+                  handleTogglePersonalizedGoals(true);
+                  return;
+                }
                 if (!isPro) { setShowProModal(true); return; }
                 setShowBodyProfile(true);
               }} 
@@ -254,7 +284,7 @@ export default function Profile() {
         </motion.div>
 
         {/* Appearance */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
+        <motion.div variants={fadeUp}
           className="bg-card rounded-2xl p-5 border border-border/50">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Appearance</h2>
           <div className="flex items-center justify-between mb-4">
@@ -271,20 +301,21 @@ export default function Profile() {
             </div>
             <div className="flex gap-2">
               {themes.map((theme) => (
-                <button key={theme.id} onClick={() => handleThemeChange(theme.id)}
+                <motion.button key={theme.id} whileTap={{ scale: 0.85 }}
+                  onClick={() => handleThemeChange(theme.id)}
                   className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
                     settings.theme === theme.id ? 'ring-2 ring-primary ring-offset-2 ring-offset-card' : 'hover:scale-110'
                   } ${!isPro && theme.id !== 'default' ? 'opacity-50' : ''}`}
                   style={{ backgroundColor: theme.color }} title={theme.name}>
                   {settings.theme === theme.id && <Check className="w-5 h-5 text-white" />}
-                </button>
+                </motion.button>
               ))}
             </div>
           </div>
         </motion.div>
 
         {/* Goals */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+        <motion.div variants={fadeUp}
           className="bg-card rounded-2xl p-5 border border-border/50">
           <div className="flex items-center gap-2 mb-4">
             <Target className="w-4 h-4 text-primary" />
@@ -292,10 +323,11 @@ export default function Profile() {
           </div>
 
           {bodyProfile?.goal === 'bulking' && goalsChanged && (
-            <div className="flex items-start gap-2 p-3 mb-4 bg-warning/10 border border-warning/20 rounded-xl">
+            <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}
+              className="flex items-start gap-2 p-3 mb-4 bg-warning/10 border border-warning/20 rounded-xl">
               <AlertTriangle className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
               <p className="text-xs text-warning font-medium">You have bulking goals set. Changing these may conflict with your body profile targets.</p>
-            </div>
+            </motion.div>
           )}
 
           <div className="space-y-4">
@@ -353,23 +385,27 @@ export default function Profile() {
               )}
             </div>
 
-            <Button onClick={handleSaveGoals} disabled={!goalsChanged} className="w-full h-11 rounded-xl font-bold">
-              Save Goals
-            </Button>
+            <motion.div whileTap={{ scale: 0.97 }}>
+              <Button onClick={handleSaveGoals} disabled={!goalsChanged} className="w-full h-11 rounded-xl font-bold">
+                Save Goals
+              </Button>
+            </motion.div>
           </div>
         </motion.div>
 
         {/* Export */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <Button onClick={handleExport} variant="outline" className={`w-full h-12 rounded-xl justify-between font-semibold ${!isPro ? proGoldBorder : ''}`}>
-            <div className="flex items-center gap-3">
-              <Download className="w-5 h-5" /><span>Export Data (CSV)</span>
-            </div>
-          </Button>
+        <motion.div variants={fadeUp}>
+          <motion.div whileTap={{ scale: 0.97 }}>
+            <Button onClick={handleExport} variant="outline" className={`w-full h-12 rounded-xl justify-between font-semibold ${!isPro ? proGoldBorder : ''}`}>
+              <div className="flex items-center gap-3">
+                <Download className="w-5 h-5" /><span>Export Data (CSV)</span>
+              </div>
+            </Button>
+          </motion.div>
         </motion.div>
-      </div>
+      </motion.div>
 
-      {/* Goal conflict confirmation */}
+      {/* Goal conflict confirmation (bulking) */}
       <AlertDialog open={showGoalConfirm} onOpenChange={setShowGoalConfirm}>
         <AlertDialogContent className="border-border bg-card">
           <AlertDialogHeader>
@@ -384,6 +420,27 @@ export default function Profile() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={() => { setShowGoalConfirm(false); doSaveGoals(); }}>Save Anyway</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Warning when changing goals with body profile set (#16) */}
+      <AlertDialog open={showBodyGoalWarning} onOpenChange={setShowBodyGoalWarning}>
+        <AlertDialogContent className="border-border bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-warning" />
+              Override Personalized Goals?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              You have personalized body goals set. Manually changing your daily goals will override the values calculated from your body profile. Your body profile settings will remain, but goals won't match.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setShowBodyGoalWarning(false); doSaveGoals(); }}>
+              Update Goals
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

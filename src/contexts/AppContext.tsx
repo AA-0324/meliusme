@@ -11,7 +11,6 @@ type ToastVariant = 'primary' | 'success' | 'warning' | 'destructive';
 
 const goalToastKey = (date: string) => `meliusme-goal-toasts-${date}`;
 
-// Goal toast flags use sessionStorage (ephemeral, no sensitive data)
 const getGoalToastFlags = (date: string): Record<string, boolean> => {
   const stored = sessionStorage.getItem(goalToastKey(date));
   if (!stored) return {};
@@ -37,7 +36,7 @@ const getDailyTotals = (allMeals: Meal[], date: string) => {
 
 const DEFAULT_SETTINGS: Settings = {
   proStatus: false, devMode: false, darkMode: false, theme: 'default',
-  goals: { calories: 2000 }, waterGoal: 8, use24Hour: false,
+  goals: { calories: 2000 }, waterGoal: 8, use24Hour: false, animationsEnabled: true,
 };
 
 const DEFAULT_STREAK: StreakData = { currentStreak: 0, longestStreak: 0, lastLogDate: null, streakHistory: [] };
@@ -51,9 +50,10 @@ interface AppContextType {
   meals: Meal[];
   isLoading: boolean;
   isPro: boolean;
+  animationsEnabled: boolean;
   userProfile: UserProfile | null;
-  setUserName: (name: string) => void;
-  setUserAvatar: (avatar: string) => void;
+  setUserName: (name: string) => Promise<void>;
+  setUserAvatar: (avatar: string) => Promise<void>;
   bodyProfile: BodyProfile | null;
   updateBodyProfile: (profile: Partial<BodyProfile>) => void;
   streak: StreakData;
@@ -69,6 +69,7 @@ interface AppContextType {
   setPro: (enabled: boolean) => void;
   setTheme: (theme: string) => void;
   setUse24Hour: (use24Hour: boolean) => void;
+  setAnimationsEnabled: (enabled: boolean) => void;
   updateUserGoals: (goals: Partial<Goals>) => void;
   setWaterGoal: (glasses: number) => void;
   resetDailyData: () => void;
@@ -100,16 +101,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [todayWater, setTodayWater] = useState(0);
 
   const isPro = settings.proStatus || settings.devMode;
+  const animationsEnabled = settings.animationsEnabled !== false;
 
-  // ─── Async init: encryption → load all data ──────────────────────
+  // Sync animations preference to window for motion.ts
+  useEffect(() => {
+    (window as any).__melius_animations_enabled = animationsEnabled;
+  }, [animationsEnabled]);
+
+  // ─── Async init ──────────────────────
   useEffect(() => {
     const init = async () => {
       try {
-        // 1. Init encryption key
         await initEncryption();
-        // 2. Migrate plaintext → encrypted
         await migrateAllToEncrypted();
-        // 3. Load all state in parallel
         const [s, profile, body, streakD, challenge, bdgs, allMeals, water] = await Promise.all([
           getSettings(),
           getUserProfile(),
@@ -129,11 +133,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setMeals(allMeals);
         setTodayWater(water);
 
-        // Recalculate weekly challenge with meals
         const updatedChallenge = await getCurrentChallenge(allMeals);
         setCurrentChallenge(updatedChallenge);
 
-        // Pro reset migration
         const migrated = localStorage.getItem('meliusme-pro-reset-v1.1');
         if (!migrated && s.proStatus) {
           const updated = await saveSettings({ proStatus: false, theme: 'default' });
@@ -222,6 +224,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const setUse24Hour = useCallback(async (use24Hour: boolean) => {
     const updated = await saveSettings({ use24Hour });
+    setSettingsState(updated);
+  }, []);
+
+  const setAnimationsEnabled = useCallback(async (enabled: boolean) => {
+    const updated = await saveSettings({ animationsEnabled: enabled });
     setSettingsState(updated);
   }, []);
 
@@ -368,13 +375,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   return (
     <AppContext.Provider
       value={{
-        settings, meals, isLoading, isPro,
+        settings, meals, isLoading, isPro, animationsEnabled,
         userProfile, setUserName, setUserAvatar,
         bodyProfile, updateBodyProfile: updateBodyProfileCb,
         streak, currentChallenge, badges, refreshStreak,
         todayWater, incrementWater,
         notificationsEnabled, toggleNotifications,
-        setDevMode, setDarkMode, setPro, setTheme, setUse24Hour,
+        setDevMode, setDarkMode, setPro, setTheme, setUse24Hour, setAnimationsEnabled,
         updateUserGoals, setWaterGoal: setWaterGoalCb, resetDailyData,
         refreshMeals, logMeal, removeMeal,
         bottomToast, showBottomToast, hideBottomToast,

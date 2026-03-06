@@ -22,14 +22,6 @@ function openKeyDB(): Promise<IDBDatabase> {
   });
 }
 
-async function generateKey(): Promise<CryptoKey> {
-  return crypto.subtle.generateKey(
-    { name: 'AES-GCM', length: 256 },
-    false, // not extractable
-    ['encrypt', 'decrypt']
-  );
-}
-
 async function storeKey(key: CryptoKey): Promise<void> {
   const db = await openKeyDB();
   return new Promise((resolve, reject) => {
@@ -56,7 +48,6 @@ export async function getEncryptionKey(): Promise<CryptoKey> {
   
   let key = await loadKey();
   if (!key) {
-    // Generate a new extractable=false key. IndexedDB structured clone supports CryptoKey.
     key = await crypto.subtle.generateKey(
       { name: 'AES-GCM', length: 256 },
       false,
@@ -69,11 +60,24 @@ export async function getEncryptionKey(): Promise<CryptoKey> {
 }
 
 /**
+ * Convert Uint8Array to base64 string (chunk-safe, no stack overflow)
+ */
+function uint8ToBase64(bytes: Uint8Array): string {
+  let binaryStr = '';
+  const chunkSize = 8192;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
+    binaryStr += String.fromCharCode.apply(null, Array.from(chunk));
+  }
+  return btoa(binaryStr);
+}
+
+/**
  * Encrypt a string → base64 blob (iv + ciphertext)
  */
 export async function encrypt(plaintext: string): Promise<string> {
   const key = await getEncryptionKey();
-  const iv = crypto.getRandomValues(new Uint8Array(12)); // 96-bit IV for AES-GCM
+  const iv = crypto.getRandomValues(new Uint8Array(12));
   const encoded = new TextEncoder().encode(plaintext);
   
   const ciphertext = await crypto.subtle.encrypt(
@@ -82,13 +86,11 @@ export async function encrypt(plaintext: string): Promise<string> {
     encoded
   );
   
-  // Combine IV + ciphertext into one buffer
   const combined = new Uint8Array(iv.length + ciphertext.byteLength);
   combined.set(iv, 0);
   combined.set(new Uint8Array(ciphertext), iv.length);
   
-  // Encode as base64
-  return btoa(String.fromCharCode(...combined));
+  return uint8ToBase64(combined);
 }
 
 /**
@@ -97,14 +99,12 @@ export async function encrypt(plaintext: string): Promise<string> {
 export async function decrypt(blob: string): Promise<string> {
   const key = await getEncryptionKey();
   
-  // Decode base64
   const binary = atob(blob);
   const combined = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) {
     combined[i] = binary.charCodeAt(i);
   }
   
-  // Extract IV (first 12 bytes) and ciphertext
   const iv = combined.slice(0, 12);
   const ciphertext = combined.slice(12);
   
@@ -118,18 +118,14 @@ export async function decrypt(blob: string): Promise<string> {
 }
 
 /**
- * Check if a string looks like an encrypted blob (base64 with sufficient length)
+ * Check if a string looks like an encrypted blob
  */
 export function isEncrypted(value: string): boolean {
-  // Encrypted blobs are base64 and always longer than the minimum (12 bytes IV + at least some ciphertext)
-  // A valid base64 string of 12+ bytes raw = 16+ chars base64
   if (value.length < 20) return false;
-  // Quick heuristic: if it starts with { or [ it's plaintext JSON
   if (value.startsWith('{') || value.startsWith('[') || value.startsWith('"')) return false;
-  // Check if it's valid base64
   try {
     const decoded = atob(value);
-    return decoded.length >= 13; // 12 IV + at least 1 byte ciphertext
+    return decoded.length >= 13;
   } catch {
     return false;
   }
