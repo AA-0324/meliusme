@@ -1,9 +1,13 @@
 import { Variants, Transition } from 'framer-motion';
 
-// Check reduced motion preference
-export const prefersReducedMotion = () =>
-  typeof window !== 'undefined' &&
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Check reduced motion preference OR user setting
+export const prefersReducedMotion = () => {
+  if (typeof window === 'undefined') return false;
+  // Check user setting first
+  const animationsEnabled = (window as any).__melius_animations_enabled;
+  if (animationsEnabled === false) return true;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+};
 
 // Standard easing curves
 export const ease = {
@@ -12,6 +16,7 @@ export const ease = {
   spring: { type: 'spring' as const, damping: 20, stiffness: 300 },
   springBouncy: { type: 'spring' as const, damping: 12, stiffness: 200 },
   springGentle: { type: 'spring' as const, damping: 25, stiffness: 150 },
+  springSnappy: { type: 'spring' as const, damping: 15, stiffness: 400 },
 };
 
 // Standard durations (seconds)
@@ -19,7 +24,7 @@ export const duration = {
   micro: 0.15,
   fast: 0.25,
   normal: 0.35,
-  emphasis: 0.4,
+  emphasis: 0.5,
 };
 
 // Reduced-motion-safe wrapper
@@ -36,9 +41,9 @@ export function safeVariants(variants: Variants): Variants {
 
 // ─── Page Transition Variants ───
 export const pageVariants: Variants = {
-  initial: { opacity: 0, y: 12 },
+  initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -8 },
+  exit: { opacity: 0, y: -12 },
 };
 
 export const pageTransition: Transition = {
@@ -47,7 +52,7 @@ export const pageTransition: Transition = {
 };
 
 // ─── Stagger Container ───
-export const staggerContainer = (staggerDelay = 0.06): Variants => ({
+export const staggerContainer = (staggerDelay = 0.07): Variants => ({
   hidden: {},
   show: {
     transition: { staggerChildren: staggerDelay },
@@ -56,7 +61,7 @@ export const staggerContainer = (staggerDelay = 0.06): Variants => ({
 
 // ─── Fade Up Item ───
 export const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 16 },
+  hidden: { opacity: 0, y: 24 },
   show: {
     opacity: 1,
     y: 0,
@@ -66,7 +71,7 @@ export const fadeUp: Variants = {
 
 // ─── Fade In Scale ───
 export const fadeInScale: Variants = {
-  hidden: { opacity: 0, scale: 0.95 },
+  hidden: { opacity: 0, scale: 0.92 },
   show: {
     opacity: 1,
     scale: 1,
@@ -77,19 +82,19 @@ export const fadeInScale: Variants = {
 // ─── Card Hover (desktop) ───
 export const cardHover = {
   rest: { y: 0, scale: 1 },
-  hover: { y: -4, scale: 1.01 },
-  tap: { scale: 0.98 },
+  hover: { y: -6, scale: 1.02 },
+  tap: { scale: 0.97 },
 };
 
 // ─── Button Press ───
 export const buttonPress = {
-  whileTap: { scale: 0.97 },
+  whileTap: { scale: 0.95 },
   transition: ease.spring,
 };
 
 export const buttonPressPrimary = {
-  whileTap: { scale: 0.96 },
-  whileHover: { scale: 1.01 },
+  whileTap: { scale: 0.94 },
+  whileHover: { scale: 1.02 },
   transition: ease.spring,
 };
 
@@ -108,9 +113,27 @@ export const modalOverlay: Variants = {
 };
 
 export const modalContent: Variants = {
-  initial: { opacity: 0, scale: 0.92, y: 20 },
+  initial: { opacity: 0, scale: 0.88, y: 30 },
   animate: { opacity: 1, scale: 1, y: 0 },
-  exit: { opacity: 0, scale: 0.95, y: 10 },
+  exit: { opacity: 0, scale: 0.92, y: 15 },
+};
+
+// ─── Pop in (for success states, badges, etc.) ───
+export const popIn: Variants = {
+  hidden: { opacity: 0, scale: 0.5 },
+  show: {
+    opacity: 1,
+    scale: 1,
+    transition: { type: 'spring', damping: 12, stiffness: 200 },
+  },
+};
+
+// ─── Bounce subtle ───
+export const bounceSubtle = {
+  animate: {
+    y: [0, -8, 0],
+    transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
+  },
 };
 
 // ─── Number counter helper ───
@@ -119,7 +142,7 @@ export function countTo(target: number, durationMs = 600): { value: number; done
   const result: { value: number; done: boolean }[] = [];
   for (let i = 0; i <= steps; i++) {
     const t = i / steps;
-    const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+    const eased = 1 - Math.pow(1 - t, 3);
     result.push({ value: Math.round(eased * target), done: i === steps });
   }
   return result;

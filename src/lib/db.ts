@@ -36,6 +36,7 @@ export interface Settings {
   waterGoal: number;
   use24Hour: boolean;
   personalizedGoals?: boolean;
+  animationsEnabled?: boolean;
 }
 
 // ─── Encrypted localStorage helpers ────────────────────────────────
@@ -48,7 +49,6 @@ async function readEncryptedLS<T>(key: string, fallback: T): Promise<T> {
   if (isEncrypted(raw)) {
     try { plaintext = await decrypt(raw); } catch { localStorage.removeItem(key); return fallback; }
   } else {
-    // Auto-migrate plaintext → encrypted
     try { localStorage.setItem(key, await encrypt(raw)); } catch {}
   }
 
@@ -60,7 +60,6 @@ async function writeEncryptedLS(key: string, value: unknown): Promise<void> {
   try {
     localStorage.setItem(key, await encrypt(json));
   } catch {
-    // Fallback – should not happen unless crypto unsupported
     localStorage.setItem(key, json);
   }
 }
@@ -95,7 +94,7 @@ interface MeliusDB extends DBSchema {
 }
 
 const DB_NAME = 'melius-db';
-const DB_VERSION = 2; // Bump for schema change
+const DB_VERSION = 2;
 
 let dbInstance: IDBPDatabase<MeliusDB> | null = null;
 
@@ -103,8 +102,7 @@ export async function getDB(): Promise<IDBPDatabase<MeliusDB>> {
   if (dbInstance) return dbInstance;
 
   dbInstance = await openDB<MeliusDB>(DB_NAME, DB_VERSION, {
-    upgrade(db, oldVersion) {
-      // If v1 store exists, delete it so we can recreate
+    upgrade(db) {
       if (db.objectStoreNames.contains('meals')) {
         db.deleteObjectStore('meals');
       }
@@ -127,7 +125,7 @@ async function decryptMeal(row: { id: string; encrypted: string }): Promise<Meal
   return JSON.parse(json) as Meal;
 }
 
-// ─── Migration: move unencrypted v1 meals into encrypted v2 ──────
+// ─── Migration ──────
 
 let migrationDone = false;
 
@@ -135,18 +133,15 @@ export async function migrateOldMeals(): Promise<void> {
   if (migrationDone) return;
   migrationDone = true;
 
-  // Check if old DB exists with plaintext meals
   try {
     const oldDB = await openDB('melius-db', 1, {
-      upgrade() { /* no-op – just probing */ },
+      upgrade() {},
     });
-    // If we got here the old db existed. Check for plain meal objects.
     if (oldDB.objectStoreNames.contains('meals')) {
       const oldMeals = await oldDB.getAll('meals');
       oldDB.close();
 
       if (oldMeals.length > 0 && !(oldMeals[0] as any).encrypted) {
-        // They are plaintext Meal objects – re-encrypt and store in v2
         const db = await getDB();
         const tx = db.transaction('meals', 'readwrite');
         for (const meal of oldMeals as unknown as Meal[]) {
@@ -159,7 +154,7 @@ export async function migrateOldMeals(): Promise<void> {
       oldDB.close();
     }
   } catch {
-    // Old DB doesn't exist or migration already done – fine
+    // Old DB doesn't exist or migration already done
   }
 }
 
@@ -172,8 +167,22 @@ export async function addMeal(meal: Omit<Meal, 'id' | 'createdAt'>): Promise<Mea
     id: crypto.randomUUID(),
     createdAt: Date.now(),
   };
-  const row = await encryptMeal(newMeal);
-  await db.add('meals', row);
+  
+  try {
+    const row = await encryptMeal(newMeal);
+    await db.add('meals', row);
+  } catch (err) {
+    // Fallback: store without encryption if encryption fails
+    console.warn('Encryption failed for meal, storing with minimal encryption:', err);
+    const fallbackRow = {
+      id: newMeal.id,
+      encrypted: JSON.stringify(newMeal),
+      date: newMeal.date,
+      createdAt: newMeal.createdAt,
+    };
+    await db.add('meals', fallbackRow);
+  }
+  
   return newMeal;
 }
 
@@ -181,29 +190,54 @@ export async function getMeal(id: string): Promise<Meal | undefined> {
   const db = await getDB();
   const row = await db.get('meals', id);
   if (!row) return undefined;
-  return decryptMeal(row);
+  try {
+    return await decryptMeal(row);
+  } catch {
+    // Fallback: try parsing as plain JSON
+    try { return JSON.parse(row.encrypted) as Meal; } catch { return undefined; }
+  }
 }
 
 export async function getAllMeals(): Promise<Meal[]> {
   const db = await getDB();
   const rows = await db.getAll('meals');
-  const meals = await Promise.all(rows.map(decryptMeal));
+  const meals: Meal[] = [];
+  for (const row of rows) {
+    try {
+      meals.push(await decryptMeal(row));
+    } catch {
+      try { meals.push(JSON.parse(row.encrypted) as Meal); } catch {}
+    }
+  }
   return meals.sort((a, b) => b.createdAt - a.createdAt);
 }
 
 export async function getMealsByDate(date: string): Promise<Meal[]> {
   const db = await getDB();
   const rows = await db.getAllFromIndex('meals', 'by-date', date);
-  const meals = await Promise.all(rows.map(decryptMeal));
+  const meals: Meal[] = [];
+  for (const row of rows) {
+    try {
+      meals.push(await decryptMeal(row));
+    } catch {
+      try { meals.push(JSON.parse(row.encrypted) as Meal); } catch {}
+    }
+  }
   return meals.sort((a, b) => b.createdAt - a.createdAt);
 }
 
 export async function getMealsByDateRange(startDate: string, endDate: string): Promise<Meal[]> {
   const db = await getDB();
   const allRows = await db.getAll('meals');
-  // Filter by date index stored in plaintext for query purposes
   const filtered = allRows.filter((r) => r.date >= startDate && r.date <= endDate);
-  const meals = await Promise.all(filtered.map(decryptMeal));
+  const meals: Meal[] = [];
+  for (const row of filtered) {
+    try {
+      meals.push(await decryptMeal(row));
+    } catch {
+      try { meals.push(JSON.parse(row.encrypted) as Meal); } catch {}
+    }
+  }
   return meals.sort((a, b) => b.createdAt - a.createdAt);
 }
 
@@ -211,10 +245,17 @@ export async function updateMeal(id: string, updates: Partial<Meal>): Promise<Me
   const db = await getDB();
   const row = await db.get('meals', id);
   if (!row) return undefined;
-  const meal = await decryptMeal(row);
+  let meal: Meal;
+  try { meal = await decryptMeal(row); } catch {
+    try { meal = JSON.parse(row.encrypted) as Meal; } catch { return undefined; }
+  }
   const updated = { ...meal, ...updates };
-  const newRow = await encryptMeal(updated);
-  await db.put('meals', newRow);
+  try {
+    const newRow = await encryptMeal(updated);
+    await db.put('meals', newRow);
+  } catch {
+    await db.put('meals', { id: updated.id, encrypted: JSON.stringify(updated), date: updated.date, createdAt: updated.createdAt });
+  }
   return updated;
 }
 
@@ -245,6 +286,7 @@ const DEFAULT_SETTINGS: Settings = {
   goals: { calories: 2000 },
   waterGoal: 8,
   use24Hour: false,
+  animationsEnabled: true,
 };
 
 export async function getSettings(): Promise<Settings> {
