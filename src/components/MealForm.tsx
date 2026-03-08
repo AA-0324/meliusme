@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Tag, ChevronLeft, Flame, Beef, Apple, Candy, UtensilsCrossed } from 'lucide-react';
+import { X, Tag, ChevronLeft, Flame, Beef, Apple, Candy, UtensilsCrossed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -424,29 +424,16 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                   </div>
 
                   {/* Input row */}
-                  <div className="flex gap-2.5 relative z-10">
-                    <motion.div 
-                      className="flex-1"
-                      initial={{ opacity: 0, x: -12 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.5, type: 'spring', damping: 15 }}
-                    >
-                      <Input placeholder="e.g. homemade, spicy..." value={tagInput} onChange={(e) => setTagInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
-                        className="h-12 rounded-xl bg-background/40 border-0 text-sm placeholder:text-muted-foreground/25 font-medium focus:ring-2 focus:ring-violet-500/40 focus:bg-background/60 transition-all duration-200" />
-                    </motion.div>
-                    <motion.div 
-                      whileTap={{ scale: 0.85, rotate: -10 }}
-                      whileHover={{ scale: 1.08 }}
-                      initial={{ opacity: 0, scale: 0.5, rotate: -20 }}
-                      animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                      transition={{ delay: 0.55, type: 'spring', damping: 12 }}
-                    >
-                      <Button onClick={handleAddTag} size="icon" className="h-12 w-12 rounded-xl flex-shrink-0 bg-violet-500/80 hover:bg-violet-500 shadow-lg shadow-violet-500/25 text-white">
-                        <Plus className="w-5 h-5" />
-                      </Button>
-                    </motion.div>
-                  </div>
+                  <motion.div 
+                    className="relative z-10"
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.5, type: 'spring', damping: 15 }}
+                  >
+                    <Input placeholder="e.g. homemade, spicy..." value={tagInput} onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
+                      className="h-12 rounded-xl bg-background/40 border-0 text-sm placeholder:text-muted-foreground/25 font-medium focus:ring-2 focus:ring-violet-500/40 focus:bg-background/60 transition-all duration-200" />
+                  </motion.div>
 
                   {/* Tags list */}
                   {tags.length > 0 && (
