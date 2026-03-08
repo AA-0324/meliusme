@@ -304,7 +304,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                         <div className="flex items-center gap-1.5 mb-1.5">
                           <Icon className={`w-3.5 h-3.5 ${field.iconColor}`} />
                           <span className="font-bold text-[10px] uppercase tracking-wider">{field.label}</span>
-                          <span className="text-destructive text-[10px]">*</span>
+                          
                         </div>
                         <Input 
                           type="number" inputMode="numeric" min="0" max={field.max}
