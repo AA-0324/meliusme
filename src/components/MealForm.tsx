@@ -153,7 +153,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
     <>
       <AnimatePresence>
         {open && (
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 30 }} transition={{ type: 'spring', damping: 22, stiffness: 260 }} className="fixed inset-0 z-[100] bg-background flex flex-col overflow-hidden overscroll-none touch-none">
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 30 }} transition={{ type: 'spring', damping: 22, stiffness: 260 }} className="fixed inset-0 z-[100] bg-background flex flex-col" style={{ overscrollBehavior: 'none' }}>
             {/* Hero photo header */}
             <div className="relative flex-shrink-0">
               <div className="relative h-44 bg-black overflow-hidden">
@@ -214,7 +214,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
             </div>
 
             {/* Scrollable form content */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 pt-5 pb-4 space-y-5 overscroll-contain">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 pt-5 pb-4 space-y-5" style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
               {/* Meal Type selector */}
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, type: 'spring', damping: 18, stiffness: 200 }}>
                 <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 block">
@@ -270,17 +270,16 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                 >
                   <motion.div 
                     className="absolute top-2 right-2 opacity-10"
-                    animate={{ rotate: [0, 8, -8, 0], scale: [1, 1.05, 1] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                    animate={{ rotate: [0, 8, -8, 0], scale: [1, 1.08, 0.95, 1] }}
+                    transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
                   >
                     <Flame className="w-16 h-16" />
                   </motion.div>
                   <div className="flex items-center gap-3 mb-2">
                     <motion.div 
                       className={`w-8 h-8 rounded-lg bg-background/30 flex items-center justify-center ${nutritionFields[0].iconColor}`}
-                      whileTap={{ scale: 0.9 }}
-                      animate={{ scale: calories ? [1, 1.1, 1] : 1 }}
-                      transition={{ duration: 0.3 }}
+                      animate={{ y: [0, -2, 0], scale: [1, 1.05, 1] }}
+                      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                     >
                       <Flame className="w-4 h-4" />
                     </motion.div>
@@ -299,7 +298,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                 <div className="grid grid-cols-3 gap-2.5">
                   {nutritionFields.slice(1).map((field, i) => {
                     const Icon = field.icon;
-                    const hasValue = !!values[field.key];
+                    
                     return (
                       <motion.div
                         key={field.key}
@@ -311,15 +310,15 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                       >
                         <motion.div 
                           className="absolute -bottom-1 -right-1 opacity-[0.07]"
-                          animate={{ rotate: hasValue ? [0, 10, -5, 0] : 0 }}
-                          transition={{ duration: 0.5 }}
+                          animate={{ rotate: [0, 6, -6, 0], scale: [1, 1.06, 0.96, 1] }}
+                          transition={{ duration: 5 + i, repeat: Infinity, ease: 'easeInOut', delay: i * 0.5 }}
                         >
                           <Icon className="w-10 h-10" />
                         </motion.div>
                         <div className="flex items-center gap-1.5 mb-1.5">
                           <motion.div
-                            animate={hasValue ? { scale: [1, 1.2, 1] } : {}}
-                            transition={{ duration: 0.3 }}
+                            animate={{ y: [0, -1.5, 0], scale: [1, 1.08, 1] }}
+                            transition={{ duration: 2.5 + i * 0.3, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}
                           >
                             <Icon className={`w-3.5 h-3.5 ${field.iconColor}`} />
                           </motion.div>
@@ -359,63 +358,88 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                 </>
               )}
 
-              {/* Custom Tags (Pro) */}
+              {/* Tags (Pro) */}
               {isPro && (
                 <motion.div 
-                  initial={{ opacity: 0, y: 20 }} 
+                  initial={{ opacity: 0, y: 24 }} 
                   animate={{ opacity: 1, y: 0 }} 
-                  transition={{ delay: 0.35, type: 'spring', damping: 18 }}
-                  className="relative rounded-2xl p-4 border bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-primary/20 overflow-hidden"
+                  transition={{ delay: 0.45, type: 'spring', damping: 16, stiffness: 180 }}
+                  className="relative rounded-2xl p-4 border bg-gradient-to-br from-violet-500/15 via-purple-500/10 to-fuchsia-500/5 border-violet-500/25 overflow-hidden"
                 >
-                  {/* Background decorative element */}
-                  <div className="absolute -bottom-2 -right-2 opacity-[0.06]">
-                    <Tag className="w-20 h-20" />
+                  {/* Animated background decoration */}
+                  <motion.div 
+                    className="absolute -bottom-3 -right-3 opacity-[0.06]"
+                    animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.1, 0.95, 1] }}
+                    transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    <Tag className="w-24 h-24" />
+                  </motion.div>
+                  <motion.div 
+                    className="absolute top-3 left-3 opacity-[0.04]"
+                    animate={{ rotate: [0, -8, 8, 0] }}
+                    transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+                  >
+                    <Tag className="w-12 h-12" />
+                  </motion.div>
+
+                  {/* Header with icon */}
+                  <div className="flex items-center gap-2.5 mb-3 relative z-10">
+                    <motion.div 
+                      className="w-8 h-8 rounded-lg bg-violet-500/20 flex items-center justify-center text-violet-400"
+                      animate={{ y: [0, -2, 0], scale: [1, 1.06, 1] }}
+                      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                    >
+                      <Tag className="w-4 h-4" />
+                    </motion.div>
+                    <span className="font-bold text-sm">Tags</span>
                   </div>
 
+                  {/* Input row */}
                   <div className="flex gap-2.5 relative z-10">
                     <motion.div 
                       className="flex-1"
                       initial={{ opacity: 0, x: -12 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.4, type: 'spring', damping: 15 }}
+                      transition={{ delay: 0.5, type: 'spring', damping: 15 }}
                     >
-                      <Input placeholder="Add a tag..." value={tagInput} onChange={(e) => setTagInput(e.target.value)}
+                      <Input placeholder="e.g. homemade, spicy..." value={tagInput} onChange={(e) => setTagInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
-                        className="h-12 rounded-xl bg-background/40 border-0 text-sm placeholder:text-muted-foreground/30 font-medium" />
+                        className="h-12 rounded-xl bg-background/40 border-0 text-sm placeholder:text-muted-foreground/25 font-medium focus:ring-2 focus:ring-violet-500/40 focus:bg-background/60 transition-all duration-200" />
                     </motion.div>
                     <motion.div 
-                      whileTap={{ scale: 0.85 }}
-                      whileHover={{ scale: 1.05 }}
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.45, type: 'spring', damping: 12 }}
+                      whileTap={{ scale: 0.85, rotate: -10 }}
+                      whileHover={{ scale: 1.08 }}
+                      initial={{ opacity: 0, scale: 0.5, rotate: -20 }}
+                      animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                      transition={{ delay: 0.55, type: 'spring', damping: 12 }}
                     >
-                      <Button onClick={handleAddTag} size="icon" className="h-12 w-12 rounded-xl flex-shrink-0 shadow-lg shadow-primary/25">
+                      <Button onClick={handleAddTag} size="icon" className="h-12 w-12 rounded-xl flex-shrink-0 bg-violet-500/80 hover:bg-violet-500 shadow-lg shadow-violet-500/25 text-white">
                         <Plus className="w-5 h-5" />
                       </Button>
                     </motion.div>
                   </div>
 
+                  {/* Tags list */}
                   {tags.length > 0 && (
                     <motion.div 
-                      className="flex flex-wrap gap-2 mt-3 relative z-10"
+                      className="flex flex-wrap gap-2 mt-3.5 relative z-10"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      transition={{ delay: 0.1 }}
                     >
                       {tags.map((tag, i) => (
                         <motion.span
                           key={tag}
-                          initial={{ opacity: 0, scale: 0.6, y: 8 }}
+                          initial={{ opacity: 0, scale: 0.5, y: 10 }}
                           animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.6 }}
-                          transition={{ delay: i * 0.06, type: 'spring', damping: 12, stiffness: 200 }}
-                          whileHover={{ scale: 1.05, y: -2 }}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-br from-primary/20 to-primary/10 text-primary rounded-xl text-xs font-bold border border-primary/25 shadow-sm shadow-primary/10 backdrop-blur-sm"
+                          exit={{ opacity: 0, scale: 0.5 }}
+                          transition={{ delay: i * 0.06, type: 'spring', damping: 12, stiffness: 220 }}
+                          whileHover={{ scale: 1.08, y: -3 }}
+                          whileTap={{ scale: 0.92 }}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-br from-violet-500/25 to-purple-500/15 text-violet-300 rounded-xl text-xs font-bold border border-violet-500/30 shadow-sm shadow-violet-500/10 backdrop-blur-sm"
                         >
                           <Tag className="w-3 h-3" />{tag}
                           <motion.button 
-                            whileTap={{ scale: 0.7 }}
+                            whileTap={{ scale: 0.6, rotate: 90 }}
                             onClick={() => handleRemoveTag(tag)} 
                             className="ml-1 hover:text-destructive transition-colors"
                           >
