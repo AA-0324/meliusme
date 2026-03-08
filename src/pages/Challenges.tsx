@@ -1,24 +1,18 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Target, Trophy, CheckCircle2, Circle, ChevronRight, Zap } from 'lucide-react';
+import { Target, Trophy, CheckCircle2, Circle, ChevronRight, Zap, Gift, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { REFLECTION_QUESTIONS, saveLastReflection, getLastReflection, getDailyChallenges, getXPData, getLastWeekNumber, getLastWeekStart, XPData, ReflectionData } from '@/lib/streaks';
+import { REFLECTION_QUESTIONS, saveLastReflection, getDailyChallenges, getLastWeekNumber, getLastWeekStart, ReflectionData } from '@/lib/streaks';
 import { useApp } from '@/contexts/AppContext';
 
 export default function Challenges() {
-  const { currentChallenge, meals, todayWater, settings } = useApp();
+  const { currentChallenge, meals, todayWater, settings, xpData, tempProUnlocks } = useApp();
   const [showReflection, setShowReflection] = useState(false);
-  const [xpData, setXpData] = useState<XPData>({ totalXP: 0, level: 1, xpToNextLevel: 100, currentLevelXP: 0 });
   const [lastReflection, setLastReflection] = useState<ReflectionData | null>(null);
 
   const lastWeekNumber = getLastWeekNumber();
   const lastWeekStart = getLastWeekStart();
   const reflectionQuestion = REFLECTION_QUESTIONS[lastWeekNumber % REFLECTION_QUESTIONS.length];
-
-  useEffect(() => {
-    getXPData().then(setXpData);
-    getLastReflection().then(setLastReflection);
-  }, [meals]);
 
   const hasReflectedLastWeek = lastReflection && lastReflection.weekNumber === lastWeekNumber;
 
@@ -53,6 +47,15 @@ export default function Challenges() {
   };
 
   const xpPercent = xpData.xpToNextLevel > 0 ? (xpData.currentLevelXP / xpData.xpToNextLevel) * 100 : 0;
+  const nextRewardLevel = xpData.level % 2 === 0 ? xpData.level + 2 : xpData.level + 1;
+
+  const formatTimeLeft = (expiresAt: number) => {
+    const ms = expiresAt - Date.now();
+    if (ms <= 0) return 'Expired';
+    const hours = Math.floor(ms / (1000 * 60 * 60));
+    if (hours >= 24) return `${Math.floor(hours / 24)}d ${hours % 24}h left`;
+    return `${hours}h left`;
+  };
 
   return (
     <div className="min-h-screen pb-24">
