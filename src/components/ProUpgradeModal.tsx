@@ -33,7 +33,7 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
-          className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex items-center justify-center overflow-hidden"
+          className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex items-center justify-center overflow-hidden p-8"
           style={{ touchAction: 'none' }}
           onClick={onClose}
           onTouchMove={(e) => e.preventDefault()}
@@ -44,14 +44,14 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
             exit={{ scale: 0.85, opacity: 0, y: 30 }}
             transition={{ type: 'spring', damping: 18, stiffness: 200 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-[380px] mx-4 bg-white/[0.04] border border-white/[0.08] rounded-3xl px-8 py-10 flex flex-col items-center justify-center"
+            className="w-full max-w-[360px] mx-4 my-auto bg-white/[0.04] border border-white/[0.08] rounded-3xl px-7 py-7 flex flex-col items-center"
           >
             {/* Logo */}
             <motion.div
               initial={noMotion ? false : { scale: 0, rotate: -20 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ delay: 0.1, type: 'spring', damping: 12, stiffness: 150 }}
-              className="relative mb-1"
+              className="relative mb-0"
             >
               <motion.div
                 animate={noMotion ? {} : { scale: [1, 1.4, 1], opacity: [0.1, 0.3, 0.1] }}
@@ -61,9 +61,9 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
               <motion.div
                 animate={noMotion ? {} : { y: [0, -4, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                className="relative w-32 h-32 flex items-center justify-center"
+                className="relative w-28 h-28 flex items-center justify-center"
               >
-                <img src={logo} alt="MeliusMe" className="w-28 h-28" />
+                <img src={logo} alt="MeliusMe" className="w-24 h-24" />
               </motion.div>
             </motion.div>
 
@@ -72,7 +72,7 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
               initial={noMotion ? false : { opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, type: 'spring', damping: 15 }}
-              className="text-center mb-8 relative z-10 -mt-4"
+              className="text-center mb-6 relative z-10 -mt-5"
             >
               <h2 className="text-3xl font-extrabold text-white">
                 MeliusMe <span className="text-primary">Pro</span>
@@ -80,7 +80,7 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
             </motion.div>
 
             {/* Features */}
-            <div className="w-full space-y-3.5 mb-10">
+            <div className="w-full space-y-3 mb-7">
               {proFeatures.map((feature, index) => (
                 <motion.div
                   key={feature.text}
