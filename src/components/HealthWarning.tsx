@@ -32,6 +32,7 @@ interface HealthWarningProps {
   mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   compact?: boolean;
   userGoals?: Goals;
+  isLogged?: boolean;
 }
 
 // Meal distribution ratios
