@@ -113,9 +113,14 @@ export default function Profile() {
   };
 
   const handleSaveName = async () => {
-    const validation = validateName(nameInput);
+    const trimmed = nameInput.trim();
+    if (trimmed === (userProfile?.name || '')) {
+      setIsEditingName(false);
+      return;
+    }
+    const validation = validateName(trimmed);
     if (!validation.valid) { toast.error(validation.error); return; }
-    await setUserName(nameInput.trim());
+    await setUserName(trimmed);
     setIsEditingName(false);
     toast.success('Profile updated!');
   };

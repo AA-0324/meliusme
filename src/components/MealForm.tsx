@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Tag } from 'lucide-react';
+import { X, Plus, Tag, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -141,87 +141,110 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
       <AnimatePresence>
         {open && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-background flex flex-col overflow-hidden">
-            <div className="relative h-32 bg-black flex-shrink-0">
-              {photo && <img src={photo} alt="Meal" className="w-full h-full object-cover opacity-70" />}
-              <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/50" />
-              <Button variant="ghost" size="icon" onClick={onClose} className="absolute top-3 left-3 text-white hover:bg-white/10 rounded-full safe-top">
-                <X className="w-6 h-6" />
-              </Button>
-              <h1 className="absolute top-3 left-1/2 -translate-x-1/2 text-white font-bold text-lg safe-top">Log Meal</h1>
+            {/* Header with photo preview */}
+            <div className="relative flex-shrink-0">
+              {/* Photo strip */}
+              <div className="relative h-28 bg-black overflow-hidden">
+                {photo && <img src={photo} alt="Meal" className="w-full h-full object-cover opacity-60" />}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-background" />
+              </div>
+
+              {/* Navigation bar overlaid */}
+              <div className="absolute top-0 left-0 right-0 safe-top flex items-center justify-between px-4 pt-3">
+                <motion.button
+                  whileTap={{ scale: 0.85 }}
+                  onClick={onClose}
+                  className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center"
+                >
+                  <ChevronLeft className="w-5 h-5 text-white" />
+                </motion.button>
+                <h1 className="text-white font-bold text-base">Log Meal</h1>
+                <div className="w-9" />
+              </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-4 flex flex-col">
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
-                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Meal Type</Label>
+            {/* Scrollable form content */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 pt-4 pb-4 space-y-5">
+              {/* Meal Type */}
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 block">Meal Type</Label>
                 <div className="grid grid-cols-4 gap-2">
                   {mealTypes.map(({ value, label }) => {
                     const isAvailable = availableMealTypes.includes(value);
                     return (
-                      <button key={value} onClick={() => setMealType(value)} disabled={!isAvailable}
-                        className={`py-2.5 px-2 rounded-xl font-semibold text-xs transition-all border ${
-                          mealType === value ? 'bg-primary text-primary-foreground shadow-neon border-primary'
-                          : isAvailable ? 'bg-secondary/50 text-secondary-foreground hover:bg-secondary border-border/50'
-                          : 'bg-muted/30 text-muted-foreground/50 border-border/30 cursor-not-allowed'
-                        }`}>
+                      <motion.button
+                        key={value}
+                        whileTap={isAvailable ? { scale: 0.92 } : {}}
+                        onClick={() => isAvailable && setMealType(value)}
+                        disabled={!isAvailable}
+                        className={`py-2.5 rounded-xl font-semibold text-xs transition-all ${
+                          mealType === value
+                            ? 'bg-primary text-primary-foreground shadow-md'
+                            : isAvailable
+                              ? 'bg-secondary text-secondary-foreground active:bg-secondary/70'
+                              : 'bg-muted/20 text-muted-foreground/40 cursor-not-allowed'
+                        }`}
+                      >
                         {label}
-                      </button>
+                      </motion.button>
                     );
                   })}
                 </div>
               </motion.div>
 
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="space-y-2">
-                <Label htmlFor="calories" className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                  Calories <span className="text-destructive">*</span>
-                </Label>
-                <Input id="calories" type="number" inputMode="numeric" min="0" max="5000" value={calories}
-                  onChange={(e) => setCalories(e.target.value)} className="h-12 text-lg rounded-xl bg-secondary/50 border-border/50 font-semibold" />
+              {/* Nutrition Fields */}
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+                className="space-y-4">
+                <div>
+                  <Label htmlFor="calories" className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">
+                    Calories <span className="text-destructive">*</span>
+                  </Label>
+                  <Input id="calories" type="number" inputMode="numeric" min="0" max="5000" value={calories}
+                    onChange={(e) => setCalories(e.target.value)}
+                    placeholder="0"
+                    className="h-12 text-lg rounded-xl bg-secondary border-0 font-semibold placeholder:text-muted-foreground/30" />
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <Label htmlFor="protein" className="text-[10px] font-bold text-muted-foreground uppercase mb-1 block">
+                      Protein (g) <span className="text-destructive">*</span>
+                    </Label>
+                    <Input id="protein" type="number" inputMode="numeric" min="0" max="200" value={protein}
+                      onChange={(e) => setProtein(e.target.value)}
+                      placeholder="0"
+                      className="h-11 rounded-xl bg-secondary border-0 placeholder:text-muted-foreground/30" />
+                  </div>
+                  <div>
+                    <Label htmlFor="fiber" className="text-[10px] font-bold text-muted-foreground uppercase mb-1 block">
+                      Fiber (g) <span className="text-destructive">*</span>
+                    </Label>
+                    <Input id="fiber" type="number" inputMode="numeric" min="0" max="100" value={fiber}
+                      onChange={(e) => setFiber(e.target.value)}
+                      placeholder="0"
+                      className="h-11 rounded-xl bg-secondary border-0 placeholder:text-muted-foreground/30" />
+                  </div>
+                  <div>
+                    <Label htmlFor="sugar" className="text-[10px] font-bold text-muted-foreground uppercase mb-1 block">
+                      Sugar (g) <span className="text-destructive">*</span>
+                    </Label>
+                    <Input id="sugar" type="number" inputMode="numeric" min="0" max="300" value={sugar}
+                      onChange={(e) => setSugar(e.target.value)}
+                      placeholder="0"
+                      className="h-11 rounded-xl bg-secondary border-0 placeholder:text-muted-foreground/30" />
+                  </div>
+                </div>
               </motion.div>
 
-              {isPro ? (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-3 gap-2">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="protein" className="text-[10px] font-bold text-muted-foreground uppercase">Protein (g) <span className="text-destructive">*</span></Label>
-                    <Input id="protein" type="number" inputMode="numeric" min="0" max="200" value={protein}
-                      onChange={(e) => setProtein(e.target.value)} className="h-11 rounded-xl bg-secondary/50 border-border/50" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="fiber" className="text-[10px] font-bold text-muted-foreground uppercase">Fiber (g) <span className="text-destructive">*</span></Label>
-                    <Input id="fiber" type="number" inputMode="numeric" min="0" max="100" value={fiber}
-                      onChange={(e) => setFiber(e.target.value)} className="h-11 rounded-xl bg-secondary/50 border-border/50" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="sugar" className="text-[10px] font-bold text-muted-foreground uppercase">Sugar (g) <span className="text-destructive">*</span></Label>
-                    <Input id="sugar" type="number" inputMode="numeric" min="0" max="300" value={sugar}
-                      onChange={(e) => setSugar(e.target.value)} className="h-11 rounded-xl bg-secondary/50 border-border/50" />
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="space-y-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="protein" className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Protein (g) <span className="text-destructive">*</span></Label>
-                    <Input id="protein" type="number" inputMode="numeric" min="0" max="200" value={protein}
-                      onChange={(e) => setProtein(e.target.value)} className="h-12 rounded-xl bg-secondary/50 border-border/50" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="fiber" className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Fiber (g) <span className="text-destructive">*</span></Label>
-                    <Input id="fiber" type="number" inputMode="numeric" min="0" max="100" value={fiber}
-                      onChange={(e) => setFiber(e.target.value)} className="h-12 rounded-xl bg-secondary/50 border-border/50" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="sugar" className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Sugar (g) <span className="text-destructive">*</span></Label>
-                    <Input id="sugar" type="number" inputMode="numeric" min="0" max="300" value={sugar}
-                      onChange={(e) => setSugar(e.target.value)} className="h-12 rounded-xl bg-secondary/50 border-border/50" />
-                  </div>
-                </motion.div>
-              )}
-
+              {/* Validation errors */}
               {sanityValidation && !sanityValidation.valid && (
-                <div className="text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-xl p-3">
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                  className="text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-xl p-3">
                   {sanityValidation.errors[0]}
-                </div>
+                </motion.div>
               )}
 
+              {/* Health warnings */}
               {showWarnings && (
                 <>
                   <HealthWarning calories={parseInt(calories, 10) || 0} protein={protein ? parseInt(protein, 10) : undefined}
@@ -233,21 +256,22 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                 </>
               )}
 
+              {/* Custom Tags (Pro) */}
               {isPro && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="space-y-2">
-                  <Label className="text-[10px] font-bold text-muted-foreground uppercase">Custom Tags</Label>
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+                  <Label className="text-[10px] font-bold text-muted-foreground uppercase mb-1.5 block">Custom Tags</Label>
                   <div className="flex gap-2">
                     <Input placeholder="Add a tag..." value={tagInput} onChange={(e) => setTagInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
-                      className="h-11 rounded-xl bg-secondary/50 border-border/50 flex-1" />
+                      className="h-11 rounded-xl bg-secondary border-0 flex-1" />
                     <Button onClick={handleAddTag} size="icon" className="h-11 w-11 rounded-xl flex-shrink-0">
                       <Plus className="w-5 h-5" />
                     </Button>
                   </div>
                   {tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2 mt-2">
                       {tags.map((tag) => (
-                        <span key={tag} className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/15 text-primary rounded-lg text-sm font-medium border border-primary/20">
+                        <span key={tag} className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/15 text-primary rounded-lg text-xs font-medium border border-primary/20">
                           <Tag className="w-3 h-3" />{tag}
                           <button onClick={() => handleRemoveTag(tag)} className="ml-1 hover:text-destructive"><X className="w-3 h-3" /></button>
                         </span>
@@ -256,14 +280,16 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                   )}
                 </motion.div>
               )}
-              <div className="flex-1" />
             </div>
 
-            <div className="p-4 safe-bottom bg-background border-t border-border/50 flex-shrink-0">
-              <Button onClick={handleSubmit} disabled={!calories || !protein || !fiber || !sugar || isSubmitting}
-                className="w-full h-12 text-base rounded-xl font-bold shadow-neon">
-                {isSubmitting ? 'Saving...' : 'Save Meal'}
-              </Button>
+            {/* Fixed bottom save button */}
+            <div className="p-4 safe-bottom bg-background/95 backdrop-blur-sm border-t border-border/30 flex-shrink-0">
+              <motion.div whileTap={{ scale: 0.96 }}>
+                <Button onClick={handleSubmit} disabled={!calories || !protein || !fiber || !sugar || isSubmitting}
+                  className="w-full h-12 text-base rounded-xl font-bold shadow-neon gradient-primary">
+                  {isSubmitting ? 'Saving...' : 'Save Meal'}
+                </Button>
+              </motion.div>
             </div>
           </motion.div>
         )}

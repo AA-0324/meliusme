@@ -94,7 +94,7 @@ export default function Challenges() {
             />
           </div>
           <p className="text-[10px] text-muted-foreground mt-2">
-            Next reward at Level {nextRewardLevel} 🎁
+            Next reward at Level {nextRewardLevel}
           </p>
         </motion.div>
 

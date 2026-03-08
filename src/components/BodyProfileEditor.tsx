@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Scale, Ruler, Calendar, User2, Target, Sparkles, AlertTriangle, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -40,7 +40,7 @@ export function BodyProfileEditor({ open, onClose }: BodyProfileEditorProps) {
   const [weightLbs, setWeightLbs] = useState('');
   const [weightKg, setWeightKg] = useState(bodyProfile?.weightKg?.toString() || '');
   
-  const [sex, setSex] = useState<'male' | 'female' | 'prefer_not_to_say'>(bodyProfile?.sex || 'prefer_not_to_say');
+  const [sex, setSex] = useState<'male' | 'female'>(bodyProfile?.sex === 'male' || bodyProfile?.sex === 'female' ? bodyProfile.sex : 'male');
   const [goal, setGoal] = useState<'bulking' | 'cutting' | 'maintain'>(bodyProfile?.goal || 'maintain');
   
   const [showAutoGoals, setShowAutoGoals] = useState(false);
@@ -51,7 +51,7 @@ export function BodyProfileEditor({ open, onClose }: BodyProfileEditorProps) {
     if (bodyProfile) {
       setAge(bodyProfile.age?.toString() || '');
       setUseImperial(bodyProfile.useImperial ?? true);
-      setSex(bodyProfile.sex || 'prefer_not_to_say');
+      setSex(bodyProfile.sex === 'male' || bodyProfile.sex === 'female' ? bodyProfile.sex : 'male');
       setGoal(bodyProfile.goal || 'maintain');
       
       if (bodyProfile.heightCm) {
@@ -68,12 +68,62 @@ export function BodyProfileEditor({ open, onClose }: BodyProfileEditorProps) {
     }
   }, [bodyProfile, open]);
 
+  const hasChanges = useMemo(() => {
+    const currentAge = bodyProfile?.age?.toString() || '';
+    const currentHeightCm = bodyProfile?.heightCm?.toString() || '';
+    const currentWeightKg = bodyProfile?.weightKg?.toString() || '';
+    const currentSex = bodyProfile?.sex === 'male' || bodyProfile?.sex === 'female' ? bodyProfile.sex : 'male';
+    const currentGoal = bodyProfile?.goal || 'maintain';
+    const currentUseImperial = bodyProfile?.useImperial ?? true;
+
+    if (age !== currentAge) return true;
+    if (sex !== currentSex) return true;
+    if (goal !== currentGoal) return true;
+    if (useImperial !== currentUseImperial) return true;
+
+    if (useImperial) {
+      if (bodyProfile?.heightCm) {
+        const { feet: origFeet, inches: origInches } = cmToFeet(bodyProfile.heightCm);
+        if (heightFeet !== origFeet.toString() || heightInches !== origInches.toString()) return true;
+      } else {
+        if (heightFeet || heightInches) return true;
+      }
+      if (bodyProfile?.weightKg) {
+        if (weightLbs !== kgToLbs(bodyProfile.weightKg).toString()) return true;
+      } else {
+        if (weightLbs) return true;
+      }
+    } else {
+      if (heightCm !== currentHeightCm) return true;
+      if (weightKg !== currentWeightKg) return true;
+    }
+
+    return false;
+  }, [age, sex, goal, useImperial, heightFeet, heightInches, heightCm, weightLbs, weightKg, bodyProfile]);
+
   const handleSaveProfile = () => {
+    if (!age.trim()) { toast.error('Age is required'); return; }
     const ageNum = parseInt(age, 10);
-    if (age && (isNaN(ageNum) || ageNum < 13 || ageNum > 120)) {
+    if (isNaN(ageNum) || ageNum < 13 || ageNum > 120) {
       toast.error('Please enter a valid age (13-120)');
       return;
     }
+
+    // Validate height
+    if (useImperial) {
+      if (!heightFeet && !heightInches) { toast.error('Height is required'); return; }
+    } else {
+      if (!heightCm) { toast.error('Height is required'); return; }
+    }
+
+    // Validate weight
+    if (useImperial) {
+      if (!weightLbs) { toast.error('Weight is required'); return; }
+    } else {
+      if (!weightKg) { toast.error('Weight is required'); return; }
+    }
+
+    if (!hasChanges) { onClose(); return; }
 
     let heightCmValue: number | undefined;
     let weightKgValue: number | undefined;
@@ -81,22 +131,14 @@ export function BodyProfileEditor({ open, onClose }: BodyProfileEditorProps) {
     if (useImperial) {
       const feet = parseInt(heightFeet, 10) || 0;
       const inches = parseInt(heightInches, 10) || 0;
-      if (feet > 0 || inches > 0) {
-        heightCmValue = feetToCm(feet, inches);
-      }
+      if (feet > 0 || inches > 0) heightCmValue = feetToCm(feet, inches);
       const lbs = parseFloat(weightLbs);
-      if (!isNaN(lbs) && lbs > 0) {
-        weightKgValue = lbsToKg(lbs);
-      }
+      if (!isNaN(lbs) && lbs > 0) weightKgValue = lbsToKg(lbs);
     } else {
       const cm = parseFloat(heightCm);
-      if (!isNaN(cm) && cm > 0) {
-        heightCmValue = cm;
-      }
+      if (!isNaN(cm) && cm > 0) heightCmValue = cm;
       const kg = parseFloat(weightKg);
-      if (!isNaN(kg) && kg > 0) {
-        weightKgValue = kg;
-      }
+      if (!isNaN(kg) && kg > 0) weightKgValue = kg;
     }
 
     const profile: Partial<BodyProfile> = {
@@ -111,7 +153,6 @@ export function BodyProfileEditor({ open, onClose }: BodyProfileEditorProps) {
     updateBodyProfile(profile);
     toast.success('Body profile saved!');
 
-    // Check if we can generate auto goals
     if (isPro && isBodyProfileComplete({ ...bodyProfile, ...profile } as BodyProfile)) {
       const goals = generateAutoGoals({ ...bodyProfile, ...profile } as BodyProfile);
       if (goals) {
@@ -248,8 +289,8 @@ export function BodyProfileEditor({ open, onClose }: BodyProfileEditorProps) {
                 <User2 className="w-5 h-5 text-primary" />
                 <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Sex</Label>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                {(['male', 'female', 'prefer_not_to_say'] as const).map((option) => (
+              <div className="grid grid-cols-2 gap-2">
+                {(['male', 'female'] as const).map((option) => (
                   <button
                     key={option}
                     onClick={() => setSex(option)}
@@ -259,7 +300,7 @@ export function BodyProfileEditor({ open, onClose }: BodyProfileEditorProps) {
                         : 'bg-secondary/50 text-secondary-foreground border-border/50 hover:bg-secondary'
                     }`}
                   >
-                    {option === 'prefer_not_to_say' ? 'Skip' : option.charAt(0).toUpperCase() + option.slice(1)}
+                    {option.charAt(0).toUpperCase() + option.slice(1)}
                   </button>
                 ))}
               </div>
@@ -311,7 +352,7 @@ export function BodyProfileEditor({ open, onClose }: BodyProfileEditorProps) {
 
           {/* Save Button */}
           <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border/50 safe-bottom">
-            <Button onClick={handleSaveProfile} className="w-full h-12 rounded-xl font-bold">
+            <Button onClick={handleSaveProfile} disabled={!hasChanges && !!bodyProfile?.goal} className="w-full h-12 rounded-xl font-bold">
               Save Profile
             </Button>
           </div>

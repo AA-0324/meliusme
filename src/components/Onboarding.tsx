@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, ChevronRight, ArrowRight, Sparkles, ShieldCheck } from 'lucide-react';
+import { Camera, ChevronRight, ArrowRight, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useApp } from '@/contexts/AppContext';
@@ -14,7 +14,7 @@ interface OnboardingProps {
 }
 
 export function Onboarding({ onComplete }: OnboardingProps) {
-  const { setUserName, setUserAvatar, isPro } = useApp();
+  const { setUserName, setUserAvatar } = useApp();
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState<string | null>(null);
@@ -39,7 +39,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       return; 
     }
     setNameError('');
-    // Await the async setUserName to ensure it saves
     await setUserName(name.trim());
     if (avatar) await setUserAvatar(avatar);
     setStep(2);
@@ -142,7 +141,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 className="flex items-start gap-2.5 p-3 rounded-xl bg-primary/5 border border-primary/10 mb-6">
                 <ShieldCheck className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Your name stays on your device only. We don't collect, store, or share any personal data. It's just here to make the app feel more personal.
+                  Your name is stored locally on this device only and is never collected or shared. It is used solely to personalize your experience.
                 </p>
               </motion.div>
 

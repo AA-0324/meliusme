@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { MotionConfig } from 'framer-motion';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -51,13 +52,21 @@ const GlobalLevelUpModal = () => {
   );
 };
 
+const AnimationWrapper = ({ children }: { children: React.ReactNode }) => {
+  const { animationsEnabled } = useApp();
+  return (
+    <MotionConfig reducedMotion={animationsEnabled ? 'never' : 'always'}>
+      {children}
+    </MotionConfig>
+  );
+};
+
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   const handleSplashComplete = () => {
     setShowSplash(false);
-    // Check if user has been onboarded
     const onboarded = localStorage.getItem('meliusme-onboarded');
     if (!onboarded) {
       setShowOnboarding(true);
@@ -68,32 +77,33 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AppProvider>
-          <Toaster />
-          <Sonner />
-          <SplashScreen show={showSplash} onComplete={handleSplashComplete} />
-          {showOnboarding && <Onboarding onComplete={() => setShowOnboarding(false)} />}
-          <GlobalBottomToast />
-          <GlobalLevelUpModal />
-          <BrowserRouter>
-            <ForceHomeOnLoad />
-            <ScrollToTop />
-            <div className="min-h-screen bg-background overflow-x-hidden">
-              {/* Global Profile Button */}
-              <div className="fixed top-4 right-4 z-40 safe-top">
-                <ProfileButton />
+          <AnimationWrapper>
+            <Toaster />
+            <Sonner />
+            <SplashScreen show={showSplash} onComplete={handleSplashComplete} />
+            {showOnboarding && <Onboarding onComplete={() => setShowOnboarding(false)} />}
+            <GlobalBottomToast />
+            <GlobalLevelUpModal />
+            <BrowserRouter>
+              <ForceHomeOnLoad />
+              <ScrollToTop />
+              <div className="min-h-screen bg-background overflow-x-hidden">
+                <div className="fixed top-4 right-4 z-40 safe-top">
+                  <ProfileButton />
+                </div>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/log" element={<Log />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/challenges" element={<Challenges />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+                <BottomNav />
               </div>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/log" element={<Log />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/challenges" element={<Challenges />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-              <BottomNav />
-            </div>
-          </BrowserRouter>
+            </BrowserRouter>
+          </AnimationWrapper>
         </AppProvider>
       </TooltipProvider>
     </QueryClientProvider>
