@@ -94,7 +94,7 @@ export function LevelUpModal({ open, level, reward, onClose }: LevelUpModalProps
                   <p className="font-bold text-base mb-1">{reward.featureName}</p>
                   <p className="text-sm text-muted-foreground mb-3">{reward.featureDescription}</p>
 
-                  <div className="flex items-center gap-1.5 text-amber-500">
+                  <div className="flex items-center gap-1.5 text-primary">
                     <Sparkles className="w-3.5 h-3.5" />
                     <span className="text-xs font-semibold">Available for {durationLabel}</span>
                   </div>
