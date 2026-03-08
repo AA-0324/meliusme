@@ -337,8 +337,8 @@ export function HealthWarning({ calories, protein, fiber, sugar, mealType, compa
 }
 
 // Component to show positive feedback
-export function HealthPositive({ calories, protein, fiber, sugar, mealType, userGoals }: Omit<HealthWarningProps, 'compact'>) {
-  const warnings = getHealthWarnings(calories, protein, fiber, sugar, mealType, userGoals);
+export function HealthPositive({ calories, protein, fiber, sugar, mealType, userGoals, isLogged }: Omit<HealthWarningProps, 'compact'>) {
+  const warnings = getHealthWarnings(calories, protein, fiber, sugar, mealType, userGoals, undefined, { isLogged });
   const hasWarnings = hasAnyWarning(warnings);
   const hasPositives = hasAnyPositive(warnings);
   
