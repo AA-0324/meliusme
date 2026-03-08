@@ -311,7 +311,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                           value={values[field.key]}
                           onChange={(e) => setters[field.key](e.target.value)}
                           placeholder="0"
-                          className="h-11 text-xl rounded-lg bg-background/40 border-0 font-extrabold placeholder:text-muted-foreground/20 text-center"
+                          className="h-11 text-xl rounded-lg bg-background/40 border-0 font-extrabold placeholder:text-muted-foreground/20 text-center focus:ring-2 focus:ring-primary/40 focus:bg-background/60 transition-all duration-200"
                         />
                         <span className="text-[9px] text-muted-foreground/60 block text-center mt-1">grams</span>
                       </motion.div>
