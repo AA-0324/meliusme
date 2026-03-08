@@ -214,7 +214,7 @@ export function getHealthWarnings(
     if (fiber < thresholds.minFiber && mealType !== 'snack') {
       warnings.lowFiber = true;
       warnings.messages.push(`Low fiber for ${mealType} (${fiber}g)`);
-    } else if (fiber > thresholds.maxFiber) {
+    } else if (fiber > thresholds.maxFiber && !isLogged) {
       warnings.highFiber = true;
       warnings.messages.push(`Very high fiber (${fiber}g) - may cause discomfort`);
     } else if (fiber >= thresholds.minFiber) {
