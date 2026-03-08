@@ -102,11 +102,11 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
                     transition={{ delay: 0.25 + index * 0.05 }}
                     className="flex items-center gap-2.5"
                   >
-                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/10 flex items-center justify-center flex-shrink-0 border border-amber-500/15">
-                      <feature.icon className="w-3.5 h-3.5 text-amber-400" />
+                    <div className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center flex-shrink-0 border border-primary/20">
+                      <feature.icon className="w-3.5 h-3.5 text-primary" />
                     </div>
                     <span className="text-white/80 text-xs font-medium flex-1">{feature.text}</span>
-                    <Check className="w-3.5 h-3.5 text-amber-400/70 flex-shrink-0" />
+                    <Check className="w-3.5 h-3.5 text-primary/70 flex-shrink-0" />
                   </motion.div>
                 ))}
               </div>
