@@ -61,7 +61,6 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[100] bg-background flex flex-col"
-          onClick={onClose}
         >
           <motion.div
             initial={{ y: '100%' }}
