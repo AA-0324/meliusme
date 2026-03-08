@@ -224,7 +224,7 @@ export function getHealthWarnings(
   
   // === SUGAR CHECKS ===
   if (sugar !== undefined) {
-    if (sugar > thresholds.maxSugar) {
+    if (sugar > thresholds.maxSugar && !isLogged) {
       warnings.highSugar = true;
       if (goal === 'cutting') {
         warnings.messages.push(`High sugar while cutting (${sugar}g > ${thresholds.maxSugar}g)`);
