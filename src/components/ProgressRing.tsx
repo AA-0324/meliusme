@@ -101,6 +101,17 @@ export function ProgressRing({
             cy={size / 2 + radius * Math.sin((2 * Math.PI * progress / 100) - Math.PI / 2)}
             r={strokeWidth / 2 + 2}
             fill={getColor()}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ 
+              scale: [1, 1.4, 1], 
+              opacity: [0.8, 1, 0.8],
+            }}
+            transition={{ 
+              delay: 1.2,
+              duration: 1.5,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
           />
         )}
       </svg>
