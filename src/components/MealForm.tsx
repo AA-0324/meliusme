@@ -342,35 +342,69 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
 
               {/* Custom Tags (Pro) */}
               {isPro && (
-                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 block">
-                    Custom Tags
-                  </Label>
-                  <div className="flex gap-2.5">
-                    <Input placeholder="Add a tag..." value={tagInput} onChange={(e) => setTagInput(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
-                      className="h-12 rounded-xl bg-secondary/80 border border-border/30 flex-1 text-sm placeholder:text-muted-foreground/40" />
-                    <motion.div whileTap={{ scale: 0.9 }}>
-                      <Button onClick={handleAddTag} size="icon" className="h-12 w-12 rounded-xl flex-shrink-0 shadow-lg shadow-primary/20">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  transition={{ delay: 0.35, type: 'spring', damping: 18 }}
+                  className="relative rounded-2xl p-4 border bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-primary/20 overflow-hidden"
+                >
+                  {/* Background decorative element */}
+                  <div className="absolute -bottom-2 -right-2 opacity-[0.06]">
+                    <Tag className="w-20 h-20" />
+                  </div>
+
+                  <div className="flex gap-2.5 relative z-10">
+                    <motion.div 
+                      className="flex-1"
+                      initial={{ opacity: 0, x: -12 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.4, type: 'spring', damping: 15 }}
+                    >
+                      <Input placeholder="Add a tag..." value={tagInput} onChange={(e) => setTagInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
+                        className="h-12 rounded-xl bg-background/40 border-0 text-sm placeholder:text-muted-foreground/30 font-medium" />
+                    </motion.div>
+                    <motion.div 
+                      whileTap={{ scale: 0.85 }}
+                      whileHover={{ scale: 1.05 }}
+                      initial={{ opacity: 0, scale: 0.5 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.45, type: 'spring', damping: 12 }}
+                    >
+                      <Button onClick={handleAddTag} size="icon" className="h-12 w-12 rounded-xl flex-shrink-0 shadow-lg shadow-primary/25">
                         <Plus className="w-5 h-5" />
                       </Button>
                     </motion.div>
                   </div>
+
                   {tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-3">
+                    <motion.div 
+                      className="flex flex-wrap gap-2 mt-3 relative z-10"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.1 }}
+                    >
                       {tags.map((tag, i) => (
                         <motion.span
                           key={tag}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: i * 0.05, type: 'spring', damping: 15 }}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-br from-primary/15 to-primary/5 text-primary rounded-xl text-xs font-semibold border border-primary/20 shadow-sm"
+                          initial={{ opacity: 0, scale: 0.6, y: 8 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.6 }}
+                          transition={{ delay: i * 0.06, type: 'spring', damping: 12, stiffness: 200 }}
+                          whileHover={{ scale: 1.05, y: -2 }}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-br from-primary/20 to-primary/10 text-primary rounded-xl text-xs font-bold border border-primary/25 shadow-sm shadow-primary/10 backdrop-blur-sm"
                         >
                           <Tag className="w-3 h-3" />{tag}
-                          <button onClick={() => handleRemoveTag(tag)} className="ml-1 hover:text-destructive transition-colors"><X className="w-3 h-3" /></button>
+                          <motion.button 
+                            whileTap={{ scale: 0.7 }}
+                            onClick={() => handleRemoveTag(tag)} 
+                            className="ml-1 hover:text-destructive transition-colors"
+                          >
+                            <X className="w-3 h-3" />
+                          </motion.button>
                         </motion.span>
                       ))}
-                    </div>
+                    </motion.div>
                   )}
                 </motion.div>
               )}
