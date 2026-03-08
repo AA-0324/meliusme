@@ -325,7 +325,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             setTempProUnlocks(await getTempProUnlocks());
           }
         }
-        showBottomToast(`Challenge complete: ${c.title} (+${c.xp} XP)`, 'success');
+        showBottomToast(`${c.title} — Complete! +${c.xp} XP`, 'challenge');
       }
     }
   }, [settings.waterGoal, settings.goals, isPro, getAwardedChallenges, markChallengeAwarded, showBottomToast]);
