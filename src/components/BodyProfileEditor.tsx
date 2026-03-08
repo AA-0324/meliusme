@@ -40,7 +40,7 @@ export function BodyProfileEditor({ open, onClose }: BodyProfileEditorProps) {
   const [weightLbs, setWeightLbs] = useState('');
   const [weightKg, setWeightKg] = useState(bodyProfile?.weightKg?.toString() || '');
   
-  const [sex, setSex] = useState<'male' | 'female' | 'prefer_not_to_say'>(bodyProfile?.sex || 'prefer_not_to_say');
+  const [sex, setSex] = useState<'male' | 'female'>(bodyProfile?.sex === 'male' || bodyProfile?.sex === 'female' ? bodyProfile.sex : 'male');
   const [goal, setGoal] = useState<'bulking' | 'cutting' | 'maintain'>(bodyProfile?.goal || 'maintain');
   
   const [showAutoGoals, setShowAutoGoals] = useState(false);
