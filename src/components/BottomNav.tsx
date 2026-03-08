@@ -49,7 +49,7 @@ export function BottomNav() {
         {/* Single persistent indicator — never unmounts */}
         {indicatorStyle && (
           <motion.div
-            className={`absolute top-1/2 h-[calc(100%-18px)] bg-primary/15 rounded-2xl ${animationsEnabled ? 'animate-glow-pulse' : ''}`}
+            className={`absolute top-1/2 h-[calc(100%-14px)] bg-primary/15 rounded-2xl ${animationsEnabled ? 'animate-glow-pulse' : ''}`}
             initial={false}
             animate={{
               left: indicatorStyle.left - indicatorStyle.width / 2,
@@ -71,7 +71,7 @@ export function BottomNav() {
               key={to}
               to={to}
               end={to === '/'}
-              className="flex items-center justify-center flex-1 pt-3"
+              className="flex items-center justify-center flex-1"
             >
               <div
                 ref={(el) => { navRefs.current[index] = el; }}
