@@ -160,7 +160,7 @@ export default function Dashboard() {
                 )}
                 {settings.goals.fiber && (
                   <motion.div 
-                    className="flex flex-col items-center gap-1.5"
+                    className="flex flex-col items-center gap-1.5 min-w-0 overflow-hidden"
                     initial={noMotion ? false : { scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.4, type: 'spring', damping: 10 }}
