@@ -172,7 +172,15 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
     <>
       <AnimatePresence>
         {open && (
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 30 }} transition={{ type: 'spring', damping: 22, stiffness: 260 }} className="fixed inset-0 z-[100] bg-background flex flex-col overflow-hidden" style={{ overscrollBehavior: 'none', touchAction: 'none' }}>
+          <>
+          {/* Opaque backdrop to fully hide everything behind */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[99] bg-background"
+          />
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 30 }} transition={{ type: 'spring', damping: 22, stiffness: 260 }} className="fixed inset-0 z-[100] bg-background flex flex-col overflow-hidden" style={{ overscrollBehavior: 'none' }}>
             {/* Hero photo header */}
             <div className="relative flex-shrink-0">
               <div className="relative h-44 bg-black overflow-hidden">
@@ -510,6 +518,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
               </motion.div>
             </motion.div>
           </motion.div>
+          </>
         )}
       </AnimatePresence>
       <ProUpgradeModal open={showProModal} onClose={() => setShowProModal(false)} />
