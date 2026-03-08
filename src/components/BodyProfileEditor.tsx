@@ -51,7 +51,7 @@ export function BodyProfileEditor({ open, onClose }: BodyProfileEditorProps) {
     if (bodyProfile) {
       setAge(bodyProfile.age?.toString() || '');
       setUseImperial(bodyProfile.useImperial ?? true);
-      setSex(bodyProfile.sex || 'prefer_not_to_say');
+      setSex(bodyProfile.sex === 'male' || bodyProfile.sex === 'female' ? bodyProfile.sex : 'male');
       setGoal(bodyProfile.goal || 'maintain');
       
       if (bodyProfile.heightCm) {
