@@ -168,7 +168,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   </motion.div>
                 </motion.div>
               </div>
-              </motion.div>
             </motion.div>
           )}
 
