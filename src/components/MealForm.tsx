@@ -99,22 +99,24 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
     }
   }, [open, availableMealTypes, mealType, currentHour]);
 
-  // Lock body scroll when meal form is open to prevent background bleed-through
+  // Lock body scroll AND hide background UI when meal form is open
   useEffect(() => {
     if (!open) return;
     const html = document.documentElement;
     const body = document.body;
-    html.style.overflow = 'hidden';
-    body.style.overflow = 'hidden';
+    html.style.overflow = 'clip';
+    body.style.overflow = 'clip';
     body.style.position = 'fixed';
     body.style.inset = '0';
     body.style.width = '100%';
+    body.setAttribute('data-modal-open', 'true');
     return () => {
       html.style.overflow = '';
       body.style.overflow = '';
       body.style.position = '';
       body.style.inset = '';
       body.style.width = '';
+      body.removeAttribute('data-modal-open');
     };
   }, [open]);
 

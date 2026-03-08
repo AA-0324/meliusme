@@ -88,7 +88,7 @@ const App = () => {
               <ForceHomeOnLoad />
               <ScrollToTop />
               <div className="min-h-screen bg-background overflow-x-hidden">
-                <div className="fixed top-4 right-4 z-40 safe-top">
+                <div className="fixed top-4 right-4 z-40 safe-top" data-nav-profile>
                   <ProfileButton />
                 </div>
                 <Routes>

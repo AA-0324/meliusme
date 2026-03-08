@@ -647,3 +647,12 @@
 [data-animations-disabled="true"] .cta-glow { animation: none !important; }
 [data-animations-disabled="true"] .animate-shine::after { animation: none !important; display: none; }
 [data-animations-disabled="true"] .card-interactive:hover { transform: none; }
+
+/* Hide background UI elements when a fullscreen modal is open */
+body[data-modal-open="true"] nav,
+body[data-modal-open="true"] [data-nav-profile] {
+  display: none !important;
+}
+body[data-modal-open="true"] {
+  overscroll-behavior: none !important;
+}
