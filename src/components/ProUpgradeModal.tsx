@@ -111,7 +111,7 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
                 <Crown className="w-4 h-4 mr-2" />
                 Get Pro — $9.99
               </Button>
-              <p className="text-center text-white/30 text-xs mt-3 font-semibold tracking-wide">
+              <p className="text-center text-white text-xs mt-3 font-semibold tracking-wide" style={{ textShadow: '0 0 12px rgba(255,255,255,0.15)' }}>
                 Pay once, yours forever
               </p>
             </motion.div>
