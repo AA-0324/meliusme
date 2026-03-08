@@ -124,7 +124,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try {
         await initEncryption();
         await migrateAllToEncrypted();
-        const [s, profile, body, streakD, challenge, bdgs, allMeals, water] = await Promise.all([
+        const [s, profile, body, streakD, challenge, bdgs, allMeals, water, xp, unlocks] = await Promise.all([
           getSettings(),
           getUserProfile(),
           getBodyProfile(),
@@ -133,11 +133,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           getEarnedBadges(),
           getAllMeals(),
           getWaterIntake(today),
+          getXPData(),
+          getTempProUnlocks(),
         ]);
 
         setSettingsState(s);
         setUserProfile(profile);
         setBodyProfile(body);
+        setXpData(xp);
+        setTempProUnlocks(unlocks);
         setStreak(streakD);
         setBadges(bdgs);
         setMeals(allMeals);
@@ -315,7 +319,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const updatedChallenge = await getCurrentChallenge(updatedMeals);
     setCurrentChallenge(updatedChallenge);
 
-    await addXP(10);
+    const levelResult = await addXP(10, isPro);
+    setXpData(levelResult.xpData);
+    if (levelResult.leveledUp) {
+      setLevelUpPending(levelResult);
+      if (levelResult.reward) {
+        setTempProUnlocks(await getTempProUnlocks());
+      }
+    }
 
     const currentBadges = await getEarnedBadges();
     if (!currentBadges.some(b => b.id === 'first_meal')) {
@@ -395,6 +406,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         updateUserGoals, setWaterGoal: setWaterGoalCb, resetDailyData,
         refreshMeals, logMeal, removeMeal,
         bottomToast, showBottomToast, hideBottomToast,
+        xpData, tempProUnlocks, levelUpPending, dismissLevelUp,
       }}
     >
       {children}
