@@ -62,12 +62,12 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
               </div>
             </motion.div>
 
-            {/* Title */}
+            {/* Title - overlaps logo */}
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="text-center mb-6"
+              className="text-center mb-6 relative z-10 -mt-6"
             >
               <h2 className="text-2xl font-extrabold text-white">
                 MeliusMe <span className="text-primary">Pro</span>
