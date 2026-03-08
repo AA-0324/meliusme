@@ -133,8 +133,10 @@ export function getHealthWarnings(
   sugar: number | undefined,
   mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack',
   userGoals?: Goals,
-  bodyProfile?: BodyProfile | null
+  bodyProfile?: BodyProfile | null,
+  options?: { isLogged?: boolean }
 ): HealthWarnings {
+  const isLogged = options?.isLogged ?? false;
   const { thresholds, goal } = getThresholds(mealType, userGoals, bodyProfile);
   const warnings: HealthWarnings = {
     messages: [],
