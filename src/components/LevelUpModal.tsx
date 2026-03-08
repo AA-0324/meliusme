@@ -80,14 +80,14 @@ export function LevelUpModal({ open, level, reward, onClose }: LevelUpModalProps
                   initial={{ opacity: 0, y: 20, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ delay: 0.5, type: 'spring', damping: 15 }}
-                  className="bg-gradient-to-br from-amber-500/15 to-orange-500/10 border border-amber-500/30 rounded-2xl p-5 text-left"
+                  className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-2xl p-5 text-left"
                 >
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                      <Gift className="w-4 h-4 text-amber-500" />
+                    <div className="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center">
+                      <Gift className="w-4 h-4 text-primary" />
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Pro Feature Unlocked</p>
+                      <p className="text-[10px] font-bold text-primary uppercase tracking-wider">Pro Feature Unlocked</p>
                     </div>
                   </div>
 
