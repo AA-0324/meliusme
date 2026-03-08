@@ -255,7 +255,7 @@ export default function Profile() {
 
         {/* Personalized Goals */}
         <motion.div variants={fadeUp}
-          className={`bg-card rounded-2xl p-4 border border-border/50 ${!isPro ? proGoldBorder : ''}`}>
+          className={`bg-card rounded-2xl p-4 border border-border/50 ${!isPro ? proLocked : ''}`}>
           <div className="flex items-center gap-3">
             <Button 
               onClick={() => {
