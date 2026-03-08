@@ -216,7 +216,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
             {/* Scrollable form content */}
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 pt-5 pb-4 space-y-5 overscroll-contain">
               {/* Meal Type selector */}
-              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08, type: 'spring', damping: 20 }}>
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, type: 'spring', damping: 18, stiffness: 200 }}>
                 <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 block">
                   What are you having?
                 </Label>
@@ -227,14 +227,14 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                     return (
                       <motion.button
                         key={value}
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 + i * 0.05, type: 'spring', damping: 15 }}
-                        whileTap={isAvailable ? { scale: 0.9 } : {}}
-                        whileHover={isAvailable ? { y: -2 } : {}}
+                        initial={{ opacity: 0, y: 16, scale: 0.85 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ delay: 0.15 + i * 0.06, type: 'spring', damping: 14, stiffness: 220 }}
+                        whileTap={isAvailable ? { scale: 0.88 } : {}}
+                        whileHover={isAvailable ? { y: -3, scale: 1.04 } : {}}
                         onClick={() => isAvailable && setMealType(value)}
                         disabled={!isAvailable}
-                        className={`py-3 rounded-xl font-semibold text-xs transition-all flex flex-col items-center gap-1 ${
+                        className={`py-3.5 rounded-xl font-semibold text-xs transition-all flex flex-col items-center gap-1 ${
                           isSelected
                             ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-[1.02]'
                             : isAvailable
