@@ -94,24 +94,19 @@ export function ProgressRing({
           />
         )}
 
-        {/* Rotating dot at the end of progress */}
-        {progress > 0 && progress < 100 && !noMotion && (
-          <motion.circle
-            cx={size / 2 + radius * Math.cos((2 * Math.PI * progress / 100) - Math.PI / 2)}
-            cy={size / 2 + radius * Math.sin((2 * Math.PI * progress / 100) - Math.PI / 2)}
-            r={strokeWidth / 2 + 2}
-            fill={getColor()}
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ 
-              scale: [1, 1.4, 1], 
-              opacity: [0.8, 1, 0.8],
-            }}
-            transition={{ 
-              delay: 1.2,
-              duration: 1.5,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
+        {/* Glow filter for progress arc */}
+        {progress >= 60 && !noMotion && (
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke={getGlowColor()}
+            strokeWidth={strokeWidth + 6}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            style={{ filter: 'blur(6px)' }}
           />
         )}
       </svg>
