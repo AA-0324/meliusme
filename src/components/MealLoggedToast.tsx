@@ -1,8 +1,8 @@
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import { AlertTriangle, Check } from 'lucide-react';
+import { AlertTriangle, Check, Trophy } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
-type ToastVariant = 'primary' | 'success' | 'warning' | 'destructive';
+type ToastVariant = 'primary' | 'success' | 'warning' | 'destructive' | 'challenge';
 
 interface MealLoggedToastProps {
   show: boolean;
@@ -17,21 +17,22 @@ export function MealLoggedToast({ show, onHide, message = 'Meal logged!', varian
   useEffect(() => {
     if (show) {
       if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(onHide, 2500);
+      timerRef.current = setTimeout(onHide, variant === 'challenge' ? 3500 : 2500);
       return () => {
         if (timerRef.current) clearTimeout(timerRef.current);
       };
     }
-  }, [show, message, onHide]);
+  }, [show, message, onHide, variant]);
 
   const variantClasses: Record<ToastVariant, string> = {
     primary: 'bg-primary text-primary-foreground shadow-primary/30',
     success: 'bg-success text-success-foreground shadow-success/30',
     warning: 'bg-warning text-warning-foreground shadow-warning/30',
     destructive: 'bg-destructive text-destructive-foreground shadow-destructive/30',
+    challenge: 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-primary/40 shadow-xl',
   };
 
-  const Icon = variant === 'warning' || variant === 'destructive' ? AlertTriangle : Check;
+  const Icon = variant === 'warning' || variant === 'destructive' ? AlertTriangle : variant === 'challenge' ? Trophy : Check;
 
   const handleDragEnd = (_: any, info: PanInfo) => {
     if (Math.abs(info.offset.y) > 30 || Math.abs(info.offset.x) > 60) {
