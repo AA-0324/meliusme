@@ -352,7 +352,7 @@ export function BodyProfileEditor({ open, onClose }: BodyProfileEditorProps) {
 
           {/* Save Button */}
           <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border/50 safe-bottom">
-            <Button onClick={handleSaveProfile} className="w-full h-12 rounded-xl font-bold">
+            <Button onClick={handleSaveProfile} disabled={!hasChanges && !!bodyProfile?.goal} className="w-full h-12 rounded-xl font-bold">
               Save Profile
             </Button>
           </div>
