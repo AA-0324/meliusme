@@ -430,19 +430,30 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
             </div>
 
             {/* Fixed bottom save button */}
-            <div className="p-4 safe-bottom bg-background/95 backdrop-blur-sm border-t border-border/30 flex-shrink-0">
+            <motion.div 
+              className="p-4 safe-bottom bg-background/95 backdrop-blur-sm border-t border-border/30 flex-shrink-0"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, type: 'spring', damping: 20 }}
+            >
               {/* Mini progress dots */}
               <div className="flex items-center justify-center gap-1.5 mb-3">
-                {['calories', 'protein', 'fiber', 'sugar'].map((key) => (
+                {['calories', 'protein', 'fiber', 'sugar'].map((key, i) => (
                   <motion.div
                     key={key}
                     className={`w-2 h-2 rounded-full transition-colors ${values[key] ? 'bg-primary' : 'bg-muted/40'}`}
-                    animate={values[key] ? { scale: [1, 1.3, 1] } : {}}
-                    transition={{ duration: 0.3 }}
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: values[key] ? [1, 1.4, 1] : 1 }}
+                    transition={{ delay: 0.55 + i * 0.05, type: 'spring', damping: 12 }}
                   />
                 ))}
               </div>
-              <motion.div whileTap={{ scale: 0.96 }}>
+              <motion.div 
+                whileTap={{ scale: 0.96 }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.6, type: 'spring', damping: 16 }}
+              >
                 <Button onClick={handleSubmit} disabled={!calories || !protein || !fiber || !sugar || isSubmitting}
                   className="w-full h-13 text-base rounded-2xl font-bold shadow-neon gradient-primary">
                   {isSubmitting ? (
@@ -454,7 +465,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                   )}
                 </Button>
               </motion.div>
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
