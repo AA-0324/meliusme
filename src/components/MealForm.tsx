@@ -217,8 +217,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 pt-5 pb-4 space-y-5">
               {/* Meal Type selector */}
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08, type: 'spring', damping: 20 }}>
-                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 block flex items-center gap-1.5">
-                  <Sparkles className="w-3 h-3 text-primary" />
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 block">
                   What are you having?
                 </Label>
                 <div className="grid grid-cols-4 gap-2">
