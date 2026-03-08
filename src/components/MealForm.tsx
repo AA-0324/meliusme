@@ -20,11 +20,11 @@ interface MealFormProps {
 
 type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
-const mealTypes: { value: MealType; label: string; emoji: string }[] = [
-  { value: 'breakfast', label: 'Breakfast', emoji: '🌅' },
-  { value: 'lunch', label: 'Lunch', emoji: '☀️' },
-  { value: 'dinner', label: 'Dinner', emoji: '🌙' },
-  { value: 'snack', label: 'Snack', emoji: '🍿' },
+const mealTypes: { value: MealType; label: string }[] = [
+  { value: 'breakfast', label: 'Breakfast' },
+  { value: 'lunch', label: 'Lunch' },
+  { value: 'dinner', label: 'Dinner' },
+  { value: 'snack', label: 'Snack' },
 ];
 
 function getSuggestedMealTypeForHour(hour: number): MealType {
