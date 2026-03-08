@@ -336,11 +336,11 @@ export function BodyProfileEditor({ open, onClose }: BodyProfileEditorProps) {
 
             {/* Pro Feature Notice */}
             {!isPro && (
-              <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-2xl p-4 border border-amber-500/20">
+              <div className="bg-primary/5 rounded-2xl p-4 border border-primary/15">
                 <div className="flex items-start gap-3">
-                  <Sparkles className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <Sparkles className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-semibold text-amber-600 dark:text-amber-400">Pro Feature</p>
+                    <p className="font-semibold text-primary">Pro Feature</p>
                     <p className="text-sm text-muted-foreground mt-1">
                       Upgrade to MeliusMe Pro to get personalized calorie, protein, fiber, and sugar goals based on your profile.
                     </p>

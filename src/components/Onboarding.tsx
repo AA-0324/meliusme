@@ -180,7 +180,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 className="w-full max-w-xs space-y-3">
                 <motion.div whileTap={{ scale: 0.95 }} transition={{ type: 'spring', damping: 15 }}>
                   <Button onClick={() => setShowProModal(true)}
-                    className="w-full h-14 rounded-2xl font-bold text-base bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 hover:from-amber-600 hover:via-orange-600 hover:to-rose-600 shadow-[0_0_25px_-5px_hsl(43_96%_50%/0.6)]">
+                    className="w-full h-14 rounded-2xl font-bold text-base bg-primary hover:bg-primary/90 text-primary-foreground">
                     <img src={logo} alt="" className="w-5 h-5 mr-2" />
                     Try MeliusMe Pro — $9.99
                   </Button>
