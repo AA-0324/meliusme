@@ -102,11 +102,11 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
                     transition={{ delay: 0.25 + index * 0.05 }}
                     className="flex items-center gap-2.5"
                   >
-                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/10 flex items-center justify-center flex-shrink-0 border border-amber-500/15">
-                      <feature.icon className="w-3.5 h-3.5 text-amber-400" />
+                    <div className="w-7 h-7 rounded-lg bg-primary/15 flex items-center justify-center flex-shrink-0 border border-primary/20">
+                      <feature.icon className="w-3.5 h-3.5 text-primary" />
                     </div>
                     <span className="text-white/80 text-xs font-medium flex-1">{feature.text}</span>
-                    <Check className="w-3.5 h-3.5 text-amber-400/70 flex-shrink-0" />
+                    <Check className="w-3.5 h-3.5 text-primary/70 flex-shrink-0" />
                   </motion.div>
                 ))}
               </div>
@@ -124,12 +124,12 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
                 <motion.div
                   animate={{ opacity: [0.3, 0.7, 0.3], scale: [0.95, 1.05, 0.95] }}
                   transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute inset-[-8px] bg-gradient-to-r from-amber-500/30 via-orange-400/20 to-amber-500/30 rounded-2xl blur-xl"
+                  className="absolute inset-[-8px] bg-gradient-to-r from-primary/30 via-primary/20 to-primary/30 rounded-2xl blur-xl"
                 />
-                <span className="relative text-4xl font-black text-white tracking-tight drop-shadow-[0_0_12px_hsl(43_96%_56%/0.4)]">$9.99</span>
+                <span className="relative text-4xl font-black text-white tracking-tight">$9.99</span>
               </div>
 
-              {/* One-time purchase badge — bold, glowing, unmissable */}
+              {/* One-time purchase badge */}
               <motion.div
                 initial={{ scale: 0.7, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -138,23 +138,14 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
               >
                 <motion.div
                   animate={{
-                    boxShadow: [
-                      '0 0 12px hsl(43 96% 56% / 0.3), inset 0 0 12px hsl(43 96% 56% / 0.05)',
-                      '0 0 28px hsl(43 96% 56% / 0.6), inset 0 0 20px hsl(43 96% 56% / 0.1)',
-                      '0 0 12px hsl(43 96% 56% / 0.3), inset 0 0 12px hsl(43 96% 56% / 0.05)',
-                    ],
-                    borderColor: [
-                      'hsl(43 96% 56% / 0.4)',
-                      'hsl(43 96% 56% / 0.8)',
-                      'hsl(43 96% 56% / 0.4)',
-                    ],
+                    scale: [1, 1.03, 1],
                   }}
                   transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                  className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-amber-500/20 via-amber-400/15 to-amber-500/20 rounded-full border-2 border-amber-500/50"
+                  className="flex items-center gap-2 px-5 py-2 bg-primary/15 rounded-full border border-primary/30"
                 >
-                  <InfinityIcon className="w-5 h-5 text-amber-400" />
-                  <span className="text-amber-300 font-black text-sm uppercase tracking-[0.15em]">One-Time Purchase</span>
-                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  <InfinityIcon className="w-5 h-5 text-primary" />
+                  <span className="text-primary font-black text-sm uppercase tracking-[0.15em]">One-Time Purchase</span>
+                  <Sparkles className="w-4 h-4 text-primary" />
                 </motion.div>
 
                 <div className="flex items-center gap-3 text-white/30 text-[10px] font-bold uppercase tracking-wider">

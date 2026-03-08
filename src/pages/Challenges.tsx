@@ -126,18 +126,18 @@ export default function Challenges() {
                 initial={noMotion ? false : { opacity: 0, x: -30, scale: 0.9 }}
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 transition={{ delay: i * 0.1, type: 'spring', damping: 12 }}
-                className={`bg-gradient-to-r from-amber-500/10 to-orange-500/5 rounded-2xl p-4 border border-amber-500/20 ${animationsEnabled ? 'animate-shine' : ''}`}
+                className={`bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl p-4 border border-primary/20 ${animationsEnabled ? 'animate-shine' : ''}`}
               >
                 <div className="flex items-center gap-3">
                   <motion.div 
                     animate={noMotion ? {} : { rotate: [0, 10, -10, 0], scale: [1, 1.15, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
-                    className="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0"
+                    className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0"
                   >
-                    <Gift className="w-4 h-4 text-amber-500" />
+                    <Gift className="w-4 h-4 text-primary" />
                   </motion.div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-amber-500 uppercase tracking-wider">Active Reward</p>
+                    <p className="text-xs font-bold text-primary uppercase tracking-wider">Active Reward</p>
                     <p className="font-semibold text-sm truncate">{unlock.featureName}</p>
                   </div>
                   <div className="flex items-center gap-1 text-muted-foreground flex-shrink-0">

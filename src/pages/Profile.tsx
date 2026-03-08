@@ -28,7 +28,7 @@ const themes = [
   { id: 'midnight', name: 'Midnight', color: 'hsl(230, 70%, 55%)' },
 ];
 
-const proGoldBorder = 'ring-1 ring-amber-500/50 shadow-[0_0_12px_-3px_hsl(43_96%_50%/0.4)]';
+const proLocked = 'relative opacity-75';
 
 export default function Profile() {
   const { settings, isPro, setDarkMode, updateUserGoals, setWaterGoal, setTheme, userProfile, setUserName, setUserAvatar, bodyProfile } = useApp();
@@ -237,17 +237,15 @@ export default function Profile() {
             <motion.button 
               onClick={() => setShowProModal(true)}
               whileTap={{ scale: 0.97 }}
-              animate={{ boxShadow: ['0 0 15px hsl(43 96% 50% / 0.2)', '0 0 30px hsl(43 96% 50% / 0.4)', '0 0 15px hsl(43 96% 50% / 0.2)'] }}
-              transition={{ duration: 2.5, repeat: Infinity }}
-              className="w-full rounded-2xl p-5 text-left relative overflow-hidden bg-gradient-to-br from-amber-500/15 via-card to-orange-500/15 border border-amber-500/40 hover:border-amber-500/60"
+              className="w-full rounded-2xl p-5 text-left relative overflow-hidden bg-gradient-to-br from-primary/10 via-card to-primary/5 border border-primary/30 hover:border-primary/50"
             >
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
+                <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/70 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
                   <img src={logo} alt="" className="w-8 h-8" />
                 </div>
                 <div className="flex-1">
                   <h2 className="text-lg font-extrabold">Upgrade to Pro</h2>
-                  <p className="text-amber-500 font-bold text-sm">$9.99 • One-time • Lifetime</p>
+                  <p className="text-primary font-bold text-sm">$9.99 • One-time • Lifetime</p>
                 </div>
               </div>
             </motion.button>
@@ -256,7 +254,7 @@ export default function Profile() {
 
         {/* Personalized Goals */}
         <motion.div variants={fadeUp}
-          className={`bg-card rounded-2xl p-4 border border-border/50 ${!isPro ? proGoldBorder : ''}`}>
+          className={`bg-card rounded-2xl p-4 border border-border/50 ${!isPro ? proLocked : ''}`}>
           <div className="flex items-center gap-3">
             <Button 
               onClick={() => {
@@ -299,7 +297,7 @@ export default function Profile() {
             </div>
             <Switch checked={settings.darkMode} onCheckedChange={setDarkMode} />
           </div>
-          <div className={`pt-3 border-t border-border/50 ${!isPro ? 'rounded-xl p-3 ' + proGoldBorder : ''}`}>
+          <div className={`pt-3 border-t border-border/50 ${!isPro ? 'rounded-xl p-3 ' + proLocked : ''}`}>
             <div className="flex items-center gap-2 mb-3">
               <Palette className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm font-semibold">Theme</span>
@@ -351,40 +349,40 @@ export default function Profile() {
                 onChange={(e) => setWaterGoalInput(e.target.value)} className="h-11 rounded-xl bg-secondary border-0" />
             </div>
 
-            <div className={`space-y-2 ${!isPro ? 'rounded-xl p-3 ' + proGoldBorder : ''}`}>
+            <div className={`space-y-2 ${!isPro ? 'rounded-xl p-3 ' + proLocked : ''}`}>
               <Label htmlFor="protein-goal" className="text-sm font-semibold">Protein Goal (g)</Label>
               {isPro ? (
                 <Input id="protein-goal" type="number" inputMode="numeric" value={proteinGoal}
                   onChange={(e) => setProteinGoal(e.target.value)} className="h-11 rounded-xl bg-secondary border-0" />
               ) : (
                 <button onClick={() => setShowProModal(true)}
-                  className="w-full h-11 rounded-xl border-2 border-dashed border-amber-500/30 flex items-center justify-center gap-2 text-amber-500/70 hover:border-amber-500/50 hover:text-amber-500 transition-colors">
+                  className="w-full h-11 rounded-xl border border-dashed border-muted-foreground/30 flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground hover:border-muted-foreground/50 transition-colors">
                   <Lock className="w-4 h-4" /><span className="text-sm font-medium">Unlock with Pro</span>
                 </button>
               )}
             </div>
 
-            <div className={`space-y-2 ${!isPro ? 'rounded-xl p-3 ' + proGoldBorder : ''}`}>
+            <div className={`space-y-2 ${!isPro ? 'rounded-xl p-3 ' + proLocked : ''}`}>
               <Label htmlFor="fiber-goal" className="text-sm font-semibold">Fiber Goal (g)</Label>
               {isPro ? (
                 <Input id="fiber-goal" type="number" inputMode="numeric" value={fiberGoal}
                   onChange={(e) => setFiberGoal(e.target.value)} className="h-11 rounded-xl bg-secondary border-0" />
               ) : (
                 <button onClick={() => setShowProModal(true)}
-                  className="w-full h-11 rounded-xl border-2 border-dashed border-amber-500/30 flex items-center justify-center gap-2 text-amber-500/70 hover:border-amber-500/50 hover:text-amber-500 transition-colors">
+                  className="w-full h-11 rounded-xl border border-dashed border-muted-foreground/30 flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground hover:border-muted-foreground/50 transition-colors">
                   <Lock className="w-4 h-4" /><span className="text-sm font-medium">Unlock with Pro</span>
                 </button>
               )}
             </div>
 
-            <div className={`space-y-2 ${!isPro ? 'rounded-xl p-3 ' + proGoldBorder : ''}`}>
+            <div className={`space-y-2 ${!isPro ? 'rounded-xl p-3 ' + proLocked : ''}`}>
               <Label htmlFor="sugar-goal" className="text-sm font-semibold">Sugar Limit (g)</Label>
               {isPro ? (
                 <Input id="sugar-goal" type="number" inputMode="numeric" value={sugarGoal}
                   onChange={(e) => setSugarGoal(e.target.value)} className="h-11 rounded-xl bg-secondary border-0" />
               ) : (
                 <button onClick={() => setShowProModal(true)}
-                  className="w-full h-11 rounded-xl border-2 border-dashed border-amber-500/30 flex items-center justify-center gap-2 text-amber-500/70 hover:border-amber-500/50 hover:text-amber-500 transition-colors">
+                  className="w-full h-11 rounded-xl border border-dashed border-muted-foreground/30 flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground hover:border-muted-foreground/50 transition-colors">
                   <Lock className="w-4 h-4" /><span className="text-sm font-medium">Unlock with Pro</span>
                 </button>
               )}
@@ -401,7 +399,7 @@ export default function Profile() {
         {/* Export */}
         <motion.div variants={fadeUp}>
           <motion.div whileTap={{ scale: 0.97 }}>
-            <Button onClick={handleExport} variant="outline" className={`w-full h-12 rounded-xl justify-between font-semibold ${!isPro ? proGoldBorder : ''}`}>
+            <Button onClick={handleExport} variant="outline" className={`w-full h-12 rounded-xl justify-between font-semibold ${!isPro ? proLocked : ''}`}>
               <div className="flex items-center gap-3">
                 <Download className="w-5 h-5" /><span>Export Data (CSV)</span>
               </div>
