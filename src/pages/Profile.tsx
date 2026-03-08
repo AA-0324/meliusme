@@ -80,26 +80,26 @@ export default function Profile() {
     return personalizedGoalsEnabled && bodyProfile?.goal;
   }, [personalizedGoalsEnabled, bodyProfile]);
 
+  const goalsBlank = !calorieGoal || !proteinGoal || !fiberGoal || !sugarGoal || !waterGoalInput;
+
   const doSaveGoals = useCallback(() => {
-    const newSugar = sugarGoal ? parseInt(sugarGoal, 10) : undefined;
+    if (goalsBlank) { toast.error('All goal fields are required.'); return; }
+
+    const newSugar = parseInt(sugarGoal, 10);
     const oldSugar = settings.goals.sugar;
-    const newProtein = proteinGoal ? parseInt(proteinGoal, 10) : undefined;
+    const newProtein = parseInt(proteinGoal, 10);
     const oldProtein = settings.goals.protein;
-    const newFiber = fiberGoal ? parseInt(fiberGoal, 10) : undefined;
+    const newFiber = parseInt(fiberGoal, 10);
     const oldFiber = settings.goals.fiber;
 
     // Show macro feedback BEFORE "Goals saved"
-    if (newProtein !== undefined && oldProtein !== undefined) {
-      if (newProtein < oldProtein) {
-        toast.warning('Lowering your protein goal may slow muscle recovery.');
-      }
+    if (oldProtein !== undefined && newProtein < oldProtein) {
+      toast.warning('Lowering your protein goal may slow muscle recovery.');
     }
-    if (newFiber !== undefined && oldFiber !== undefined) {
-      if (newFiber < oldFiber) {
-        toast.warning('Lowering your fiber goal may affect digestion.');
-      }
+    if (oldFiber !== undefined && newFiber < oldFiber) {
+      toast.warning('Lowering your fiber goal may affect digestion.');
     }
-    if (newSugar !== undefined && oldSugar !== undefined) {
+    if (oldSugar !== undefined) {
       if (newSugar < oldSugar) {
         toast.success('Great job lowering your sugar limit!');
       } else if (newSugar > oldSugar) {
@@ -109,15 +109,15 @@ export default function Profile() {
 
     updateUserGoals({
       calories: parseInt(calorieGoal, 10) || 2000,
-      protein: proteinGoal ? parseInt(proteinGoal, 10) : undefined,
-      fiber: fiberGoal ? parseInt(fiberGoal, 10) : undefined,
-      sugar: sugarGoal ? parseInt(sugarGoal, 10) : undefined,
+      protein: newProtein,
+      fiber: newFiber,
+      sugar: newSugar,
     });
     setWaterGoal(parseInt(waterGoalInput, 10) || 8);
 
     // Delay "Goals saved" so feedback toasts are visible first
     setTimeout(() => toast.success('Goals saved!'), 800);
-  }, [calorieGoal, proteinGoal, fiberGoal, sugarGoal, waterGoalInput, settings.goals.sugar, settings.goals.protein, settings.goals.fiber, updateUserGoals, setWaterGoal]);
+  }, [calorieGoal, proteinGoal, fiberGoal, sugarGoal, waterGoalInput, goalsBlank, settings.goals.sugar, settings.goals.protein, settings.goals.fiber, updateUserGoals, setWaterGoal]);
 
   const handleSaveGoals = () => {
     if (hasBulkingConflict) { setShowGoalConfirm(true); return; }
