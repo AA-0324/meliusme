@@ -467,32 +467,14 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                   )}
                 </motion.div>
               )}
-            </div>
 
-            {/* Fixed bottom save button */}
-            <motion.div 
-              className="p-4 safe-bottom bg-background/95 backdrop-blur-sm border-t border-border/30 flex-shrink-0"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, type: 'spring', damping: 20 }}
-            >
-              {/* Mini progress dots */}
-              <div className="flex items-center justify-center gap-1.5 mb-3">
-                {['calories', 'protein', 'fiber', 'sugar'].map((key, i) => (
-                  <motion.div
-                    key={key}
-                    className={`w-2 h-2 rounded-full transition-colors ${values[key] ? 'bg-primary' : 'bg-muted/40'}`}
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: values[key] ? [1, 1.4, 1] : 1 }}
-                    transition={{ delay: 0.55 + i * 0.05, type: 'spring', damping: 12 }}
-                  />
-                ))}
-              </div>
+              {/* Save Meal button at bottom of scroll area */}
               <motion.div 
                 whileTap={{ scale: 0.96 }}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.6, type: 'spring', damping: 16 }}
+                className="pb-6"
               >
                 <Button onClick={handleSubmit} disabled={!calories || !protein || !fiber || !sugar || isSubmitting}
                   className="w-full h-13 text-base rounded-2xl font-bold shadow-neon gradient-primary">
@@ -505,7 +487,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                   )}
                 </Button>
               </motion.div>
-            </motion.div>
+            </div>
           </motion.div>
           </>
         )}
