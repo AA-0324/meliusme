@@ -310,15 +310,15 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                       >
                         <motion.div 
                           className="absolute -bottom-1 -right-1 opacity-[0.07]"
-                          animate={{ rotate: hasValue ? [0, 10, -5, 0] : 0 }}
-                          transition={{ duration: 0.5 }}
+                          animate={{ rotate: [0, 6, -6, 0], scale: [1, 1.06, 0.96, 1] }}
+                          transition={{ duration: 5 + i, repeat: Infinity, ease: 'easeInOut', delay: i * 0.5 }}
                         >
                           <Icon className="w-10 h-10" />
                         </motion.div>
                         <div className="flex items-center gap-1.5 mb-1.5">
                           <motion.div
-                            animate={hasValue ? { scale: [1, 1.2, 1] } : {}}
-                            transition={{ duration: 0.3 }}
+                            animate={{ y: [0, -1.5, 0], scale: [1, 1.08, 1] }}
+                            transition={{ duration: 2.5 + i * 0.3, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}
                           >
                             <Icon className={`w-3.5 h-3.5 ${field.iconColor}`} />
                           </motion.div>
