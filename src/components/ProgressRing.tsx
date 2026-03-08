@@ -102,8 +102,8 @@ export function ProgressRing({
         {/* Glow filter for progress arc */}
         {progress >= 60 && !noMotion && (
           <circle
-            cx={size / 2}
-            cy={size / 2}
+            cx={totalSize / 2}
+            cy={totalSize / 2}
             r={radius}
             fill="none"
             stroke={getGlowColor()}
