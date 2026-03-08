@@ -14,8 +14,8 @@ export function BottomNav() {
   const location = useLocation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-lg border-t border-border safe-bottom">
-      <div className="grid grid-cols-4 h-[64px] max-w-lg mx-auto relative items-center">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-lg border-t border-border">
+      <div className="grid grid-cols-4 h-[60px] max-w-lg mx-auto relative items-center" style={{ marginBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         {navItems.map(({ to, icon: Icon, label }) => {
           const isActive = to === '/' ? location.pathname === '/' : location.pathname.startsWith(to);
           return (
