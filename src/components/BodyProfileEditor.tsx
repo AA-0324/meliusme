@@ -68,12 +68,62 @@ export function BodyProfileEditor({ open, onClose }: BodyProfileEditorProps) {
     }
   }, [bodyProfile, open]);
 
+  const hasChanges = useMemo(() => {
+    const currentAge = bodyProfile?.age?.toString() || '';
+    const currentHeightCm = bodyProfile?.heightCm?.toString() || '';
+    const currentWeightKg = bodyProfile?.weightKg?.toString() || '';
+    const currentSex = bodyProfile?.sex === 'male' || bodyProfile?.sex === 'female' ? bodyProfile.sex : 'male';
+    const currentGoal = bodyProfile?.goal || 'maintain';
+    const currentUseImperial = bodyProfile?.useImperial ?? true;
+
+    if (age !== currentAge) return true;
+    if (sex !== currentSex) return true;
+    if (goal !== currentGoal) return true;
+    if (useImperial !== currentUseImperial) return true;
+
+    if (useImperial) {
+      if (bodyProfile?.heightCm) {
+        const { feet: origFeet, inches: origInches } = cmToFeet(bodyProfile.heightCm);
+        if (heightFeet !== origFeet.toString() || heightInches !== origInches.toString()) return true;
+      } else {
+        if (heightFeet || heightInches) return true;
+      }
+      if (bodyProfile?.weightKg) {
+        if (weightLbs !== kgToLbs(bodyProfile.weightKg).toString()) return true;
+      } else {
+        if (weightLbs) return true;
+      }
+    } else {
+      if (heightCm !== currentHeightCm) return true;
+      if (weightKg !== currentWeightKg) return true;
+    }
+
+    return false;
+  }, [age, sex, goal, useImperial, heightFeet, heightInches, heightCm, weightLbs, weightKg, bodyProfile]);
+
   const handleSaveProfile = () => {
+    if (!age.trim()) { toast.error('Age is required'); return; }
     const ageNum = parseInt(age, 10);
-    if (age && (isNaN(ageNum) || ageNum < 13 || ageNum > 120)) {
+    if (isNaN(ageNum) || ageNum < 13 || ageNum > 120) {
       toast.error('Please enter a valid age (13-120)');
       return;
     }
+
+    // Validate height
+    if (useImperial) {
+      if (!heightFeet && !heightInches) { toast.error('Height is required'); return; }
+    } else {
+      if (!heightCm) { toast.error('Height is required'); return; }
+    }
+
+    // Validate weight
+    if (useImperial) {
+      if (!weightLbs) { toast.error('Weight is required'); return; }
+    } else {
+      if (!weightKg) { toast.error('Weight is required'); return; }
+    }
+
+    if (!hasChanges) { onClose(); return; }
 
     let heightCmValue: number | undefined;
     let weightKgValue: number | undefined;
@@ -81,22 +131,14 @@ export function BodyProfileEditor({ open, onClose }: BodyProfileEditorProps) {
     if (useImperial) {
       const feet = parseInt(heightFeet, 10) || 0;
       const inches = parseInt(heightInches, 10) || 0;
-      if (feet > 0 || inches > 0) {
-        heightCmValue = feetToCm(feet, inches);
-      }
+      if (feet > 0 || inches > 0) heightCmValue = feetToCm(feet, inches);
       const lbs = parseFloat(weightLbs);
-      if (!isNaN(lbs) && lbs > 0) {
-        weightKgValue = lbsToKg(lbs);
-      }
+      if (!isNaN(lbs) && lbs > 0) weightKgValue = lbsToKg(lbs);
     } else {
       const cm = parseFloat(heightCm);
-      if (!isNaN(cm) && cm > 0) {
-        heightCmValue = cm;
-      }
+      if (!isNaN(cm) && cm > 0) heightCmValue = cm;
       const kg = parseFloat(weightKg);
-      if (!isNaN(kg) && kg > 0) {
-        weightKgValue = kg;
-      }
+      if (!isNaN(kg) && kg > 0) weightKgValue = kg;
     }
 
     const profile: Partial<BodyProfile> = {
@@ -111,7 +153,6 @@ export function BodyProfileEditor({ open, onClose }: BodyProfileEditorProps) {
     updateBodyProfile(profile);
     toast.success('Body profile saved!');
 
-    // Check if we can generate auto goals
     if (isPro && isBodyProfileComplete({ ...bodyProfile, ...profile } as BodyProfile)) {
       const goals = generateAutoGoals({ ...bodyProfile, ...profile } as BodyProfile);
       if (goals) {
