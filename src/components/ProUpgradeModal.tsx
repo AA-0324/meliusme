@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, Crown, Zap, Shield, Palette, Heart } from 'lucide-react';
+import { X, Crown, Zap, Shield, Palette, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useApp } from '@/contexts/AppContext';
 import logo from '@/assets/meliusme-logo-new.png';
@@ -43,10 +43,10 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             transition={{ type: 'spring', damping: 22, stiffness: 300 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-[300px] mx-4 flex flex-col items-center"
+            className="w-full max-w-[340px] mx-4 bg-white/[0.04] border border-white/[0.08] rounded-3xl p-6 flex flex-col items-center"
           >
             {/* Close */}
-            <div className="w-full flex justify-end mb-3">
+            <div className="w-full flex justify-end -mt-1 -mr-1 mb-2">
               <motion.button whileTap={{ scale: 0.85 }} onClick={onClose}
                 className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
                 <X className="w-4 h-4 text-white/50" />
@@ -58,15 +58,15 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.1, type: 'spring', damping: 14, stiffness: 180 }}
-              className="relative mb-4"
+              className="relative mb-5"
             >
               <motion.div
                 animate={{ scale: [1, 1.3, 1], opacity: [0.15, 0.35, 0.15] }}
                 transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                className="absolute inset-[-16px] bg-primary/30 rounded-full blur-2xl"
+                className="absolute inset-[-20px] bg-primary/30 rounded-full blur-2xl"
               />
-              <div className="relative w-14 h-14 flex items-center justify-center">
-                <img src={logo} alt="MeliusMe" className="w-12 h-12" />
+              <div className="relative w-16 h-16 flex items-center justify-center">
+                <img src={logo} alt="MeliusMe" className="w-14 h-14" />
               </div>
             </motion.div>
 
@@ -75,9 +75,9 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="text-center mb-5"
+              className="text-center mb-6"
             >
-              <h2 className="text-xl font-extrabold text-white">
+              <h2 className="text-2xl font-extrabold text-white">
                 MeliusMe <span className="text-primary">Pro</span>
               </h2>
             </motion.div>
@@ -87,7 +87,7 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="w-full space-y-2.5 mb-6"
+              className="w-full space-y-3 mb-8"
             >
               {proFeatures.map((feature, index) => (
                 <motion.div
@@ -97,7 +97,7 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
                   transition={{ delay: 0.25 + index * 0.05 }}
                   className="flex items-center gap-3"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center flex-shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-white/[0.06] flex items-center justify-center flex-shrink-0">
                     <feature.icon className="w-4 h-4 text-primary" />
                   </div>
                   <span className="text-white/70 text-sm font-medium">{feature.text}</span>
@@ -114,13 +114,13 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
             >
               <Button
                 onClick={handleUpgrade}
-                className="w-full h-12 text-sm font-bold rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground border-0"
+                className="w-full h-13 text-base font-bold rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground border-0"
               >
                 <Crown className="w-4 h-4 mr-2" />
                 Get Pro — $9.99
               </Button>
-              <p className="text-center text-white/25 text-[10px] mt-2.5 font-medium">
-                One-time purchase · Lifetime access
+              <p className="text-center text-white/30 text-xs mt-3 font-semibold tracking-wide">
+                Pay once, yours forever
               </p>
             </motion.div>
           </motion.div>
