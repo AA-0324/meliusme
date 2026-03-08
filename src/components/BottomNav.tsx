@@ -45,11 +45,11 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-lg border-t border-border pb-[env(safe-area-inset-bottom)]">
-      <div ref={containerRef} className="flex justify-center gap-2 h-[72px] max-w-[340px] mx-auto relative">
+      <div ref={containerRef} className="flex justify-center gap-2 h-[72px] max-w-[340px] mx-auto relative pt-2">
         {/* Single persistent indicator — never unmounts */}
         {indicatorStyle && (
           <motion.div
-            className={`absolute top-1/2 h-[calc(100%-14px)] bg-primary/15 rounded-2xl ${animationsEnabled ? 'animate-glow-pulse' : ''}`}
+            className={`absolute top-[calc(50%+4px)] h-[calc(100%-18px)] bg-primary/15 rounded-2xl ${animationsEnabled ? 'animate-glow-pulse' : ''}`}
             initial={false}
             animate={{
               left: indicatorStyle.left - indicatorStyle.width / 2,
