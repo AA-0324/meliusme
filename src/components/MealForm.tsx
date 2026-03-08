@@ -390,10 +390,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                       Saving...
                     </motion.span>
                   ) : (
-                    <>
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Save Meal
-                    </>
+                    'Save Meal'
                   )}
                 </Button>
               </motion.div>
