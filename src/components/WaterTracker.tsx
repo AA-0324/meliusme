@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Droplets, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatedNumber } from '@/components/AnimatedNumber';
+import { useApp } from '@/contexts/AppContext';
 import confetti from 'canvas-confetti';
 
 interface WaterTrackerProps {
@@ -14,30 +15,37 @@ interface WaterTrackerProps {
 const getConfettiKey = () => `melius-confetti-${new Date().toISOString().split('T')[0]}`;
 
 export function WaterTracker({ glasses, goal, onIncrement }: WaterTrackerProps) {
+  const { animationsEnabled } = useApp();
   const progress = Math.min((glasses / goal) * 100, 100);
   const isComplete = glasses >= goal;
+  const noMotion = !animationsEnabled;
 
   useEffect(() => {
     const confettiKey = getConfettiKey();
     const alreadyShown = sessionStorage.getItem(confettiKey) === 'true';
     if (isComplete && !alreadyShown) {
       sessionStorage.setItem(confettiKey, 'true');
-      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#22d3ee', '#0ea5e9', '#3b82f6', '#06b6d4'] });
+      confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 }, colors: ['#22d3ee', '#0ea5e9', '#3b82f6', '#06b6d4'] });
     }
   }, [isComplete]);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -2 }}
-      transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-      className="bg-gradient-to-br from-[hsl(199,89%,40%)] to-[hsl(199,89%,30%)] rounded-2xl p-5 text-white shadow-lg shadow-[hsl(199,89%,40%)]/20"
+      initial={noMotion ? false : { opacity: 0, y: 30, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      whileHover={noMotion ? {} : { y: -4, scale: 1.02 }}
+      transition={{ type: 'spring', damping: 12, stiffness: 200 }}
+      className={`bg-gradient-to-br from-[hsl(199,89%,40%)] to-[hsl(199,89%,30%)] rounded-2xl p-5 text-white shadow-lg shadow-[hsl(199,89%,40%)]/20 ${animationsEnabled ? 'animate-wave' : ''}`}
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <motion.div
-            whileTap={{ scale: 0.9, rotate: -10 }}
+            whileTap={noMotion ? {} : { scale: 0.75, rotate: -20 }}
+            animate={noMotion ? {} : { 
+              rotate: [0, 10, -10, 0],
+              y: [0, -3, 0],
+            }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
             className="w-11 h-11 bg-white/15 rounded-xl flex items-center justify-center backdrop-blur-sm"
           >
             <Droplets className="w-6 h-6" />
@@ -49,7 +57,11 @@ export function WaterTracker({ glasses, goal, onIncrement }: WaterTrackerProps) 
             </p>
           </div>
         </div>
-        <motion.div whileTap={{ scale: 0.85 }} whileHover={{ scale: 1.05 }} transition={{ type: 'spring', damping: 15, stiffness: 300 }}>
+        <motion.div 
+          whileTap={noMotion ? {} : { scale: 0.7, rotate: -15 }}
+          whileHover={noMotion ? {} : { scale: 1.15, rotate: 5 }}
+          transition={{ type: 'spring', damping: 8, stiffness: 300 }}
+        >
           <Button
             size="icon"
             variant="ghost"
@@ -66,19 +78,19 @@ export function WaterTracker({ glasses, goal, onIncrement }: WaterTrackerProps) 
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.8, type: 'spring', damping: 15 }}
           className={`h-full rounded-full ${isComplete ? 'bg-white' : 'bg-white/80'}`}
         />
       </div>
       
       {isComplete && (
         <motion.p
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ type: 'spring', damping: 15 }}
+          initial={noMotion ? false : { opacity: 0, y: 15, scale: 0.8 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ type: 'spring', damping: 10, stiffness: 150 }}
           className="text-sm text-center mt-3 font-semibold"
         >
-          Goal reached! Great job staying hydrated!
+          🎉 Goal reached! Great job staying hydrated!
         </motion.p>
       )}
     </motion.div>

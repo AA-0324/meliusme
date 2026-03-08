@@ -4,11 +4,13 @@ import { Target, Trophy, CheckCircle2, Circle, ChevronRight, Zap, Gift, Clock } 
 import { Button } from '@/components/ui/button';
 import { REFLECTION_QUESTIONS, saveLastReflection, getDailyChallenges, getLastWeekNumber, getLastWeekStart, ReflectionData } from '@/lib/streaks';
 import { useApp } from '@/contexts/AppContext';
+import { staggerContainer, fadeUpBounce } from '@/lib/motion';
 
 export default function Challenges() {
-  const { currentChallenge, meals, todayWater, settings, xpData, tempProUnlocks } = useApp();
+  const { currentChallenge, meals, todayWater, settings, xpData, tempProUnlocks, animationsEnabled } = useApp();
   const [showReflection, setShowReflection] = useState(false);
   const [lastReflection, setLastReflection] = useState<ReflectionData | null>(null);
+  const noMotion = !animationsEnabled;
 
   const lastWeekNumber = getLastWeekNumber();
   const lastWeekStart = getLastWeekStart();
@@ -60,21 +62,38 @@ export default function Challenges() {
   return (
     <div className="min-h-screen pb-24">
       <div className="px-6 pt-8 pb-4 safe-top">
-        <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-3xl font-bold">
+        <motion.h1 
+          initial={noMotion ? false : { opacity: 0, y: -30, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ type: 'spring', damping: 12, stiffness: 150 }}
+          className="text-3xl font-bold"
+        >
           Challenges
         </motion.h1>
-        <p className="text-muted-foreground mt-1">Daily missions & achievements</p>
+        <motion.p
+          initial={noMotion ? false : { opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1, type: 'spring', damping: 15 }}
+          className="text-muted-foreground mt-1"
+        >
+          Daily missions & achievements
+        </motion.p>
       </div>
 
-      <div className="px-6 space-y-4">
+      <motion.div 
+        variants={staggerContainer(0.12)} 
+        initial={noMotion ? false : "hidden"} 
+        animate="show"
+        className="px-6 space-y-4"
+      >
         {/* XP Level Bar */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.02 }}
-          className="bg-card rounded-2xl p-4 border border-border/50">
+        <motion.div variants={noMotion ? {} : fadeUpBounce}
+          className={`bg-card rounded-2xl p-4 border border-border/50 ${animationsEnabled ? 'animate-glow-pulse' : ''}`}>
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <motion.div
-                animate={{ rotate: [0, 10, -10, 0] }}
-                transition={{ duration: 0.5, delay: 0.5 }}
+                animate={noMotion ? {} : { rotate: [0, 15, -15, 0], scale: [1, 1.2, 1] }}
+                transition={{ duration: 0.8, delay: 0.5, repeat: Infinity, repeatDelay: 3 }}
                 className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
                 <Zap className="w-4 h-4 text-primary" />
               </motion.div>
@@ -89,7 +108,7 @@ export default function Challenges() {
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${xpPercent}%` }}
-              transition={{ duration: 0.8, ease: 'easeOut', delay: 0.3 }}
+              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
               className="h-full bg-primary rounded-full"
             />
           </div>
@@ -100,15 +119,23 @@ export default function Challenges() {
 
         {/* Active Temp Pro Unlocks */}
         {tempProUnlocks.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}
-            className="space-y-2">
-            {tempProUnlocks.map((unlock) => (
-              <div key={unlock.featureId + unlock.unlockedAt}
-                className="bg-gradient-to-r from-amber-500/10 to-orange-500/5 rounded-2xl p-4 border border-amber-500/20">
+          <motion.div variants={noMotion ? {} : fadeUpBounce} className="space-y-2">
+            {tempProUnlocks.map((unlock, i) => (
+              <motion.div 
+                key={unlock.featureId + unlock.unlockedAt}
+                initial={noMotion ? false : { opacity: 0, x: -30, scale: 0.9 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                transition={{ delay: i * 0.1, type: 'spring', damping: 12 }}
+                className={`bg-gradient-to-r from-amber-500/10 to-orange-500/5 rounded-2xl p-4 border border-amber-500/20 ${animationsEnabled ? 'animate-shine' : ''}`}
+              >
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                  <motion.div 
+                    animate={noMotion ? {} : { rotate: [0, 10, -10, 0], scale: [1, 1.15, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0"
+                  >
                     <Gift className="w-4 h-4 text-amber-500" />
-                  </div>
+                  </motion.div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-bold text-amber-500 uppercase tracking-wider">Active Reward</p>
                     <p className="font-semibold text-sm truncate">{unlock.featureName}</p>
@@ -118,16 +145,21 @@ export default function Challenges() {
                     <span className="text-[10px] font-medium">{formatTimeLeft(unlock.expiresAt)}</span>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </motion.div>
         )}
 
         {/* Weekly Challenge */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-          className="bg-card rounded-2xl p-5 border border-border/50">
+        <motion.div variants={noMotion ? {} : fadeUpBounce}
+          className={`bg-card rounded-2xl p-5 border border-border/50 ${animationsEnabled ? 'animate-shine' : ''}`}>
           <div className="flex items-center gap-2 mb-4">
-            <Target className="w-5 h-5 text-primary" />
+            <motion.div
+              animate={noMotion ? {} : { rotate: [0, 360] }}
+              transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+            >
+              <Target className="w-5 h-5 text-primary" />
+            </motion.div>
             <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Weekly Challenge</h2>
           </div>
           <p className="font-semibold text-lg mb-3">{currentChallenge.title}</p>
@@ -141,22 +173,31 @@ export default function Challenges() {
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.min((currentChallenge.progress / currentChallenge.target) * 100, 100)}%` }}
-                transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}
+                transition={{ duration: 1, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
                 className="h-full bg-primary rounded-full"
               />
             </div>
           </div>
           {currentChallenge.completed && (
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-              className="mt-4 flex items-center gap-2 text-primary bg-primary/10 rounded-xl px-4 py-3">
-              <CheckCircle2 className="w-5 h-5" />
+            <motion.div 
+              initial={noMotion ? false : { opacity: 0, scale: 0.5, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ type: 'spring', damping: 10, stiffness: 150 }}
+              className="mt-4 flex items-center gap-2 text-primary bg-primary/10 rounded-xl px-4 py-3"
+            >
+              <motion.div
+                animate={noMotion ? {} : { scale: [1, 1.3, 1] }}
+                transition={{ duration: 1, repeat: Infinity }}
+              >
+                <CheckCircle2 className="w-5 h-5" />
+              </motion.div>
               <span className="font-semibold">Challenge Complete!</span>
             </motion.div>
           )}
         </motion.div>
 
         {/* Daily Challenges */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+        <motion.div variants={noMotion ? {} : fadeUpBounce}
           className="bg-card rounded-2xl p-5 border border-border/50">
           <div className="flex items-center gap-2 mb-4">
             <Target className="w-5 h-5 text-primary" />
@@ -165,12 +206,15 @@ export default function Challenges() {
           <div className="space-y-3">
             {dailyChallenges.map((challenge, i) => (
               <motion.div key={challenge.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.15 + i * 0.05 }}
+                initial={noMotion ? false : { opacity: 0, x: -40, scale: 0.85 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                transition={{ delay: 0.2 + i * 0.08, type: 'spring', damping: 12, stiffness: 150 }}
                 className="p-3 bg-secondary/30 rounded-xl">
                 <div className="flex items-center gap-3">
-                  <motion.div animate={challenge.completed ? { scale: [1, 1.2, 1] } : {}} transition={{ duration: 0.3 }}>
+                  <motion.div 
+                    animate={challenge.completed && !noMotion ? { scale: [1, 1.4, 1], rotate: [0, 10, 0] } : {}}
+                    transition={{ duration: 0.5, repeat: challenge.completed ? Infinity : 0, repeatDelay: 2 }}
+                  >
                     {challenge.completed ? (
                       <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
                     ) : (
@@ -187,7 +231,7 @@ export default function Challenges() {
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${Math.min((challenge.progress / challenge.target) * 100, 100)}%` }}
-                    transition={{ duration: 0.5, ease: 'easeOut', delay: 0.3 + i * 0.05 }}
+                    transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.4 + i * 0.08 }}
                     className="h-full bg-primary rounded-full"
                   />
                 </div>
@@ -197,16 +241,25 @@ export default function Challenges() {
         </motion.div>
 
         {/* Weekly Reflection */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+        <motion.div variants={noMotion ? {} : fadeUpBounce}
           className="bg-card rounded-2xl p-5 border border-border/50">
           <div className="flex items-center gap-2 mb-4">
-            <Trophy className="w-5 h-5 text-amber-500" />
+            <motion.div
+              animate={noMotion ? {} : { scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
+              transition={{ duration: 2, repeat: Infinity, repeatDelay: 2 }}
+            >
+              <Trophy className="w-5 h-5 text-amber-500" />
+            </motion.div>
             <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Last Week's Reflection</h2>
           </div>
           <p className="font-medium mb-4">{reflectionQuestion}</p>
           {hasReflectedLastWeek ? (
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }}
-              className="flex items-center gap-2 text-primary bg-primary/10 rounded-xl px-4 py-3">
+            <motion.div 
+              initial={noMotion ? false : { scale: 0.7 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', damping: 10 }}
+              className="flex items-center gap-2 text-primary bg-primary/10 rounded-xl px-4 py-3"
+            >
               <CheckCircle2 className="w-5 h-5" />
               <span className="font-semibold">Reflected on last week</span>
             </motion.div>
@@ -219,23 +272,41 @@ export default function Challenges() {
             <p className="text-sm text-muted-foreground">No meals logged last week to reflect on</p>
           )}
         </motion.div>
-      </div>
+      </motion.div>
 
       {/* Reflection Modal */}
       <AnimatePresence>
         {showReflection && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[110] bg-black/80 flex items-end" onClick={() => setShowReflection(false)}>
-            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[110] bg-black/80 flex items-end" 
+            onClick={() => setShowReflection(false)}
+          >
+            <motion.div 
+              initial={{ y: '100%', scale: 0.95 }} 
+              animate={{ y: 0, scale: 1 }} 
+              exit={{ y: '100%', scale: 0.95 }}
+              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-h-[70vh] bg-background rounded-t-3xl p-6 overflow-y-auto">
+              className="w-full max-h-[70vh] bg-background rounded-t-3xl p-6 overflow-y-auto"
+            >
               <h3 className="text-lg font-bold mb-4">{reflectionQuestion}</h3>
               <div className="grid grid-cols-3 gap-3">
-                {lastWeekMeals.slice(0, 9).map((meal) => (
-                  <button key={meal.id} onClick={() => handleReflectionSelect(meal.id)}
-                    className="aspect-square rounded-xl overflow-hidden border-2 border-transparent hover:border-primary transition-all">
+                {lastWeekMeals.slice(0, 9).map((meal, i) => (
+                  <motion.button 
+                    key={meal.id} 
+                    onClick={() => handleReflectionSelect(meal.id)}
+                    initial={noMotion ? false : { opacity: 0, scale: 0.6 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.05, type: 'spring', damping: 12 }}
+                    whileHover={noMotion ? {} : { scale: 1.08 }}
+                    whileTap={noMotion ? {} : { scale: 0.9 }}
+                    className="aspect-square rounded-xl overflow-hidden border-2 border-transparent hover:border-primary transition-all"
+                  >
                     <img src={meal.photo} alt="Meal" className="w-full h-full object-cover" />
-                  </button>
+                  </motion.button>
                 ))}
               </div>
             </motion.div>
