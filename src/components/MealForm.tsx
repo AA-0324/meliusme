@@ -99,6 +99,25 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
     }
   }, [open, availableMealTypes, mealType, currentHour]);
 
+  // Lock body scroll when meal form is open to prevent background bleed-through
+  useEffect(() => {
+    if (!open) return;
+    const html = document.documentElement;
+    const body = document.body;
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    body.style.position = 'fixed';
+    body.style.inset = '0';
+    body.style.width = '100%';
+    return () => {
+      html.style.overflow = '';
+      body.style.overflow = '';
+      body.style.position = '';
+      body.style.inset = '';
+      body.style.width = '';
+    };
+  }, [open]);
+
   const showWarnings = useMemo(() => calories && parseInt(calories, 10) > 0, [calories]);
 
   const sanityValidation = useMemo(() => {
