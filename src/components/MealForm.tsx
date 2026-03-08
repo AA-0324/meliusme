@@ -298,7 +298,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                 <div className="grid grid-cols-3 gap-2.5">
                   {nutritionFields.slice(1).map((field, i) => {
                     const Icon = field.icon;
-                    const hasValue = !!values[field.key];
+                    
                     return (
                       <motion.div
                         key={field.key}
