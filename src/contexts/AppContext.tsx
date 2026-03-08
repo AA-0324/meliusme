@@ -404,21 +404,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       showBottomToast("You're over your calorie goal — consider a lighter choice.", 'warning');
     }
 
-    if (isPro && settings.goals.protein) {
+    if (settings.goals.protein) {
       const g = settings.goals.protein;
       if (!flags.protein_done && prevTotals.protein < g && nextTotals.protein >= g) {
         setGoalToastFlag(dateKey, 'protein_done');
         showBottomToast('Protein goal completed!', 'success');
       }
     }
-    if (isPro && settings.goals.fiber) {
+    if (settings.goals.fiber) {
       const g = settings.goals.fiber;
       if (!flags.fiber_done && prevTotals.fiber < g && nextTotals.fiber >= g) {
         setGoalToastFlag(dateKey, 'fiber_done');
         showBottomToast('Fiber goal completed!', 'success');
       }
     }
-    if (isPro && settings.goals.sugar) {
+    if (settings.goals.sugar) {
       const g = settings.goals.sugar;
       if (!flags.sugar_over && prevTotals.sugar <= g && nextTotals.sugar > g) {
         setGoalToastFlag(dateKey, 'sugar_over');

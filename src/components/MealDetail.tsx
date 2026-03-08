@@ -22,7 +22,7 @@ function getNutritionColor(type: 'calories' | 'protein' | 'fiber' | 'sugar', val
   const prot = allValues?.protein ?? (type === 'protein' ? value : 20);
   const fib = allValues?.fiber ?? (type === 'fiber' ? value : 5);
   const sug = allValues?.sugar ?? (type === 'sugar' ? value : 10);
-  const warnings = getHealthWarnings(cal, prot, fib, sug, mealType, userGoals);
+  const warnings = getHealthWarnings(cal, prot, fib, sug, mealType, userGoals, undefined, { isLogged: true });
   if (type === 'calories') {
     if (warnings.highCalories) return 'bg-destructive/20 border-destructive/30 text-destructive';
     if (warnings.lowCalories) return 'bg-warning/20 border-warning/30 text-warning';
@@ -46,8 +46,8 @@ function getNutritionColor(type: 'calories' | 'protein' | 'fiber' | 'sugar', val
 }
 
 export function MealDetail({ meal, onClose }: MealDetailProps) {
-  const { removeMeal, settings, isPro } = useApp();
-  const userGoals = isPro ? settings.goals : undefined;
+  const { removeMeal, settings } = useApp();
+  const userGoals = settings.goals;
 
   const handleDelete = async () => {
     if (meal) { await removeMeal(meal.id); onClose(); }
@@ -92,8 +92,8 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
                 </div>
               </div>
 
-              <HealthWarning calories={meal.calories} protein={meal.protein} fiber={meal.fiber} sugar={meal.sugar} mealType={meal.mealType} userGoals={userGoals} />
-              <HealthPositive calories={meal.calories} protein={meal.protein} fiber={meal.fiber} sugar={meal.sugar} mealType={meal.mealType} userGoals={userGoals} />
+              <HealthWarning calories={meal.calories} protein={meal.protein} fiber={meal.fiber} sugar={meal.sugar} mealType={meal.mealType} userGoals={userGoals} isLogged />
+              <HealthPositive calories={meal.calories} protein={meal.protein} fiber={meal.fiber} sugar={meal.sugar} mealType={meal.mealType} userGoals={userGoals} isLogged />
 
               <div className="grid grid-cols-2 gap-3">
                 {[

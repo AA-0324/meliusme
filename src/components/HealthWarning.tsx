@@ -32,6 +32,7 @@ interface HealthWarningProps {
   mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   compact?: boolean;
   userGoals?: Goals;
+  isLogged?: boolean;
 }
 
 // Meal distribution ratios
@@ -133,8 +134,10 @@ export function getHealthWarnings(
   sugar: number | undefined,
   mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack',
   userGoals?: Goals,
-  bodyProfile?: BodyProfile | null
+  bodyProfile?: BodyProfile | null,
+  options?: { isLogged?: boolean }
 ): HealthWarnings {
+  const isLogged = options?.isLogged ?? false;
   const { thresholds, goal } = getThresholds(mealType, userGoals, bodyProfile);
   const warnings: HealthWarnings = {
     messages: [],
@@ -193,8 +196,8 @@ export function getHealthWarnings(
       } else {
         warnings.messages.push(`Low protein for ${mealType} (${protein}g)`);
       }
-    } else if (protein > thresholds.maxProtein) {
-      // Very high protein - unusual but warn
+    } else if (protein > thresholds.maxProtein && !isLogged) {
+      // Very high protein - unusual but warn (only during logging, not when viewing)
       warnings.highProtein = true;
       warnings.messages.push(`Unusually high protein (${protein}g) - verify entry`);
     } else if (protein >= thresholds.minProtein) {
@@ -212,7 +215,7 @@ export function getHealthWarnings(
     if (fiber < thresholds.minFiber && mealType !== 'snack') {
       warnings.lowFiber = true;
       warnings.messages.push(`Low fiber for ${mealType} (${fiber}g)`);
-    } else if (fiber > thresholds.maxFiber) {
+    } else if (fiber > thresholds.maxFiber && !isLogged) {
       warnings.highFiber = true;
       warnings.messages.push(`Very high fiber (${fiber}g) - may cause discomfort`);
     } else if (fiber >= thresholds.minFiber) {
@@ -222,7 +225,7 @@ export function getHealthWarnings(
   
   // === SUGAR CHECKS ===
   if (sugar !== undefined) {
-    if (sugar > thresholds.maxSugar) {
+    if (sugar > thresholds.maxSugar && !isLogged) {
       warnings.highSugar = true;
       if (goal === 'cutting') {
         warnings.messages.push(`High sugar while cutting (${sugar}g > ${thresholds.maxSugar}g)`);
@@ -286,8 +289,8 @@ export function hasAnyPositive(warnings: HealthWarnings): boolean {
   return warnings.positiveMessages.length > 0;
 }
 
-export function HealthWarning({ calories, protein, fiber, sugar, mealType, compact, userGoals }: HealthWarningProps) {
-  const warnings = getHealthWarnings(calories, protein, fiber, sugar, mealType, userGoals);
+export function HealthWarning({ calories, protein, fiber, sugar, mealType, compact, userGoals, isLogged }: HealthWarningProps) {
+  const warnings = getHealthWarnings(calories, protein, fiber, sugar, mealType, userGoals, undefined, { isLogged });
   const hasWarnings = hasAnyWarning(warnings);
   const hasPositives = hasAnyPositive(warnings);
   
@@ -334,8 +337,8 @@ export function HealthWarning({ calories, protein, fiber, sugar, mealType, compa
 }
 
 // Component to show positive feedback
-export function HealthPositive({ calories, protein, fiber, sugar, mealType, userGoals }: Omit<HealthWarningProps, 'compact'>) {
-  const warnings = getHealthWarnings(calories, protein, fiber, sugar, mealType, userGoals);
+export function HealthPositive({ calories, protein, fiber, sugar, mealType, userGoals, isLogged }: Omit<HealthWarningProps, 'compact'>) {
+  const warnings = getHealthWarnings(calories, protein, fiber, sugar, mealType, userGoals, undefined, { isLogged });
   const hasWarnings = hasAnyWarning(warnings);
   const hasPositives = hasAnyPositive(warnings);
   
