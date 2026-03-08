@@ -289,8 +289,8 @@ export function hasAnyPositive(warnings: HealthWarnings): boolean {
   return warnings.positiveMessages.length > 0;
 }
 
-export function HealthWarning({ calories, protein, fiber, sugar, mealType, compact, userGoals }: HealthWarningProps) {
-  const warnings = getHealthWarnings(calories, protein, fiber, sugar, mealType, userGoals);
+export function HealthWarning({ calories, protein, fiber, sugar, mealType, compact, userGoals, isLogged }: HealthWarningProps) {
+  const warnings = getHealthWarnings(calories, protein, fiber, sugar, mealType, userGoals, undefined, { isLogged });
   const hasWarnings = hasAnyWarning(warnings);
   const hasPositives = hasAnyPositive(warnings);
   
