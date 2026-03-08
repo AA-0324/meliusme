@@ -53,8 +53,8 @@ export function ProgressRing({
       <svg width={totalSize} height={totalSize} className="-rotate-90" style={{ overflow: 'visible' }}>
         {/* Background circle */}
         <circle
-          cx={size / 2}
-          cy={size / 2}
+          cx={totalSize / 2}
+          cy={totalSize / 2}
           r={radius}
           fill="none"
           stroke="hsl(var(--secondary))"
