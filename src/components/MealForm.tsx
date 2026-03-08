@@ -270,17 +270,16 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                 >
                   <motion.div 
                     className="absolute top-2 right-2 opacity-10"
-                    animate={{ rotate: [0, 8, -8, 0], scale: [1, 1.05, 1] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                    animate={{ rotate: [0, 8, -8, 0], scale: [1, 1.08, 0.95, 1] }}
+                    transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
                   >
                     <Flame className="w-16 h-16" />
                   </motion.div>
                   <div className="flex items-center gap-3 mb-2">
                     <motion.div 
                       className={`w-8 h-8 rounded-lg bg-background/30 flex items-center justify-center ${nutritionFields[0].iconColor}`}
-                      whileTap={{ scale: 0.9 }}
-                      animate={{ scale: calories ? [1, 1.1, 1] : 1 }}
-                      transition={{ duration: 0.3 }}
+                      animate={{ y: [0, -2, 0], scale: [1, 1.05, 1] }}
+                      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                     >
                       <Flame className="w-4 h-4" />
                     </motion.div>
