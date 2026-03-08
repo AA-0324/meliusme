@@ -282,7 +282,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                     value={calories}
                     onChange={(e) => setCalories(e.target.value)}
                     placeholder="0"
-                    className="h-14 text-3xl rounded-xl bg-background/40 border-0 font-extrabold placeholder:text-muted-foreground/20 text-center"
+                    className="h-14 text-3xl rounded-xl bg-background/40 border-0 font-extrabold placeholder:text-muted-foreground/20 text-center focus:ring-2 focus:ring-primary/40 focus:bg-background/60 transition-all duration-200"
                   />
                 </motion.div>
 
