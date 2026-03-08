@@ -7,7 +7,7 @@ import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge
 import { initEncryption } from '@/lib/crypto';
 import { migrateAllToEncrypted } from '@/lib/encryptedStorage';
 
-type ToastVariant = 'primary' | 'success' | 'warning' | 'destructive';
+type ToastVariant = 'primary' | 'success' | 'warning' | 'destructive' | 'challenge';
 
 const goalToastKey = (date: string) => `meliusme-goal-toasts-${date}`;
 
@@ -325,7 +325,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             setTempProUnlocks(await getTempProUnlocks());
           }
         }
-        showBottomToast(`Challenge complete: ${c.title} (+${c.xp} XP)`, 'success');
+        showBottomToast(`${c.title} — Complete! +${c.xp} XP`, 'challenge');
       }
     }
   }, [settings.waterGoal, settings.goals, isPro, getAwardedChallenges, markChallengeAwarded, showBottomToast]);
