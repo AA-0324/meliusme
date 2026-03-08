@@ -37,19 +37,24 @@ export function ProgressRing({
     return 'transparent';
   };
 
+  // Extra padding needed for the glow effect
+  const glowPadding = progress >= 60 && !noMotion ? 8 : 0;
+  const totalSize = size + glowPadding * 2;
+
   return (
     <motion.div 
       className="relative inline-flex items-center justify-center"
+      style={{ width: totalSize, height: totalSize }}
       animate={!noMotion && progress >= 100 ? { 
         scale: [1, 1.04, 1],
       } : {}}
       transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
     >
-      <svg width={size} height={size} className="-rotate-90">
+      <svg width={totalSize} height={totalSize} className="-rotate-90" style={{ overflow: 'visible' }}>
         {/* Background circle */}
         <circle
-          cx={size / 2}
-          cy={size / 2}
+          cx={totalSize / 2}
+          cy={totalSize / 2}
           r={radius}
           fill="none"
           stroke="hsl(var(--secondary))"
@@ -58,8 +63,8 @@ export function ProgressRing({
         
         {/* Progress circle */}
         <motion.circle
-          cx={size / 2}
-          cy={size / 2}
+          cx={totalSize / 2}
+          cy={totalSize / 2}
           r={radius}
           fill="none"
           stroke={getColor()}
@@ -74,8 +79,8 @@ export function ProgressRing({
         {/* Completion animation - pulsing ring */}
         {progress >= 100 && showAnimation && !noMotion && (
           <motion.circle
-            cx={size / 2}
-            cy={size / 2}
+            cx={totalSize / 2}
+            cy={totalSize / 2}
             r={radius}
             fill="none"
             stroke="hsl(var(--primary))"
@@ -97,8 +102,8 @@ export function ProgressRing({
         {/* Glow filter for progress arc */}
         {progress >= 60 && !noMotion && (
           <circle
-            cx={size / 2}
-            cy={size / 2}
+            cx={totalSize / 2}
+            cy={totalSize / 2}
             r={radius}
             fill="none"
             stroke={getGlowColor()}

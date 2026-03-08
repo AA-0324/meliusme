@@ -136,10 +136,10 @@ export default function Dashboard() {
           <motion.div variants={noMotion ? {} : fadeUpBounce} className="px-6 mb-6">
             <div className={`bg-card rounded-3xl p-6 border border-border ${animationsEnabled ? 'animate-shine' : ''}`}>
               <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">Today's Goals</h2>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-2">
                 {settings.goals.protein && (
                   <motion.div 
-                    className="flex flex-col items-center gap-1.5"
+                    className="flex flex-col items-center gap-1.5 min-w-0 overflow-hidden"
                     initial={noMotion ? false : { scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.3, type: 'spring', damping: 10 }}
@@ -160,7 +160,7 @@ export default function Dashboard() {
                 )}
                 {settings.goals.fiber && (
                   <motion.div 
-                    className="flex flex-col items-center gap-1.5"
+                    className="flex flex-col items-center gap-1.5 min-w-0 overflow-hidden"
                     initial={noMotion ? false : { scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.4, type: 'spring', damping: 10 }}
@@ -181,7 +181,7 @@ export default function Dashboard() {
                 )}
                 {settings.goals.sugar && (
                   <motion.div 
-                    className="flex flex-col items-center gap-1.5"
+                    className="flex flex-col items-center gap-1.5 min-w-0 overflow-hidden"
                     initial={noMotion ? false : { scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.5, type: 'spring', damping: 10 }}
