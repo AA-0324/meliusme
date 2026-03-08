@@ -37,15 +37,20 @@ export function ProgressRing({
     return 'transparent';
   };
 
+  // Extra padding needed for the glow effect
+  const glowPadding = progress >= 60 && !noMotion ? 8 : 0;
+  const totalSize = size + glowPadding * 2;
+
   return (
     <motion.div 
       className="relative inline-flex items-center justify-center"
+      style={{ width: totalSize, height: totalSize }}
       animate={!noMotion && progress >= 100 ? { 
         scale: [1, 1.04, 1],
       } : {}}
       transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
     >
-      <svg width={size} height={size} className="-rotate-90">
+      <svg width={totalSize} height={totalSize} className="-rotate-90" style={{ overflow: 'visible' }}>
         {/* Background circle */}
         <circle
           cx={size / 2}
