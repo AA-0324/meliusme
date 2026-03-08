@@ -71,7 +71,7 @@ export function BottomNav() {
               key={to}
               to={to}
               end={to === '/'}
-              className="flex items-center justify-center flex-1 pt-3"
+              className="flex items-center justify-center flex-1"
             >
               <div
                 ref={(el) => { navRefs.current[index] = el; }}
