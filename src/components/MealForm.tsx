@@ -275,7 +275,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                       <Flame className="w-4 h-4" />
                     </div>
                     <span className="font-bold text-sm">Calories</span>
-                    <span className="text-destructive text-xs">*</span>
+                    
                   </div>
                   <Input 
                     type="number" inputMode="numeric" min="0" max="5000" 
