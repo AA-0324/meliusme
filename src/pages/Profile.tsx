@@ -376,14 +376,14 @@ export default function Profile() {
               )}
             </div>
 
-            <div className={`space-y-2 ${!isPro ? 'rounded-xl p-3 ' + proGoldBorder : ''}`}>
+            <div className={`space-y-2 ${!isPro ? 'rounded-xl p-3 ' + proLocked : ''}`}>
               <Label htmlFor="sugar-goal" className="text-sm font-semibold">Sugar Limit (g)</Label>
               {isPro ? (
                 <Input id="sugar-goal" type="number" inputMode="numeric" value={sugarGoal}
                   onChange={(e) => setSugarGoal(e.target.value)} className="h-11 rounded-xl bg-secondary border-0" />
               ) : (
                 <button onClick={() => setShowProModal(true)}
-                  className="w-full h-11 rounded-xl border-2 border-dashed border-amber-500/30 flex items-center justify-center gap-2 text-amber-500/70 hover:border-amber-500/50 hover:text-amber-500 transition-colors">
+                  className="w-full h-11 rounded-xl border border-dashed border-muted-foreground/30 flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground hover:border-muted-foreground/50 transition-colors">
                   <Lock className="w-4 h-4" /><span className="text-sm font-medium">Unlock with Pro</span>
                 </button>
               )}
