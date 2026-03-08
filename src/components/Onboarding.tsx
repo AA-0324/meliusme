@@ -69,7 +69,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="flex-1 flex flex-col items-center justify-center px-8">
               <motion.div initial={{ scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0 }} 
                 transition={{ type: 'spring', damping: 12, stiffness: 150 }}
-                className="relative mb-8">
+                className="relative mb-4">
                 <motion.div
                   animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }}
                   transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
@@ -80,7 +80,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               <motion.h1 initial={{ opacity: 0, y: 25 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5 }}
                 className="text-3xl font-extrabold text-center mb-2">Welcome to MeliusMe</motion.h1>
               <motion.p initial={{ opacity: 0, y: 25 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35, duration: 0.5 }}
-                className="text-muted-foreground text-center mb-10">Track better. Live better.</motion.p>
+                className="text-muted-foreground text-center mb-6">Track better. Live better.</motion.p>
               <motion.div initial={{ opacity: 0, y: 25 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.5 }} className="w-full max-w-xs">
                 <motion.div whileTap={{ scale: 0.95 }} transition={{ type: 'spring', damping: 15 }}>
                   <Button onClick={() => setStep(1)} className="w-full h-14 rounded-2xl font-bold text-base shadow-neon gradient-primary cta-glow">
