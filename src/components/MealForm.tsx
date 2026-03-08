@@ -251,9 +251,9 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
 
               {/* Nutrition Cards */}
               <motion.div 
-                initial={{ opacity: 0, y: 16 }} 
+                initial={{ opacity: 0, y: 24 }} 
                 animate={{ opacity: 1, y: 0 }} 
-                transition={{ delay: 0.15, type: 'spring', damping: 20 }}
+                transition={{ delay: 0.2, type: 'spring', damping: 18, stiffness: 180 }}
                 className="space-y-3"
               >
                 <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1 block">
@@ -262,20 +262,29 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
 
                 {/* Calories - full width hero card */}
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.2, type: 'spring', damping: 18 }}
+                  initial={{ opacity: 0, scale: 0.9, y: 16 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ delay: 0.25, type: 'spring', damping: 16, stiffness: 200 }}
+                  whileHover={{ scale: 1.01 }}
                   className={`relative rounded-2xl p-4 border bg-gradient-to-br ${nutritionFields[0].color} overflow-hidden`}
                 >
-                  <div className="absolute top-2 right-2 opacity-10">
+                  <motion.div 
+                    className="absolute top-2 right-2 opacity-10"
+                    animate={{ rotate: [0, 8, -8, 0], scale: [1, 1.05, 1] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                  >
                     <Flame className="w-16 h-16" />
-                  </div>
+                  </motion.div>
                   <div className="flex items-center gap-3 mb-2">
-                    <div className={`w-8 h-8 rounded-lg bg-background/30 flex items-center justify-center ${nutritionFields[0].iconColor}`}>
+                    <motion.div 
+                      className={`w-8 h-8 rounded-lg bg-background/30 flex items-center justify-center ${nutritionFields[0].iconColor}`}
+                      whileTap={{ scale: 0.9 }}
+                      animate={{ scale: calories ? [1, 1.1, 1] : 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
                       <Flame className="w-4 h-4" />
-                    </div>
+                    </motion.div>
                     <span className="font-bold text-sm">Calories</span>
-                    
                   </div>
                   <Input 
                     type="number" inputMode="numeric" min="0" max="5000" 
@@ -290,21 +299,31 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                 <div className="grid grid-cols-3 gap-2.5">
                   {nutritionFields.slice(1).map((field, i) => {
                     const Icon = field.icon;
+                    const hasValue = !!values[field.key];
                     return (
                       <motion.div
                         key={field.key}
-                        initial={{ opacity: 0, y: 12, scale: 0.9 }}
+                        initial={{ opacity: 0, y: 20, scale: 0.85 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        transition={{ delay: 0.25 + i * 0.06, type: 'spring', damping: 15 }}
+                        transition={{ delay: 0.3 + i * 0.08, type: 'spring', damping: 14, stiffness: 200 }}
+                        whileHover={{ scale: 1.03, y: -2 }}
                         className={`relative rounded-xl p-3 border bg-gradient-to-br ${field.color} overflow-hidden`}
                       >
-                        <div className="absolute -bottom-1 -right-1 opacity-[0.07]">
+                        <motion.div 
+                          className="absolute -bottom-1 -right-1 opacity-[0.07]"
+                          animate={{ rotate: hasValue ? [0, 10, -5, 0] : 0 }}
+                          transition={{ duration: 0.5 }}
+                        >
                           <Icon className="w-10 h-10" />
-                        </div>
+                        </motion.div>
                         <div className="flex items-center gap-1.5 mb-1.5">
-                          <Icon className={`w-3.5 h-3.5 ${field.iconColor}`} />
+                          <motion.div
+                            animate={hasValue ? { scale: [1, 1.2, 1] } : {}}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <Icon className={`w-3.5 h-3.5 ${field.iconColor}`} />
+                          </motion.div>
                           <span className="font-bold text-[10px] uppercase tracking-wider">{field.label}</span>
-                          
                         </div>
                         <Input 
                           type="number" inputMode="numeric" min="0" max={field.max}
