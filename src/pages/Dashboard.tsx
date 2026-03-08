@@ -139,7 +139,7 @@ export default function Dashboard() {
               <div className="grid grid-cols-3 gap-2">
                 {settings.goals.protein && (
                   <motion.div 
-                    className="flex flex-col items-center gap-1.5"
+                    className="flex flex-col items-center gap-1.5 min-w-0 overflow-hidden"
                     initial={noMotion ? false : { scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.3, type: 'spring', damping: 10 }}
