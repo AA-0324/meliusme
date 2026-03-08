@@ -81,7 +81,7 @@ export default function Profile() {
   }, [personalizedGoalsEnabled, bodyProfile]);
 
   const doSaveGoals = useCallback(() => {
-    const newSugar = isPro && sugarGoal ? parseInt(sugarGoal, 10) : undefined;
+    const newSugar = sugarGoal ? parseInt(sugarGoal, 10) : undefined;
     const oldSugar = settings.goals.sugar;
 
     // Show sugar feedback BEFORE "Goals saved" with a delay
@@ -95,9 +95,9 @@ export default function Profile() {
 
     updateUserGoals({
       calories: parseInt(calorieGoal, 10) || 2000,
-      protein: isPro && proteinGoal ? parseInt(proteinGoal, 10) : undefined,
-      fiber: isPro && fiberGoal ? parseInt(fiberGoal, 10) : undefined,
-      sugar: isPro && sugarGoal ? parseInt(sugarGoal, 10) : undefined,
+      protein: proteinGoal ? parseInt(proteinGoal, 10) : undefined,
+      fiber: fiberGoal ? parseInt(fiberGoal, 10) : undefined,
+      sugar: sugarGoal ? parseInt(sugarGoal, 10) : undefined,
     });
     setWaterGoal(parseInt(waterGoalInput, 10) || 8);
 
