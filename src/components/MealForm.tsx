@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Tag, ChevronLeft } from 'lucide-react';
+import { X, Plus, Tag, ChevronLeft, Flame, Beef, Apple, Candy, Sparkles, UtensilsCrossed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,11 +20,11 @@ interface MealFormProps {
 
 type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
-const mealTypes: { value: MealType; label: string }[] = [
-  { value: 'breakfast', label: 'Breakfast' },
-  { value: 'lunch', label: 'Lunch' },
-  { value: 'dinner', label: 'Dinner' },
-  { value: 'snack', label: 'Snack' },
+const mealTypes: { value: MealType; label: string; emoji: string }[] = [
+  { value: 'breakfast', label: 'Breakfast', emoji: '🌅' },
+  { value: 'lunch', label: 'Lunch', emoji: '☀️' },
+  { value: 'dinner', label: 'Dinner', emoji: '🌙' },
+  { value: 'snack', label: 'Snack', emoji: '🍿' },
 ];
 
 function getSuggestedMealTypeForHour(hour: number): MealType {
@@ -41,6 +41,13 @@ function getAvailableMealTypesForHour(hour: number): MealType[] {
   return ['snack'];
 }
 
+const nutritionFields = [
+  { key: 'calories', label: 'Calories', icon: Flame, color: 'from-orange-500/20 to-red-500/20 border-orange-500/30', iconColor: 'text-orange-400', max: 5000, full: true },
+  { key: 'protein', label: 'Protein', unit: 'g', icon: Beef, color: 'from-blue-500/20 to-cyan-500/20 border-blue-500/30', iconColor: 'text-blue-400', max: 200 },
+  { key: 'fiber', label: 'Fiber', unit: 'g', icon: Apple, color: 'from-green-500/20 to-emerald-500/20 border-green-500/30', iconColor: 'text-green-400', max: 100 },
+  { key: 'sugar', label: 'Sugar', unit: 'g', icon: Candy, color: 'from-pink-500/20 to-rose-500/20 border-pink-500/30', iconColor: 'text-pink-400', max: 300 },
+] as const;
+
 export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
   const { logMeal, isPro, settings, meals } = useApp();
   const [showProModal, setShowProModal] = useState(false);
@@ -54,6 +61,9 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const values: Record<string, string> = { calories, protein, fiber, sugar };
+  const setters: Record<string, (v: string) => void> = { calories: setCalories, protein: setProtein, fiber: setFiber, sugar: setSugar };
 
   const currentHour = now.getHours();
   const availableMealTypes = useMemo(() => getAvailableMealTypesForHour(currentHour), [currentHour]);
@@ -136,17 +146,40 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
     }
   };
 
+  const filledCount = [calories, protein, fiber, sugar].filter(v => v !== '').length;
+  const progress = (filledCount / 4) * 100;
+
   return (
     <>
       <AnimatePresence>
         {open && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-background flex flex-col overflow-hidden">
-            {/* Header with photo preview */}
+            {/* Hero photo header */}
             <div className="relative flex-shrink-0">
-              {/* Photo strip */}
-              <div className="relative h-28 bg-black overflow-hidden">
-                {photo && <img src={photo} alt="Meal" className="w-full h-full object-cover opacity-60" />}
-                <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-background" />
+              <div className="relative h-44 bg-black overflow-hidden">
+                {photo && (
+                  <motion.img 
+                    src={photo} 
+                    alt="Meal" 
+                    initial={{ scale: 1.2, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 0.7 }}
+                    transition={{ duration: 0.6 }}
+                    className="w-full h-full object-cover" 
+                  />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-background" />
+                
+                {/* Decorative floating particles */}
+                <motion.div 
+                  animate={{ y: [-5, 5, -5], opacity: [0.3, 0.6, 0.3] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                  className="absolute top-8 right-12 w-2 h-2 rounded-full bg-primary/60"
+                />
+                <motion.div 
+                  animate={{ y: [5, -5, 5], opacity: [0.2, 0.5, 0.2] }}
+                  transition={{ duration: 4, repeat: Infinity, delay: 1 }}
+                  className="absolute top-16 right-24 w-1.5 h-1.5 rounded-full bg-primary/40"
+                />
               </div>
 
               {/* Navigation bar overlaid */}
@@ -158,33 +191,59 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                 >
                   <ChevronLeft className="w-5 h-5 text-white" />
                 </motion.button>
-                <h1 className="text-white font-bold text-base">Log Meal</h1>
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-2"
+                >
+                  <UtensilsCrossed className="w-4 h-4 text-primary" />
+                  <h1 className="text-white font-bold text-base">Log Meal</h1>
+                </motion.div>
                 <div className="w-9" />
+              </div>
+
+              {/* Progress indicator bar */}
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-muted/20">
+                <motion.div 
+                  className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-r-full"
+                  initial={{ width: '0%' }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ type: 'spring', damping: 20 }}
+                />
               </div>
             </div>
 
             {/* Scrollable form content */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 pt-4 pb-4 space-y-5">
-              {/* Meal Type */}
-              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 block">Meal Type</Label>
+            <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 pt-5 pb-4 space-y-5">
+              {/* Meal Type selector */}
+              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08, type: 'spring', damping: 20 }}>
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 block flex items-center gap-1.5">
+                  <Sparkles className="w-3 h-3 text-primary" />
+                  What are you having?
+                </Label>
                 <div className="grid grid-cols-4 gap-2">
-                  {mealTypes.map(({ value, label }) => {
+                  {mealTypes.map(({ value, label, emoji }, i) => {
                     const isAvailable = availableMealTypes.includes(value);
+                    const isSelected = mealType === value;
                     return (
                       <motion.button
                         key={value}
-                        whileTap={isAvailable ? { scale: 0.92 } : {}}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 + i * 0.05, type: 'spring', damping: 15 }}
+                        whileTap={isAvailable ? { scale: 0.9 } : {}}
+                        whileHover={isAvailable ? { y: -2 } : {}}
                         onClick={() => isAvailable && setMealType(value)}
                         disabled={!isAvailable}
-                        className={`py-2.5 rounded-xl font-semibold text-xs transition-all ${
-                          mealType === value
-                            ? 'bg-primary text-primary-foreground shadow-md'
+                        className={`py-3 rounded-xl font-semibold text-xs transition-all flex flex-col items-center gap-1 ${
+                          isSelected
+                            ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-[1.02]'
                             : isAvailable
-                              ? 'bg-secondary text-secondary-foreground active:bg-secondary/70'
+                              ? 'bg-secondary/80 text-secondary-foreground hover:bg-secondary'
                               : 'bg-muted/20 text-muted-foreground/40 cursor-not-allowed'
                         }`}
                       >
+                        <span className="text-lg">{emoji}</span>
                         {label}
                       </motion.button>
                     );
@@ -192,47 +251,75 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                 </div>
               </motion.div>
 
-              {/* Nutrition Fields */}
-              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-                className="space-y-4">
-                <div>
-                  <Label htmlFor="calories" className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">
-                    Calories <span className="text-destructive">*</span>
-                  </Label>
-                  <Input id="calories" type="number" inputMode="numeric" min="0" max="5000" value={calories}
+              {/* Nutrition Cards */}
+              <motion.div 
+                initial={{ opacity: 0, y: 16 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                transition={{ delay: 0.15, type: 'spring', damping: 20 }}
+                className="space-y-3"
+              >
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1 block flex items-center gap-1.5">
+                  <Flame className="w-3 h-3 text-primary" />
+                  Nutrition Info
+                </Label>
+
+                {/* Calories - full width hero card */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2, type: 'spring', damping: 18 }}
+                  className={`relative rounded-2xl p-4 border bg-gradient-to-br ${nutritionFields[0].color} overflow-hidden`}
+                >
+                  <div className="absolute top-2 right-2 opacity-10">
+                    <Flame className="w-16 h-16" />
+                  </div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className={`w-8 h-8 rounded-lg bg-background/30 flex items-center justify-center ${nutritionFields[0].iconColor}`}>
+                      <Flame className="w-4 h-4" />
+                    </div>
+                    <span className="font-bold text-sm">Calories</span>
+                    <span className="text-destructive text-xs">*</span>
+                  </div>
+                  <Input 
+                    type="number" inputMode="numeric" min="0" max="5000" 
+                    value={calories}
                     onChange={(e) => setCalories(e.target.value)}
                     placeholder="0"
-                    className="h-12 text-lg rounded-xl bg-secondary border-0 font-semibold placeholder:text-muted-foreground/30" />
-                </div>
+                    className="h-14 text-3xl rounded-xl bg-background/40 border-0 font-extrabold placeholder:text-muted-foreground/20 text-center"
+                  />
+                </motion.div>
 
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <Label htmlFor="protein" className="text-[10px] font-bold text-muted-foreground uppercase mb-1 block">
-                      Protein (g) <span className="text-destructive">*</span>
-                    </Label>
-                    <Input id="protein" type="number" inputMode="numeric" min="0" max="200" value={protein}
-                      onChange={(e) => setProtein(e.target.value)}
-                      placeholder="0"
-                      className="h-11 rounded-xl bg-secondary border-0 placeholder:text-muted-foreground/30" />
-                  </div>
-                  <div>
-                    <Label htmlFor="fiber" className="text-[10px] font-bold text-muted-foreground uppercase mb-1 block">
-                      Fiber (g) <span className="text-destructive">*</span>
-                    </Label>
-                    <Input id="fiber" type="number" inputMode="numeric" min="0" max="100" value={fiber}
-                      onChange={(e) => setFiber(e.target.value)}
-                      placeholder="0"
-                      className="h-11 rounded-xl bg-secondary border-0 placeholder:text-muted-foreground/30" />
-                  </div>
-                  <div>
-                    <Label htmlFor="sugar" className="text-[10px] font-bold text-muted-foreground uppercase mb-1 block">
-                      Sugar (g) <span className="text-destructive">*</span>
-                    </Label>
-                    <Input id="sugar" type="number" inputMode="numeric" min="0" max="300" value={sugar}
-                      onChange={(e) => setSugar(e.target.value)}
-                      placeholder="0"
-                      className="h-11 rounded-xl bg-secondary border-0 placeholder:text-muted-foreground/30" />
-                  </div>
+                {/* Macros grid */}
+                <div className="grid grid-cols-3 gap-2.5">
+                  {nutritionFields.slice(1).map((field, i) => {
+                    const Icon = field.icon;
+                    return (
+                      <motion.div
+                        key={field.key}
+                        initial={{ opacity: 0, y: 12, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ delay: 0.25 + i * 0.06, type: 'spring', damping: 15 }}
+                        className={`relative rounded-xl p-3 border bg-gradient-to-br ${field.color} overflow-hidden`}
+                      >
+                        <div className="absolute -bottom-1 -right-1 opacity-[0.07]">
+                          <Icon className="w-10 h-10" />
+                        </div>
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <Icon className={`w-3.5 h-3.5 ${field.iconColor}`} />
+                          <span className="font-bold text-[10px] uppercase tracking-wider">{field.label}</span>
+                          <span className="text-destructive text-[10px]">*</span>
+                        </div>
+                        <Input 
+                          type="number" inputMode="numeric" min="0" max={field.max}
+                          value={values[field.key]}
+                          onChange={(e) => setters[field.key](e.target.value)}
+                          placeholder="0"
+                          className="h-11 text-xl rounded-lg bg-background/40 border-0 font-extrabold placeholder:text-muted-foreground/20 text-center"
+                        />
+                        <span className="text-[9px] text-muted-foreground/60 block text-center mt-1">grams</span>
+                      </motion.div>
+                    );
+                  })}
                 </div>
               </motion.div>
 
@@ -258,8 +345,11 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
 
               {/* Custom Tags (Pro) */}
               {isPro && (
-                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-                  <Label className="text-[10px] font-bold text-muted-foreground uppercase mb-1.5 block">Custom Tags</Label>
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+                  <Label className="text-[10px] font-bold text-muted-foreground uppercase mb-1.5 block flex items-center gap-1.5">
+                    <Tag className="w-3 h-3 text-primary" />
+                    Custom Tags
+                  </Label>
                   <div className="flex gap-2">
                     <Input placeholder="Add a tag..." value={tagInput} onChange={(e) => setTagInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
@@ -284,10 +374,30 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
 
             {/* Fixed bottom save button */}
             <div className="p-4 safe-bottom bg-background/95 backdrop-blur-sm border-t border-border/30 flex-shrink-0">
+              {/* Mini progress dots */}
+              <div className="flex items-center justify-center gap-1.5 mb-3">
+                {['calories', 'protein', 'fiber', 'sugar'].map((key) => (
+                  <motion.div
+                    key={key}
+                    className={`w-2 h-2 rounded-full transition-colors ${values[key] ? 'bg-primary' : 'bg-muted/40'}`}
+                    animate={values[key] ? { scale: [1, 1.3, 1] } : {}}
+                    transition={{ duration: 0.3 }}
+                  />
+                ))}
+              </div>
               <motion.div whileTap={{ scale: 0.96 }}>
                 <Button onClick={handleSubmit} disabled={!calories || !protein || !fiber || !sugar || isSubmitting}
-                  className="w-full h-12 text-base rounded-xl font-bold shadow-neon gradient-primary">
-                  {isSubmitting ? 'Saving...' : 'Save Meal'}
+                  className="w-full h-13 text-base rounded-2xl font-bold shadow-neon gradient-primary">
+                  {isSubmitting ? (
+                    <motion.span animate={{ opacity: [1, 0.5, 1] }} transition={{ duration: 1, repeat: Infinity }}>
+                      Saving...
+                    </motion.span>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Save Meal
+                    </>
+                  )}
                 </Button>
               </motion.div>
             </div>
