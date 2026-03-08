@@ -43,30 +43,22 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             transition={{ type: 'spring', damping: 22, stiffness: 300 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-[340px] mx-4 bg-white/[0.04] border border-white/[0.08] rounded-3xl p-6 flex flex-col items-center"
+            className="w-full max-w-[360px] mx-4 bg-white/[0.04] border border-white/[0.08] rounded-3xl p-7 flex flex-col items-center"
           >
-            {/* Close */}
-            <div className="w-full flex justify-end -mt-1 -mr-1 mb-2">
-              <motion.button whileTap={{ scale: 0.85 }} onClick={onClose}
-                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
-                <X className="w-4 h-4 text-white/50" />
-              </motion.button>
-            </div>
-
             {/* Logo */}
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.1, type: 'spring', damping: 14, stiffness: 180 }}
-              className="relative mb-5"
+              className="relative mb-3"
             >
               <motion.div
                 animate={{ scale: [1, 1.3, 1], opacity: [0.15, 0.35, 0.15] }}
                 transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                className="absolute inset-[-20px] bg-primary/30 rounded-full blur-2xl"
+                className="absolute inset-[-24px] bg-primary/30 rounded-full blur-2xl"
               />
-              <div className="relative w-16 h-16 flex items-center justify-center">
-                <img src={logo} alt="MeliusMe" className="w-14 h-14" />
+              <div className="relative w-20 h-20 flex items-center justify-center">
+                <img src={logo} alt="MeliusMe" className="w-18 h-18" />
               </div>
             </motion.div>
 
