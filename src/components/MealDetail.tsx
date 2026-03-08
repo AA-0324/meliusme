@@ -92,8 +92,8 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
                 </div>
               </div>
 
-              <HealthWarning calories={meal.calories} protein={meal.protein} fiber={meal.fiber} sugar={meal.sugar} mealType={meal.mealType} userGoals={userGoals} />
-              <HealthPositive calories={meal.calories} protein={meal.protein} fiber={meal.fiber} sugar={meal.sugar} mealType={meal.mealType} userGoals={userGoals} />
+              <HealthWarning calories={meal.calories} protein={meal.protein} fiber={meal.fiber} sugar={meal.sugar} mealType={meal.mealType} userGoals={userGoals} isLogged />
+              <HealthPositive calories={meal.calories} protein={meal.protein} fiber={meal.fiber} sugar={meal.sugar} mealType={meal.mealType} userGoals={userGoals} isLogged />
 
               <div className="grid grid-cols-2 gap-3">
                 {[

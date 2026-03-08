@@ -36,7 +36,7 @@ const mealTypeDotColors = {
 export function MealCard({ meal, onClick, compact }: MealCardProps) {
   const { settings, animationsEnabled } = useApp();
   const noMotion = !animationsEnabled;
-  const warnings = getHealthWarnings(meal.calories, meal.protein, meal.fiber, meal.sugar, meal.mealType);
+  const warnings = getHealthWarnings(meal.calories, meal.protein, meal.fiber, meal.sugar, meal.mealType, undefined, undefined, { isLogged: true });
   const hasWarnings = hasAnyWarning(warnings);
 
   if (compact) {

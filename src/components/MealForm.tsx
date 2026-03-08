@@ -380,10 +380,10 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                 <>
                   <HealthWarning calories={parseInt(calories, 10) || 0} protein={protein ? parseInt(protein, 10) : undefined}
                     fiber={fiber ? parseInt(fiber, 10) : undefined} sugar={sugar ? parseInt(sugar, 10) : undefined}
-                    mealType={mealType} userGoals={isPro ? userGoals : undefined} />
+                    mealType={mealType} userGoals={userGoals} />
                   <HealthPositive calories={parseInt(calories, 10) || 0} protein={protein ? parseInt(protein, 10) : undefined}
                     fiber={fiber ? parseInt(fiber, 10) : undefined} sugar={sugar ? parseInt(sugar, 10) : undefined}
-                    mealType={mealType} userGoals={isPro ? userGoals : undefined} />
+                    mealType={mealType} userGoals={userGoals} />
                 </>
               )}
 
