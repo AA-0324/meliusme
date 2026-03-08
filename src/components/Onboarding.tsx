@@ -142,28 +142,32 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           {/* Step 0: Welcome */}
           {step === 0 && (
             <motion.div key="welcome" variants={slideVariants} initial="enter" animate="center" exit="exit"
-              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="flex-1 flex flex-col items-center justify-center px-8">
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="flex-1 flex flex-col items-center justify-center px-8 relative">
+              {/* Large background logo */}
               <motion.div initial={{ scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: 'spring', damping: 12, stiffness: 150 }}
-                className="relative mb-4">
+                className="absolute">
                 <motion.div
-                  animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }}
+                  animate={{ scale: [1, 1.3, 1], opacity: [0.15, 0.3, 0.15] }}
                   transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute inset-[-20px] bg-primary/30 rounded-full blur-3xl"
+                  className="absolute inset-[-40px] bg-primary/30 rounded-full blur-3xl"
                 />
-                <img src={logo} alt="MeliusMe" className="relative w-24 h-24 drop-shadow-[0_0_20px_hsl(var(--primary)/0.6)]" />
+                <img src={logo} alt="" className="relative w-56 h-56 opacity-20" />
               </motion.div>
-              <motion.h1 initial={{ opacity: 0, y: 25 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5 }}
-                className="text-3xl font-extrabold text-center mb-2">Welcome to MeliusMe</motion.h1>
-              <motion.p initial={{ opacity: 0, y: 25 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35, duration: 0.5 }}
-                className="text-muted-foreground text-center mb-6">Track better. Live better.</motion.p>
-              <motion.div initial={{ opacity: 0, y: 25 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.5 }} className="w-full max-w-xs">
-                <motion.div whileTap={{ scale: 0.95 }} transition={{ type: 'spring', damping: 15 }}>
-                  <Button onClick={() => setStep(1)} className="w-full h-14 rounded-2xl font-bold text-base shadow-neon gradient-primary cta-glow">
-                    Get Started <ArrowRight className="w-5 h-5 ml-2" />
-                  </Button>
+              {/* Foreground content */}
+              <div className="relative z-10 flex flex-col items-center">
+                <motion.h1 initial={{ opacity: 0, y: 25 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5 }}
+                  className="text-3xl font-extrabold text-center mb-1">Welcome to MeliusMe</motion.h1>
+                <motion.p initial={{ opacity: 0, y: 25 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35, duration: 0.5 }}
+                  className="text-muted-foreground text-center mb-5">Track better. Live better.</motion.p>
+                <motion.div initial={{ opacity: 0, y: 25 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.5 }} className="w-full max-w-xs">
+                  <motion.div whileTap={{ scale: 0.95 }} transition={{ type: 'spring', damping: 15 }}>
+                    <Button onClick={() => setStep(1)} className="w-full h-14 rounded-2xl font-bold text-base shadow-neon gradient-primary cta-glow">
+                      Get Started <ArrowRight className="w-5 h-5 ml-2" />
+                    </Button>
+                  </motion.div>
                 </motion.div>
-              </motion.div>
+              </div>
             </motion.div>
           )}
 
@@ -406,37 +410,38 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           {/* Step 3: Pro Upsell */}
           {step === 3 && (
             <motion.div key="pro" variants={slideVariants} initial="enter" animate="center" exit="exit"
-              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="flex-1 flex flex-col items-center justify-center px-8">
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="flex-1 flex flex-col items-center justify-center px-8 relative">
+              {/* Large background logo */}
               <motion.div initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: 'spring', damping: 14 }}
-                className="relative mb-6">
+                className="absolute">
                 <motion.div
-                  animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.5, 0.2] }}
+                  animate={{ scale: [1, 1.3, 1], opacity: [0.1, 0.25, 0.1] }}
                   transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute inset-[-20px] bg-primary/20 rounded-full blur-2xl"
+                  className="absolute inset-[-40px] bg-primary/20 rounded-full blur-2xl"
                 />
-                <div className="relative w-20 h-20 flex items-center justify-center">
-                  <img src={logo} alt="MeliusMe" className="w-16 h-16" />
-                </div>
+                <img src={logo} alt="" className="relative w-56 h-56 opacity-15" />
               </motion.div>
-              <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-                className="text-2xl font-extrabold text-center mb-2">Unlock your full potential</motion.h1>
-              <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                className="text-muted-foreground text-center mb-8">Get personalized goals, advanced tracking, and more</motion.p>
-
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-                className="w-full max-w-xs space-y-3">
-                <motion.div whileTap={{ scale: 0.95 }} transition={{ type: 'spring', damping: 15 }}>
-                  <Button onClick={() => setShowProModal(true)}
-                    className="w-full h-14 rounded-2xl font-bold text-base bg-primary hover:bg-primary/90 text-primary-foreground">
-                    <img src={logo} alt="" className="w-5 h-5 mr-2" />
-                    Try MeliusMe Pro — $9.99
+              {/* Foreground content */}
+              <div className="relative z-10 flex flex-col items-center">
+                <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+                  className="text-2xl font-extrabold text-center mb-1">Unlock your full potential</motion.h1>
+                <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                  className="text-muted-foreground text-center mb-6">Get personalized goals, advanced tracking, and more</motion.p>
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+                  className="w-full max-w-xs space-y-3">
+                  <motion.div whileTap={{ scale: 0.95 }} transition={{ type: 'spring', damping: 15 }}>
+                    <Button onClick={() => setShowProModal(true)}
+                      className="w-full h-14 rounded-2xl font-bold text-base bg-primary hover:bg-primary/90 text-primary-foreground">
+                      <img src={logo} alt="" className="w-5 h-5 mr-2" />
+                      Try MeliusMe Pro — $9.99
+                    </Button>
+                  </motion.div>
+                  <Button variant="ghost" onClick={handleFinish} className="w-full h-12 rounded-xl text-muted-foreground font-semibold">
+                    Maybe later
                   </Button>
                 </motion.div>
-                <Button variant="ghost" onClick={handleFinish} className="w-full h-12 rounded-xl text-muted-foreground font-semibold">
-                  Maybe later
-                </Button>
-              </motion.div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
