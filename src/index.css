@@ -544,17 +544,17 @@
     position: absolute;
     top: 0;
     left: -100%;
-    width: 60%;
+    width: 40%;
     height: 100%;
     background: linear-gradient(
       90deg,
       transparent,
-      hsl(var(--primary) / 0.08),
-      hsl(var(--primary) / 0.15),
-      hsl(var(--primary) / 0.08),
+      hsl(var(--primary) / 0.03),
+      hsl(var(--primary) / 0.06),
+      hsl(var(--primary) / 0.03),
       transparent
     );
-    animation: shine-sweep 3s ease-in-out infinite;
+    animation: shine-sweep 5s ease-in-out infinite;
     pointer-events: none;
     border-radius: inherit;
   }
