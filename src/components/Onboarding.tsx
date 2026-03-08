@@ -165,7 +165,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 <motion.div
                   animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.5, 0.2] }}
                   transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-                  className="absolute inset-[-20px] bg-amber-500/20 rounded-full blur-2xl"
+                  className="absolute inset-[-20px] bg-primary/20 rounded-full blur-2xl"
                 />
                 <div className="relative w-20 h-20 flex items-center justify-center">
                   <img src={logo} alt="MeliusMe" className="w-16 h-16 drop-shadow-[0_0_15px_hsl(43_96%_50%/0.5)]" />
