@@ -72,7 +72,7 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
               initial={noMotion ? false : { opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, type: 'spring', damping: 15 }}
-              className="text-center mb-8 relative z-10 -mt-4"
+              className="text-center mb-6 relative z-10 -mt-5"
             >
               <h2 className="text-3xl font-extrabold text-white">
                 MeliusMe <span className="text-primary">Pro</span>
