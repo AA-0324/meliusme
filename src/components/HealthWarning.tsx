@@ -195,8 +195,8 @@ export function getHealthWarnings(
       } else {
         warnings.messages.push(`Low protein for ${mealType} (${protein}g)`);
       }
-    } else if (protein > thresholds.maxProtein) {
-      // Very high protein - unusual but warn
+    } else if (protein > thresholds.maxProtein && !isLogged) {
+      // Very high protein - unusual but warn (only during logging, not when viewing)
       warnings.highProtein = true;
       warnings.messages.push(`Unusually high protein (${protein}g) - verify entry`);
     } else if (protein >= thresholds.minProtein) {
