@@ -74,7 +74,7 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
             <div className="relative flex-shrink-0">
               <img src={meal.photo} alt={mealTypeLabels[meal.mealType]} className="w-full aspect-video object-cover" />
               <button onClick={onClose} 
-                className="absolute top-4 right-4 w-10 h-10 bg-black/60 hover:bg-black/80 text-white rounded-full safe-top flex items-center justify-center">
+                className="absolute top-4 right-4 w-10 h-10 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center">
                 <X className="w-4 h-4" />
               </button>
             </div>
