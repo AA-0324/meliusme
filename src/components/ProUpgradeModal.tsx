@@ -50,15 +50,15 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.1, type: 'spring', damping: 14, stiffness: 180 }}
-              className="relative mt-4 mb-3"
+              className="relative mt-10 mb-4"
             >
               <motion.div
                 animate={{ scale: [1, 1.3, 1], opacity: [0.15, 0.35, 0.15] }}
                 transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                className="absolute inset-[-24px] bg-primary/30 rounded-full blur-2xl"
+                className="absolute inset-[-30px] bg-primary/30 rounded-full blur-2xl"
               />
-              <div className="relative w-20 h-20 flex items-center justify-center">
-                <img src={logo} alt="MeliusMe" className="w-18 h-18" />
+              <div className="relative w-28 h-28 flex items-center justify-center">
+                <img src={logo} alt="MeliusMe" className="w-24 h-24" />
               </div>
             </motion.div>
 
