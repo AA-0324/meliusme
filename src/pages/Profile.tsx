@@ -237,7 +237,6 @@ export default function Profile() {
             <motion.button 
               onClick={() => setShowProModal(true)}
               whileTap={{ scale: 0.97 }}
-              whileTap={{ scale: 0.97 }}
               className="w-full rounded-2xl p-5 text-left relative overflow-hidden bg-gradient-to-br from-primary/10 via-card to-primary/5 border border-primary/30 hover:border-primary/50"
             >
               <div className="flex items-center gap-3">
