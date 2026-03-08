@@ -400,7 +400,7 @@ export default function Profile() {
         {/* Export */}
         <motion.div variants={fadeUp}>
           <motion.div whileTap={{ scale: 0.97 }}>
-            <Button onClick={handleExport} variant="outline" className={`w-full h-12 rounded-xl justify-between font-semibold ${!isPro ? proGoldBorder : ''}`}>
+            <Button onClick={handleExport} variant="outline" className={`w-full h-12 rounded-xl justify-between font-semibold ${!isPro ? proLocked : ''}`}>
               <div className="flex items-center gap-3">
                 <Download className="w-5 h-5" /><span>Export Data (CSV)</span>
               </div>
