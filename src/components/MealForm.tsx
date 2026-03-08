@@ -242,7 +242,6 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                               : 'bg-muted/20 text-muted-foreground/40 cursor-not-allowed'
                         }`}
                       >
-                        <span className="text-lg">{emoji}</span>
                         {label}
                       </motion.button>
                     );
