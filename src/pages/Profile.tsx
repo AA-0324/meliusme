@@ -103,7 +103,7 @@ export default function Profile() {
 
     // Delay "Goals saved" so sugar toast is visible first
     setTimeout(() => toast.success('Goals saved!'), 800);
-  }, [calorieGoal, proteinGoal, fiberGoal, sugarGoal, waterGoalInput, isPro, settings.goals.sugar, updateUserGoals, setWaterGoal]);
+  }, [calorieGoal, proteinGoal, fiberGoal, sugarGoal, waterGoalInput, settings.goals.sugar, updateUserGoals, setWaterGoal]);
 
   const handleSaveGoals = () => {
     if (hasBulkingConflict) { setShowGoalConfirm(true); return; }
