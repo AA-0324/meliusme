@@ -172,6 +172,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
     <>
       <AnimatePresence>
         {open && (
+          <>
           {/* Opaque backdrop to fully hide everything behind */}
           <motion.div
             initial={{ opacity: 0 }}
