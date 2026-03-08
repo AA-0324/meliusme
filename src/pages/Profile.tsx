@@ -298,7 +298,7 @@ export default function Profile() {
             </div>
             <Switch checked={settings.darkMode} onCheckedChange={setDarkMode} />
           </div>
-          <div className={`pt-3 border-t border-border/50 ${!isPro ? 'rounded-xl p-3 ' + proGoldBorder : ''}`}>
+          <div className={`pt-3 border-t border-border/50 ${!isPro ? 'rounded-xl p-3 ' + proLocked : ''}`}>
             <div className="flex items-center gap-2 mb-3">
               <Palette className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm font-semibold">Theme</span>
