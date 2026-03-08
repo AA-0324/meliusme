@@ -53,8 +53,7 @@ export function getGreeting(name?: string): string {
   let greeting = 'Hello';
   if (hour >= 5 && hour < 12) greeting = 'Good morning';
   else if (hour >= 12 && hour < 17) greeting = 'Good afternoon';
-  else if (hour >= 17 && hour < 21) greeting = 'Good evening';
-  else greeting = 'Good night';
+  else greeting = 'Good evening';
   return name ? `${greeting}, ${name}` : greeting;
 }
 
