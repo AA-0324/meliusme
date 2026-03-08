@@ -3,7 +3,7 @@ import { Meal, Settings, getSettings, saveSettings, getAllMeals, addMeal, delete
 import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/userProfile';
 import { getBodyProfile, saveBodyProfile, BodyProfile } from '@/lib/bodyGoals';
 import { requestNotificationPermission, areNotificationsSupported } from '@/lib/notifications';
-import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge, getEarnedBadges, Badge, awardBadge, addXP } from '@/lib/streaks';
+import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge, getEarnedBadges, Badge, awardBadge, addXP, LevelUpResult, TempProUnlock, getTempProUnlocks, getXPData, XPData } from '@/lib/streaks';
 import { initEncryption } from '@/lib/crypto';
 import { migrateAllToEncrypted } from '@/lib/encryptedStorage';
 
@@ -79,6 +79,11 @@ interface AppContextType {
   bottomToast: { open: boolean; message: string; variant: ToastVariant };
   showBottomToast: (message: string, variant?: ToastVariant) => void;
   hideBottomToast: () => void;
+  // Level system
+  xpData: XPData;
+  tempProUnlocks: TempProUnlock[];
+  levelUpPending: LevelUpResult | null;
+  dismissLevelUp: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -93,6 +98,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [streak, setStreak] = useState<StreakData>(DEFAULT_STREAK);
   const [currentChallenge, setCurrentChallenge] = useState<Challenge>(DEFAULT_CHALLENGE);
   const [badges, setBadges] = useState<Badge[]>([]);
+  const [xpData, setXpData] = useState<XPData>({ totalXP: 0, level: 1, xpToNextLevel: 100, currentLevelXP: 0 });
+  const [tempProUnlocks, setTempProUnlocks] = useState<TempProUnlock[]>([]);
+  const [levelUpPending, setLevelUpPending] = useState<LevelUpResult | null>(null);
 
   const [bottomToast, setBottomToast] = useState<AppContextType['bottomToast']>({ open: false, message: '', variant: 'primary' });
   const toastQueueRef = useRef<Array<{ message: string; variant: ToastVariant }>>([]);
@@ -102,6 +110,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const isPro = settings.proStatus || settings.devMode;
   const animationsEnabled = settings.animationsEnabled !== false;
+
+  const dismissLevelUp = useCallback(() => setLevelUpPending(null), []);
 
   // Sync animations preference to window for motion.ts
   useEffect(() => {
@@ -114,7 +124,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try {
         await initEncryption();
         await migrateAllToEncrypted();
-        const [s, profile, body, streakD, challenge, bdgs, allMeals, water] = await Promise.all([
+        const [s, profile, body, streakD, challenge, bdgs, allMeals, water, xp, unlocks] = await Promise.all([
           getSettings(),
           getUserProfile(),
           getBodyProfile(),
@@ -123,11 +133,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           getEarnedBadges(),
           getAllMeals(),
           getWaterIntake(today),
+          getXPData(),
+          getTempProUnlocks(),
         ]);
 
         setSettingsState(s);
         setUserProfile(profile);
         setBodyProfile(body);
+        setXpData(xp);
+        setTempProUnlocks(unlocks);
         setStreak(streakD);
         setBadges(bdgs);
         setMeals(allMeals);
@@ -305,7 +319,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const updatedChallenge = await getCurrentChallenge(updatedMeals);
     setCurrentChallenge(updatedChallenge);
 
-    await addXP(10);
+    const levelResult = await addXP(10, isPro);
+    setXpData(levelResult.xpData);
+    if (levelResult.leveledUp) {
+      setLevelUpPending(levelResult);
+      if (levelResult.reward) {
+        setTempProUnlocks(await getTempProUnlocks());
+      }
+    }
 
     const currentBadges = await getEarnedBadges();
     if (!currentBadges.some(b => b.id === 'first_meal')) {
@@ -385,6 +406,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         updateUserGoals, setWaterGoal: setWaterGoalCb, resetDailyData,
         refreshMeals, logMeal, removeMeal,
         bottomToast, showBottomToast, hideBottomToast,
+        xpData, tempProUnlocks, levelUpPending, dismissLevelUp,
       }}
     >
       {children}

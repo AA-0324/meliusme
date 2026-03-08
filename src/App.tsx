@@ -11,6 +11,7 @@ import { ScrollToTop } from "@/components/ScrollToTop";
 import { SplashScreen } from "@/components/SplashScreen";
 import { Onboarding } from "@/components/Onboarding";
 import { MealLoggedToast } from "@/components/MealLoggedToast";
+import { LevelUpModal } from "@/components/LevelUpModal";
 import Home from "./pages/Home";
 import Log from "./pages/Log";
 import Dashboard from "./pages/Dashboard";
@@ -37,6 +38,19 @@ const GlobalBottomToast = () => {
   return <MealLoggedToast show={bottomToast.open} message={bottomToast.message} variant={bottomToast.variant} onHide={hideBottomToast} />;
 };
 
+const GlobalLevelUpModal = () => {
+  const { levelUpPending, dismissLevelUp } = useApp();
+  if (!levelUpPending || !levelUpPending.leveledUp) return null;
+  return (
+    <LevelUpModal
+      open={true}
+      level={levelUpPending.xpData.level}
+      reward={levelUpPending.reward}
+      onClose={dismissLevelUp}
+    />
+  );
+};
+
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -59,6 +73,7 @@ const App = () => {
           <SplashScreen show={showSplash} onComplete={handleSplashComplete} />
           {showOnboarding && <Onboarding onComplete={() => setShowOnboarding(false)} />}
           <GlobalBottomToast />
+          <GlobalLevelUpModal />
           <BrowserRouter>
             <ForceHomeOnLoad />
             <ScrollToTop />

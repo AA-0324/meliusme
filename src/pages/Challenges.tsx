@@ -1,24 +1,18 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Target, Trophy, CheckCircle2, Circle, ChevronRight, Zap } from 'lucide-react';
+import { Target, Trophy, CheckCircle2, Circle, ChevronRight, Zap, Gift, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { REFLECTION_QUESTIONS, saveLastReflection, getLastReflection, getDailyChallenges, getXPData, getLastWeekNumber, getLastWeekStart, XPData, ReflectionData } from '@/lib/streaks';
+import { REFLECTION_QUESTIONS, saveLastReflection, getDailyChallenges, getLastWeekNumber, getLastWeekStart, ReflectionData } from '@/lib/streaks';
 import { useApp } from '@/contexts/AppContext';
 
 export default function Challenges() {
-  const { currentChallenge, meals, todayWater, settings } = useApp();
+  const { currentChallenge, meals, todayWater, settings, xpData, tempProUnlocks } = useApp();
   const [showReflection, setShowReflection] = useState(false);
-  const [xpData, setXpData] = useState<XPData>({ totalXP: 0, level: 1, xpToNextLevel: 100, currentLevelXP: 0 });
   const [lastReflection, setLastReflection] = useState<ReflectionData | null>(null);
 
   const lastWeekNumber = getLastWeekNumber();
   const lastWeekStart = getLastWeekStart();
   const reflectionQuestion = REFLECTION_QUESTIONS[lastWeekNumber % REFLECTION_QUESTIONS.length];
-
-  useEffect(() => {
-    getXPData().then(setXpData);
-    getLastReflection().then(setLastReflection);
-  }, [meals]);
 
   const hasReflectedLastWeek = lastReflection && lastReflection.weekNumber === lastWeekNumber;
 
@@ -53,6 +47,15 @@ export default function Challenges() {
   };
 
   const xpPercent = xpData.xpToNextLevel > 0 ? (xpData.currentLevelXP / xpData.xpToNextLevel) * 100 : 0;
+  const nextRewardLevel = xpData.level % 2 === 0 ? xpData.level + 2 : xpData.level + 1;
+
+  const formatTimeLeft = (expiresAt: number) => {
+    const ms = expiresAt - Date.now();
+    if (ms <= 0) return 'Expired';
+    const hours = Math.floor(ms / (1000 * 60 * 60));
+    if (hours >= 24) return `${Math.floor(hours / 24)}d ${hours % 24}h left`;
+    return `${hours}h left`;
+  };
 
   return (
     <div className="min-h-screen pb-24">
@@ -90,7 +93,35 @@ export default function Challenges() {
               className="h-full bg-primary rounded-full"
             />
           </div>
+          <p className="text-[10px] text-muted-foreground mt-2">
+            Next reward at Level {nextRewardLevel} 🎁
+          </p>
         </motion.div>
+
+        {/* Active Temp Pro Unlocks */}
+        {tempProUnlocks.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}
+            className="space-y-2">
+            {tempProUnlocks.map((unlock) => (
+              <div key={unlock.featureId + unlock.unlockedAt}
+                className="bg-gradient-to-r from-amber-500/10 to-orange-500/5 rounded-2xl p-4 border border-amber-500/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+                    <Gift className="w-4 h-4 text-amber-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-amber-500 uppercase tracking-wider">Active Reward</p>
+                    <p className="font-semibold text-sm truncate">{unlock.featureName}</p>
+                  </div>
+                  <div className="flex items-center gap-1 text-muted-foreground flex-shrink-0">
+                    <Clock className="w-3 h-3" />
+                    <span className="text-[10px] font-medium">{formatTimeLeft(unlock.expiresAt)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </motion.div>
+        )}
 
         {/* Weekly Challenge */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}

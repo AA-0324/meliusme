@@ -71,6 +71,91 @@ export interface XPData {
   currentLevelXP: number;
 }
 
+export interface LevelUpResult {
+  xpData: XPData;
+  leveledUp: boolean;
+  previousLevel: number;
+  reward: TempProUnlock | null;
+}
+
+// ─── Pro Feature Reward Pool ───────────────────────────────────────
+
+export const PRO_FEATURE_POOL = [
+  { id: 'advanced_analytics', name: 'Advanced Analytics Dashboard', description: 'Unlock detailed insights into your nutrition patterns' },
+  { id: 'macro_charts', name: 'Macro Breakdown Charts', description: 'View protein, fiber & sugar breakdowns with charts' },
+  { id: 'historical_compare', name: 'Historical Comparison', description: 'Compare your progress across different time periods' },
+  { id: 'custom_layouts', name: 'Custom Dashboard Layouts', description: 'Personalize your dashboard with custom layouts' },
+  { id: 'habit_heatmap', name: 'Habit Heatmap Calendar', description: 'Visualize your consistency with a heatmap calendar' },
+  { id: 'data_export', name: 'Data Export (CSV)', description: 'Export your nutrition data to CSV files' },
+  { id: 'trend_insights', name: 'Advanced Trend Insights', description: 'Get AI-powered trend analysis of your habits' },
+  { id: 'meal_presets', name: 'Custom Meal Presets', description: 'Save and reuse your favorite meal configurations' },
+  { id: 'weekly_reports', name: 'Weekly Performance Reports', description: 'Receive detailed weekly performance summaries' },
+] as const;
+
+export type ProFeatureId = typeof PRO_FEATURE_POOL[number]['id'];
+
+export interface TempProUnlock {
+  featureId: ProFeatureId;
+  featureName: string;
+  featureDescription: string;
+  unlockedAt: number;
+  expiresAt: number;
+  fromLevel: number;
+}
+
+const TEMP_UNLOCKS_KEY = 'melius-temp-pro-unlocks';
+const LAST_REWARD_KEY = 'melius-last-reward-feature';
+
+export async function getTempProUnlocks(): Promise<TempProUnlock[]> {
+  const unlocks = await readEncLS<TempProUnlock[]>(TEMP_UNLOCKS_KEY, []);
+  // Filter out expired unlocks
+  const now = Date.now();
+  const active = unlocks.filter(u => u.expiresAt > now);
+  if (active.length !== unlocks.length) {
+    await writeEncLS(TEMP_UNLOCKS_KEY, active);
+  }
+  return active;
+}
+
+export async function hasActiveTempUnlock(): Promise<boolean> {
+  const unlocks = await getTempProUnlocks();
+  return unlocks.length > 0;
+}
+
+async function selectRandomProFeature(): Promise<typeof PRO_FEATURE_POOL[number]> {
+  const lastId = await readEncLS<string>(LAST_REWARD_KEY, '');
+  // Filter out the last rewarded feature to avoid repeats
+  const candidates = PRO_FEATURE_POOL.filter(f => f.id !== lastId);
+  const pool = candidates.length > 0 ? candidates : [...PRO_FEATURE_POOL];
+  const selected = pool[Math.floor(Math.random() * pool.length)];
+  await writeEncLS(LAST_REWARD_KEY, selected.id);
+  return selected;
+}
+
+function getRewardDuration(level: number): number {
+  // Levels 2-20: 24 hours, Levels 22+: 3 days
+  if (level >= 22) return 3 * 24 * 60 * 60 * 1000;
+  return 24 * 60 * 60 * 1000;
+}
+
+async function grantLevelReward(level: number): Promise<TempProUnlock> {
+  const feature = await selectRandomProFeature();
+  const now = Date.now();
+  const duration = getRewardDuration(level);
+  const unlock: TempProUnlock = {
+    featureId: feature.id as ProFeatureId,
+    featureName: feature.name,
+    featureDescription: feature.description,
+    unlockedAt: now,
+    expiresAt: now + duration,
+    fromLevel: level,
+  };
+  const existing = await getTempProUnlocks();
+  existing.push(unlock);
+  await writeEncLS(TEMP_UNLOCKS_KEY, existing);
+  return unlock;
+}
+
 export async function getXP(): Promise<number> {
   const raw = localStorage.getItem(XP_KEY);
   if (!raw) return 0;
@@ -83,11 +168,22 @@ export async function getXP(): Promise<number> {
   return parseInt(plaintext, 10) || 0;
 }
 
-export async function addXP(amount: number): Promise<XPData> {
+export async function addXP(amount: number, isProUser: boolean = false): Promise<LevelUpResult> {
   const current = await getXP();
+  const previousData = calculateLevel(current);
   const newTotal = current + amount;
   try { localStorage.setItem(XP_KEY, await encrypt(newTotal.toString())); } catch { localStorage.setItem(XP_KEY, newTotal.toString()); }
-  return calculateLevel(newTotal);
+  const newData = calculateLevel(newTotal);
+  
+  const leveledUp = newData.level > previousData.level;
+  let reward: TempProUnlock | null = null;
+
+  // Grant reward on even levels, only for non-Pro users
+  if (leveledUp && newData.level % 2 === 0 && !isProUser) {
+    reward = await grantLevelReward(newData.level);
+  }
+
+  return { xpData: newData, leveledUp, previousLevel: previousData.level, reward };
 }
 
 export function calculateLevel(totalXP: number): XPData {
