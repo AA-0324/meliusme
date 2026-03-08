@@ -55,8 +55,8 @@ export function SplashScreen({ show, onComplete }: SplashScreenProps) {
                 className="absolute inset-[-20px] bg-primary/30 rounded-full blur-3xl"
               />
               {/* Logo Image */}
-              <div className="relative w-28 h-28 flex items-center justify-center">
-                <img src={logo} alt="MeliusMe logo" className="w-24 h-24 drop-shadow-[0_0_20px_hsl(var(--primary)/0.6)]" />
+              <div className="relative w-44 h-44 flex items-center justify-center">
+                <img src={logo} alt="MeliusMe logo" className="w-40 h-40 object-contain drop-shadow-[0_0_30px_hsl(var(--primary)/0.6)]" />
               </div>
             </motion.div>
 
