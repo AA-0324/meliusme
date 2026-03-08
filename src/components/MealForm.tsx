@@ -256,8 +256,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                 transition={{ delay: 0.15, type: 'spring', damping: 20 }}
                 className="space-y-3"
               >
-                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1 block flex items-center gap-1.5">
-                  <Flame className="w-3 h-3 text-primary" />
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1 block">
                   Nutrition Info
                 </Label>
 
