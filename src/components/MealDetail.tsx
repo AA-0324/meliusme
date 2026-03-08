@@ -130,7 +130,7 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
                     <Trash2 className="w-5 h-5 mr-2" />Delete Meal
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent className="border-border bg-card">
+                <AlertDialogContent className="border-border bg-card z-[200]">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete this meal?</AlertDialogTitle>
                     <AlertDialogDescription>This will permanently remove this log from your device.</AlertDialogDescription>
