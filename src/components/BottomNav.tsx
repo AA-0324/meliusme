@@ -30,10 +30,6 @@ export function BottomNav() {
               <motion.div
                 className="relative flex flex-col items-center justify-center gap-1"
                 whileTap={animationsEnabled ? { scale: 0.75 } : {}}
-                transition={{ type: 'spring', damping: 10, stiffness: 300 }}
-                initial={animationsEnabled ? { opacity: 0, y: 20 } : false}
-                animate={{ opacity: 1, y: 0 }}
-                {...(animationsEnabled ? { transition: { delay: index * 0.05, type: 'spring', damping: 12, stiffness: 200 } } : {})}
               >
                 {isActive && (
                   <motion.div
