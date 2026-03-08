@@ -246,7 +246,7 @@ export default function Profile() {
                 </div>
                 <div className="flex-1">
                   <h2 className="text-lg font-extrabold">Upgrade to Pro</h2>
-                  <p className="text-amber-500 font-bold text-sm">$9.99 • One-time • Lifetime</p>
+                  <p className="text-primary font-bold text-sm">$9.99 • One-time • Lifetime</p>
                 </div>
               </div>
             </motion.button>
