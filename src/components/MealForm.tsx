@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Tag, ChevronLeft, Flame, Beef, Apple, Candy, Sparkles, UtensilsCrossed } from 'lucide-react';
+import { X, Plus, Tag, ChevronLeft, Flame, Beef, Apple, Candy, UtensilsCrossed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,11 +20,11 @@ interface MealFormProps {
 
 type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
-const mealTypes: { value: MealType; label: string; emoji: string }[] = [
-  { value: 'breakfast', label: 'Breakfast', emoji: '🌅' },
-  { value: 'lunch', label: 'Lunch', emoji: '☀️' },
-  { value: 'dinner', label: 'Dinner', emoji: '🌙' },
-  { value: 'snack', label: 'Snack', emoji: '🍿' },
+const mealTypes: { value: MealType; label: string }[] = [
+  { value: 'breakfast', label: 'Breakfast' },
+  { value: 'lunch', label: 'Lunch' },
+  { value: 'dinner', label: 'Dinner' },
+  { value: 'snack', label: 'Snack' },
 ];
 
 function getSuggestedMealTypeForHour(hour: number): MealType {
@@ -217,12 +217,11 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 pt-5 pb-4 space-y-5">
               {/* Meal Type selector */}
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08, type: 'spring', damping: 20 }}>
-                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 block flex items-center gap-1.5">
-                  <Sparkles className="w-3 h-3 text-primary" />
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 block">
                   What are you having?
                 </Label>
                 <div className="grid grid-cols-4 gap-2">
-                  {mealTypes.map(({ value, label, emoji }, i) => {
+                  {mealTypes.map(({ value, label }, i) => {
                     const isAvailable = availableMealTypes.includes(value);
                     const isSelected = mealType === value;
                     return (
@@ -243,7 +242,6 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                               : 'bg-muted/20 text-muted-foreground/40 cursor-not-allowed'
                         }`}
                       >
-                        <span className="text-lg">{emoji}</span>
                         {label}
                       </motion.button>
                     );
@@ -258,8 +256,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                 transition={{ delay: 0.15, type: 'spring', damping: 20 }}
                 className="space-y-3"
               >
-                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1 block flex items-center gap-1.5">
-                  <Flame className="w-3 h-3 text-primary" />
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1 block">
                   Nutrition Info
                 </Label>
 
@@ -278,7 +275,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                       <Flame className="w-4 h-4" />
                     </div>
                     <span className="font-bold text-sm">Calories</span>
-                    <span className="text-destructive text-xs">*</span>
+                    
                   </div>
                   <Input 
                     type="number" inputMode="numeric" min="0" max="5000" 
@@ -307,7 +304,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                         <div className="flex items-center gap-1.5 mb-1.5">
                           <Icon className={`w-3.5 h-3.5 ${field.iconColor}`} />
                           <span className="font-bold text-[10px] uppercase tracking-wider">{field.label}</span>
-                          <span className="text-destructive text-[10px]">*</span>
+                          
                         </div>
                         <Input 
                           type="number" inputMode="numeric" min="0" max={field.max}
@@ -346,25 +343,32 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
               {/* Custom Tags (Pro) */}
               {isPro && (
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-                  <Label className="text-[10px] font-bold text-muted-foreground uppercase mb-1.5 block flex items-center gap-1.5">
-                    <Tag className="w-3 h-3 text-primary" />
+                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 block">
                     Custom Tags
                   </Label>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2.5">
                     <Input placeholder="Add a tag..." value={tagInput} onChange={(e) => setTagInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
-                      className="h-11 rounded-xl bg-secondary border-0 flex-1" />
-                    <Button onClick={handleAddTag} size="icon" className="h-11 w-11 rounded-xl flex-shrink-0">
-                      <Plus className="w-5 h-5" />
-                    </Button>
+                      className="h-12 rounded-xl bg-secondary/80 border border-border/30 flex-1 text-sm placeholder:text-muted-foreground/40" />
+                    <motion.div whileTap={{ scale: 0.9 }}>
+                      <Button onClick={handleAddTag} size="icon" className="h-12 w-12 rounded-xl flex-shrink-0 shadow-lg shadow-primary/20">
+                        <Plus className="w-5 h-5" />
+                      </Button>
+                    </motion.div>
                   </div>
                   {tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {tags.map((tag) => (
-                        <span key={tag} className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/15 text-primary rounded-lg text-xs font-medium border border-primary/20">
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {tags.map((tag, i) => (
+                        <motion.span
+                          key={tag}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: i * 0.05, type: 'spring', damping: 15 }}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-br from-primary/15 to-primary/5 text-primary rounded-xl text-xs font-semibold border border-primary/20 shadow-sm"
+                        >
                           <Tag className="w-3 h-3" />{tag}
-                          <button onClick={() => handleRemoveTag(tag)} className="ml-1 hover:text-destructive"><X className="w-3 h-3" /></button>
-                        </span>
+                          <button onClick={() => handleRemoveTag(tag)} className="ml-1 hover:text-destructive transition-colors"><X className="w-3 h-3" /></button>
+                        </motion.span>
                       ))}
                     </div>
                   )}
@@ -393,10 +397,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                       Saving...
                     </motion.span>
                   ) : (
-                    <>
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Save Meal
-                    </>
+                    'Save Meal'
                   )}
                 </Button>
               </motion.div>
