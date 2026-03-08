@@ -26,7 +26,7 @@ export function BottomNav() {
               className="flex items-center justify-center flex-1 pt-3"
             >
               <motion.div
-                className="relative flex flex-col items-center justify-center"
+                className="relative flex flex-col items-center justify-center gap-1"
                 whileTap={{ scale: 0.82 }}
                 transition={{ type: 'spring', damping: 15, stiffness: 400 }}
               >
