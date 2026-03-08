@@ -50,7 +50,7 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.1, type: 'spring', damping: 14, stiffness: 180 }}
-              className="relative mb-3"
+              className="relative mt-4 mb-3"
             >
               <motion.div
                 animate={{ scale: [1, 1.3, 1], opacity: [0.15, 0.35, 0.15] }}
