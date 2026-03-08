@@ -33,7 +33,7 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
-          className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex items-center justify-center overflow-hidden"
+          className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex items-center justify-center overflow-hidden p-8"
           style={{ touchAction: 'none' }}
           onClick={onClose}
           onTouchMove={(e) => e.preventDefault()}
