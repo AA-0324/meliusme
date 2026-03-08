@@ -132,7 +132,7 @@ export default function Dashboard() {
         </motion.div>
 
         {/* Macro Goal Rings (Pro) */}
-        {isPro && (settings.goals.protein || settings.goals.fiber || settings.goals.sugar) && (
+        {(settings.goals.protein || settings.goals.fiber || settings.goals.sugar) && (
           <motion.div variants={noMotion ? {} : fadeUpBounce} className="px-6 mb-6">
             <div className={`bg-card rounded-3xl p-6 border border-border ${animationsEnabled ? 'animate-shine' : ''}`}>
               <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">Today's Goals</h2>
