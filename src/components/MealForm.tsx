@@ -99,6 +99,25 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
     }
   }, [open, availableMealTypes, mealType, currentHour]);
 
+  // Lock body scroll when meal form is open to prevent background bleed-through
+  useEffect(() => {
+    if (!open) return;
+    const html = document.documentElement;
+    const body = document.body;
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    body.style.position = 'fixed';
+    body.style.inset = '0';
+    body.style.width = '100%';
+    return () => {
+      html.style.overflow = '';
+      body.style.overflow = '';
+      body.style.position = '';
+      body.style.inset = '';
+      body.style.width = '';
+    };
+  }, [open]);
+
   const showWarnings = useMemo(() => calories && parseInt(calories, 10) > 0, [calories]);
 
   const sanityValidation = useMemo(() => {
@@ -153,7 +172,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
     <>
       <AnimatePresence>
         {open && (
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 30 }} transition={{ type: 'spring', damping: 22, stiffness: 260 }} className="fixed inset-0 z-[100] bg-background flex flex-col" style={{ overscrollBehavior: 'none' }}>
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 30 }} transition={{ type: 'spring', damping: 22, stiffness: 260 }} className="fixed inset-0 z-[100] bg-background flex flex-col overflow-hidden" style={{ overscrollBehavior: 'none', touchAction: 'none' }}>
             {/* Hero photo header */}
             <div className="relative flex-shrink-0">
               <div className="relative h-44 bg-black overflow-hidden">
@@ -214,7 +233,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
             </div>
 
             {/* Scrollable form content */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 pt-5 pb-4 space-y-5" style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
+            <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 pt-5 pb-4 space-y-5 isolate" style={{ overscrollBehavior: 'contain', touchAction: 'pan-y' }}>
               {/* Meal Type selector */}
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, type: 'spring', damping: 18, stiffness: 200 }}>
                 <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 block">
