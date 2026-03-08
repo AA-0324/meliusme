@@ -46,8 +46,8 @@ function getNutritionColor(type: 'calories' | 'protein' | 'fiber' | 'sugar', val
 }
 
 export function MealDetail({ meal, onClose }: MealDetailProps) {
-  const { removeMeal, settings, isPro } = useApp();
-  const userGoals = isPro ? settings.goals : undefined;
+  const { removeMeal, settings } = useApp();
+  const userGoals = settings.goals;
 
   const handleDelete = async () => {
     if (meal) { await removeMeal(meal.id); onClose(); }
