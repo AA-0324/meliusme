@@ -3,7 +3,6 @@ import { Variants, Transition } from 'framer-motion';
 // Check reduced motion preference OR user setting
 export const prefersReducedMotion = () => {
   if (typeof window === 'undefined') return false;
-  // Check user setting first
   const animationsEnabled = (window as any).__melius_animations_enabled;
   if (animationsEnabled === false) return true;
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -39,6 +38,12 @@ export function safeVariants(variants: Variants): Variants {
   return variants;
 }
 
+// Conditional motion props — returns empty object when animations disabled
+export function motionProps(props: Record<string, any>): Record<string, any> {
+  if (prefersReducedMotion()) return {};
+  return props;
+}
+
 // ─── Page Transition Variants ───
 export const pageVariants: Variants = {
   initial: { opacity: 0, y: 20 },
@@ -52,12 +57,15 @@ export const pageTransition: Transition = {
 };
 
 // ─── Stagger Container ───
-export const staggerContainer = (staggerDelay = 0.07): Variants => ({
-  hidden: {},
-  show: {
-    transition: { staggerChildren: staggerDelay },
-  },
-});
+export const staggerContainer = (staggerDelay = 0.07): Variants => {
+  if (prefersReducedMotion()) return { hidden: {}, show: {} };
+  return {
+    hidden: {},
+    show: {
+      transition: { staggerChildren: staggerDelay },
+    },
+  };
+};
 
 // ─── Fade Up Item ───
 export const fadeUp: Variants = {
@@ -67,6 +75,12 @@ export const fadeUp: Variants = {
     y: 0,
     transition: { duration: duration.normal, ease: ease.out as any },
   },
+};
+
+// Safe fadeUp that respects reduced motion
+export const safeFadeUp = (): Variants => {
+  if (prefersReducedMotion()) return { hidden: { opacity: 1 }, show: { opacity: 1 } };
+  return fadeUp;
 };
 
 // ─── Fade In Scale ───

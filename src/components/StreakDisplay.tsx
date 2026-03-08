@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
-import { Flame, Trophy, Star } from 'lucide-react';
-import { StreakData, Badge as BadgeType } from '@/lib/streaks';
+import { Flame } from 'lucide-react';
+import { StreakData } from '@/lib/streaks';
 import { AnimatedNumber } from '@/components/AnimatedNumber';
+import { useApp } from '@/contexts/AppContext';
 
 interface StreakDisplayProps {
   streak: StreakData;
@@ -9,12 +10,15 @@ interface StreakDisplayProps {
 }
 
 export function StreakDisplay({ streak, compact }: StreakDisplayProps) {
+  const { animationsEnabled } = useApp();
   const streakColor = streak.currentStreak > 0 
     ? 'text-orange-500' 
     : 'text-muted-foreground';
   const streakBg = streak.currentStreak > 0
     ? 'from-orange-500/20 to-orange-500/10 border-orange-500/30'
     : 'from-muted/20 to-muted/10 border-muted/30';
+
+  const hasActiveStreak = streak.currentStreak > 0;
 
   if (compact) {
     return (
@@ -37,9 +41,20 @@ export function StreakDisplay({ streak, compact }: StreakDisplayProps) {
       <div className="flex items-center justify-between">
         <div className="min-w-0 flex items-center gap-3">
           <motion.div
-            animate={streak.currentStreak > 0 ? { scale: [1, 1.15, 1] } : {}}
-            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center ${streak.currentStreak > 0 ? 'bg-orange-500/20' : 'bg-muted/20'}`}
+            animate={
+              hasActiveStreak && animationsEnabled
+                ? {
+                    scale: [1, 1.2, 1],
+                    rotate: [0, 5, -5, 0],
+                  }
+                : {}
+            }
+            transition={
+              hasActiveStreak && animationsEnabled
+                ? { duration: 1.8, repeat: Infinity, ease: 'easeInOut' }
+                : {}
+            }
+            className={`w-10 h-10 rounded-xl flex items-center justify-center ${hasActiveStreak ? 'bg-orange-500/20' : 'bg-muted/20'}`}
           >
             <Flame className={`w-5 h-5 ${streakColor}`} />
           </motion.div>
