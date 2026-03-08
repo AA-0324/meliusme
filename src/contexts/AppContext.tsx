@@ -106,42 +106,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const toastQueueRef = useRef<Array<{ message: string; variant: ToastVariant }>>([]);
 
   const today = new Date().toISOString().split('T')[0];
-
-  // Track which daily challenges already awarded XP today
-  const getAwardedChallenges = useCallback((): Set<string> => {
-    const key = `melius-daily-xp-awarded-${today}`;
-    const raw = sessionStorage.getItem(key);
-    if (!raw) return new Set();
-    try { return new Set(JSON.parse(raw)); } catch { return new Set(); }
-  }, [today]);
-
-  const markChallengeAwarded = useCallback((id: string) => {
-    const key = `melius-daily-xp-awarded-${today}`;
-    const awarded = getAwardedChallenges();
-    awarded.add(id);
-    sessionStorage.setItem(key, JSON.stringify([...awarded]));
-  }, [today, getAwardedChallenges]);
-
-  const checkAndAwardDailyChallengeXP = useCallback(async (
-    mealTypes: string[], water: number, cals?: number, prot?: number
-  ) => {
-    const challenges = getDailyChallenges(mealTypes, water, settings.waterGoal, settings.goals, cals, prot);
-    const awarded = getAwardedChallenges();
-    for (const c of challenges) {
-      if (c.completed && !awarded.has(c.id)) {
-        markChallengeAwarded(c.id);
-        const result = await addXP(c.xp, isPro);
-        setXpData(result.xpData);
-        if (result.leveledUp) {
-          setLevelUpPending(result);
-          if (result.reward) {
-            setTempProUnlocks(await getTempProUnlocks());
-          }
-        }
-        showBottomToast(`Challenge complete: ${c.title} (+${c.xp} XP)`, 'success');
-      }
-    }
-  }, [settings.waterGoal, settings.goals, isPro, getAwardedChallenges, markChallengeAwarded, showBottomToast]);
   const [todayWater, setTodayWater] = useState(0);
 
   const isPro = settings.proStatus || settings.devMode;
