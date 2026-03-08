@@ -221,7 +221,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                   What are you having?
                 </Label>
                 <div className="grid grid-cols-4 gap-2">
-                  {mealTypes.map(({ value, label, emoji }, i) => {
+                  {mealTypes.map(({ value, label }, i) => {
                     const isAvailable = availableMealTypes.includes(value);
                     const isSelected = mealType === value;
                     return (
