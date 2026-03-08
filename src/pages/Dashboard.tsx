@@ -131,72 +131,72 @@ export default function Dashboard() {
           ))}
         </motion.div>
 
-        {/* Macro Goal Rings (Pro) */}
+        {/* Macro Goal Rings */}
         {(settings.goals.protein || settings.goals.fiber || settings.goals.sugar) && (
           <motion.div variants={noMotion ? {} : fadeUpBounce} className="px-6 mb-6">
             <div className={`bg-card rounded-3xl p-6 border border-border ${animationsEnabled ? 'animate-shine' : ''}`}>
               <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">Today's Goals</h2>
-              <div className="flex items-center justify-around">
+              <div className="grid grid-cols-3 gap-4">
                 {settings.goals.protein && (
                   <motion.div 
-                    className="flex flex-col items-center gap-2"
+                    className="flex flex-col items-center gap-1.5"
                     initial={noMotion ? false : { scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.3, type: 'spring', damping: 10 }}
                   >
                     <ProgressRing
                       progress={Math.min((todayTotals.protein / settings.goals.protein) * 100, 100)}
-                      size={72}
-                      strokeWidth={6}
+                      size={64}
+                      strokeWidth={5}
                       showAnimation={todayTotals.protein >= settings.goals.protein}
                     >
-                      <Beef className="w-4 h-4 text-muted-foreground" />
+                      <Beef className="w-3.5 h-3.5 text-muted-foreground" />
                     </ProgressRing>
                     <div className="text-center">
-                      <p className="text-sm font-bold"><AnimatedNumber value={todayTotals.protein} suffix="g" /></p>
-                      <p className="text-[10px] text-muted-foreground">/ {settings.goals.protein}g protein</p>
+                      <p className="text-sm font-bold leading-tight"><AnimatedNumber value={todayTotals.protein} suffix="g" /></p>
+                      <p className="text-[10px] text-muted-foreground leading-tight">/ {settings.goals.protein}g protein</p>
                     </div>
                   </motion.div>
                 )}
                 {settings.goals.fiber && (
                   <motion.div 
-                    className="flex flex-col items-center gap-2"
+                    className="flex flex-col items-center gap-1.5"
                     initial={noMotion ? false : { scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.4, type: 'spring', damping: 10 }}
                   >
                     <ProgressRing
                       progress={Math.min((todayTotals.fiber / settings.goals.fiber) * 100, 100)}
-                      size={72}
-                      strokeWidth={6}
+                      size={64}
+                      strokeWidth={5}
                       showAnimation={todayTotals.fiber >= settings.goals.fiber}
                     >
-                      <Apple className="w-4 h-4 text-muted-foreground" />
+                      <Apple className="w-3.5 h-3.5 text-muted-foreground" />
                     </ProgressRing>
                     <div className="text-center">
-                      <p className="text-sm font-bold"><AnimatedNumber value={todayTotals.fiber} suffix="g" /></p>
-                      <p className="text-[10px] text-muted-foreground">/ {settings.goals.fiber}g fiber</p>
+                      <p className="text-sm font-bold leading-tight"><AnimatedNumber value={todayTotals.fiber} suffix="g" /></p>
+                      <p className="text-[10px] text-muted-foreground leading-tight">/ {settings.goals.fiber}g fiber</p>
                     </div>
                   </motion.div>
                 )}
                 {settings.goals.sugar && (
                   <motion.div 
-                    className="flex flex-col items-center gap-2"
+                    className="flex flex-col items-center gap-1.5"
                     initial={noMotion ? false : { scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.5, type: 'spring', damping: 10 }}
                   >
                     <ProgressRing
                       progress={Math.min((todayTotals.sugar / settings.goals.sugar) * 100, 100)}
-                      size={72}
-                      strokeWidth={6}
+                      size={64}
+                      strokeWidth={5}
                       showAnimation={false}
                     >
-                      <Candy className="w-4 h-4 text-muted-foreground" />
+                      <Candy className="w-3.5 h-3.5 text-muted-foreground" />
                     </ProgressRing>
                     <div className="text-center">
-                      <p className="text-sm font-bold"><AnimatedNumber value={todayTotals.sugar} suffix="g" /></p>
-                      <p className="text-[10px] text-muted-foreground">/ {settings.goals.sugar}g sugar</p>
+                      <p className="text-sm font-bold leading-tight"><AnimatedNumber value={todayTotals.sugar} suffix="g" /></p>
+                      <p className="text-[10px] text-muted-foreground leading-tight">/ {settings.goals.sugar}g sugar</p>
                     </div>
                   </motion.div>
                 )}
