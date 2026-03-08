@@ -237,9 +237,8 @@ export default function Profile() {
             <motion.button 
               onClick={() => setShowProModal(true)}
               whileTap={{ scale: 0.97 }}
-              animate={{ boxShadow: ['0 0 15px hsl(43 96% 50% / 0.2)', '0 0 30px hsl(43 96% 50% / 0.4)', '0 0 15px hsl(43 96% 50% / 0.2)'] }}
-              transition={{ duration: 2.5, repeat: Infinity }}
-              className="w-full rounded-2xl p-5 text-left relative overflow-hidden bg-gradient-to-br from-amber-500/15 via-card to-orange-500/15 border border-amber-500/40 hover:border-amber-500/60"
+              whileTap={{ scale: 0.97 }}
+              className="w-full rounded-2xl p-5 text-left relative overflow-hidden bg-gradient-to-br from-primary/10 via-card to-primary/5 border border-primary/30 hover:border-primary/50"
             >
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
