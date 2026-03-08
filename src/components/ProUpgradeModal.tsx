@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, Crown, Infinity as InfinityIcon, Zap, Shield, Palette, Heart, Star } from 'lucide-react';
+import { X, Check, Crown, Infinity as InfinityIcon, Zap, Shield, Palette, Heart, Star, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useApp } from '@/contexts/AppContext';
 import logo from '@/assets/meliusme-logo-new.png';
@@ -56,7 +56,7 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
               </motion.button>
             </div>
 
-            {/* Hero Logo - compact */}
+            {/* Hero Logo */}
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -64,16 +64,16 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
               className="relative mb-3"
             >
               <motion.div
-                animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.5, 0.3] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-                className="absolute inset-[-16px] bg-gradient-to-br from-amber-500/30 to-orange-500/20 rounded-full blur-2xl"
+                animate={{ scale: [1, 1.4, 1], opacity: [0.2, 0.6, 0.2] }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                className="absolute inset-[-20px] bg-gradient-to-br from-amber-500/40 to-orange-500/30 rounded-full blur-2xl"
               />
               <div className="relative w-16 h-16 flex items-center justify-center">
-                <img src={logo} alt="MeliusMe" className="w-14 h-14 drop-shadow-[0_0_15px_hsl(43_96%_56%/0.5)]" />
+                <img src={logo} alt="MeliusMe" className="w-14 h-14 drop-shadow-[0_0_20px_hsl(43_96%_56%/0.6)]" />
               </div>
             </motion.div>
 
-            {/* Title - compact */}
+            {/* Title */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -86,7 +86,7 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
               <p className="text-white/40 text-xs font-medium">Unlock your full potential</p>
             </motion.div>
 
-            {/* Features - compact */}
+            {/* Features */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -112,46 +112,60 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
               </div>
             </motion.div>
 
-            {/* Pricing - ONE TIME emphasis */}
+            {/* Pricing — ONE TIME PURCHASE hero section */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
               className="text-center mb-3 w-full"
             >
-              <div className="flex items-baseline justify-center gap-1 mb-2">
-                <span className="text-3xl font-black text-white tracking-tight">$9.99</span>
+              {/* Price with animated glow behind it */}
+              <div className="relative inline-block mb-2">
+                <motion.div
+                  animate={{ opacity: [0.3, 0.7, 0.3], scale: [0.95, 1.05, 0.95] }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                  className="absolute inset-[-8px] bg-gradient-to-r from-amber-500/30 via-orange-400/20 to-amber-500/30 rounded-2xl blur-xl"
+                />
+                <span className="relative text-4xl font-black text-white tracking-tight drop-shadow-[0_0_12px_hsl(43_96%_56%/0.4)]">$9.99</span>
               </div>
 
+              {/* One-time purchase badge — bold, glowing, unmissable */}
               <motion.div
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.45, type: 'spring', damping: 14 }}
-                className="inline-flex flex-col items-center gap-1.5"
+                initial={{ scale: 0.7, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.5, type: 'spring', damping: 12, stiffness: 200 }}
+                className="flex flex-col items-center gap-2 mt-1"
               >
                 <motion.div
                   animate={{
                     boxShadow: [
-                      '0 0 10px hsl(43 96% 56% / 0.25)',
-                      '0 0 20px hsl(43 96% 56% / 0.45)',
-                      '0 0 10px hsl(43 96% 56% / 0.25)',
+                      '0 0 12px hsl(43 96% 56% / 0.3), inset 0 0 12px hsl(43 96% 56% / 0.05)',
+                      '0 0 28px hsl(43 96% 56% / 0.6), inset 0 0 20px hsl(43 96% 56% / 0.1)',
+                      '0 0 12px hsl(43 96% 56% / 0.3), inset 0 0 12px hsl(43 96% 56% / 0.05)',
+                    ],
+                    borderColor: [
+                      'hsl(43 96% 56% / 0.4)',
+                      'hsl(43 96% 56% / 0.8)',
+                      'hsl(43 96% 56% / 0.4)',
                     ],
                   }}
-                  transition={{ duration: 2.5, repeat: Infinity }}
-                  className="flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 rounded-full border border-amber-500/30"
+                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                  className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-amber-500/20 via-amber-400/15 to-amber-500/20 rounded-full border-2 border-amber-500/50"
                 >
-                  <InfinityIcon className="w-4 h-4 text-amber-400" />
-                  <span className="text-amber-400 font-extrabold text-xs uppercase tracking-widest">One-Time Purchase</span>
+                  <InfinityIcon className="w-5 h-5 text-amber-400" />
+                  <span className="text-amber-300 font-black text-sm uppercase tracking-[0.15em]">One-Time Purchase</span>
+                  <Sparkles className="w-4 h-4 text-amber-400" />
                 </motion.div>
-                <div className="flex items-center gap-2.5 text-white/25 text-[10px] font-semibold">
-                  <span className="flex items-center gap-0.5"><Star className="w-2.5 h-2.5" /> No subscription</span>
-                  <span>·</span>
-                  <span className="flex items-center gap-0.5"><Star className="w-2.5 h-2.5" /> No hidden fees</span>
+
+                <div className="flex items-center gap-3 text-white/30 text-[10px] font-bold uppercase tracking-wider">
+                  <span className="flex items-center gap-1"><Star className="w-2.5 h-2.5 text-amber-500/50" /> No subscription</span>
+                  <span className="text-amber-500/30">•</span>
+                  <span className="flex items-center gap-1"><Star className="w-2.5 h-2.5 text-amber-500/50" /> No hidden fees</span>
                 </div>
               </motion.div>
 
-              <p className="text-white/20 text-[10px] mt-2 font-medium">
-                Pay once, own it forever. No recurring charges.
+              <p className="text-white/25 text-[10px] mt-2 font-semibold tracking-wide">
+                Pay once, own it forever.
               </p>
             </motion.div>
 
@@ -165,12 +179,12 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
               <motion.div
                 animate={{
                   boxShadow: [
-                    '0 0 15px hsl(43 96% 56% / 0.2)',
-                    '0 0 30px hsl(43 96% 56% / 0.4)',
-                    '0 0 15px hsl(43 96% 56% / 0.2)',
+                    '0 0 20px hsl(43 96% 56% / 0.25)',
+                    '0 0 40px hsl(43 96% 56% / 0.5)',
+                    '0 0 20px hsl(43 96% 56% / 0.25)',
                   ],
                 }}
-                transition={{ duration: 2, repeat: Infinity }}
+                transition={{ duration: 1.8, repeat: Infinity }}
                 className="rounded-xl"
               >
                 <Button
