@@ -61,7 +61,7 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
               <motion.div
                 animate={noMotion ? {} : { y: [0, -4, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                className="relative w-32 h-32 flex items-center justify-center"
+                className="relative w-28 h-28 flex items-center justify-center"
               >
                 <img src={logo} alt="MeliusMe" className="w-28 h-28" />
               </motion.div>
