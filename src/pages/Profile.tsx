@@ -382,7 +382,7 @@ export default function Profile() {
             </div>
 
             <motion.div whileTap={{ scale: 0.97 }}>
-              <Button onClick={handleSaveGoals} disabled={!goalsChanged} className="w-full h-11 rounded-xl font-bold">
+              <Button onClick={handleSaveGoals} disabled={!goalsChanged || goalsBlank} className="w-full h-11 rounded-xl font-bold">
                 Save Goals
               </Button>
             </motion.div>
