@@ -22,7 +22,7 @@ function getNutritionColor(type: 'calories' | 'protein' | 'fiber' | 'sugar', val
   const prot = allValues?.protein ?? (type === 'protein' ? value : 20);
   const fib = allValues?.fiber ?? (type === 'fiber' ? value : 5);
   const sug = allValues?.sugar ?? (type === 'sugar' ? value : 10);
-  const warnings = getHealthWarnings(cal, prot, fib, sug, mealType, userGoals);
+  const warnings = getHealthWarnings(cal, prot, fib, sug, mealType, userGoals, undefined, { isLogged: true });
   if (type === 'calories') {
     if (warnings.highCalories) return 'bg-destructive/20 border-destructive/30 text-destructive';
     if (warnings.lowCalories) return 'bg-warning/20 border-warning/30 text-warning';
