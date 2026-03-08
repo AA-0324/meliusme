@@ -80,7 +80,7 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
             </motion.div>
 
             {/* Features */}
-            <div className="w-full space-y-3.5 mb-10">
+            <div className="w-full space-y-3 mb-7">
               {proFeatures.map((feature, index) => (
                 <motion.div
                   key={feature.text}
