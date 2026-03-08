@@ -518,6 +518,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
               </motion.div>
             </motion.div>
           </motion.div>
+          </>
         )}
       </AnimatePresence>
       <ProUpgradeModal open={showProModal} onClose={() => setShowProModal(false)} />
