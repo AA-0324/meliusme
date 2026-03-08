@@ -52,9 +52,9 @@ export default function Profile() {
 
   useEffect(() => {
     setCalorieGoal(settings.goals.calories.toString());
-    setProteinGoal(settings.goals.protein?.toString() || '');
-    setFiberGoal(settings.goals.fiber?.toString() || '');
-    setSugarGoal(settings.goals.sugar?.toString() || '');
+    setProteinGoal((settings.goals.protein ?? 50).toString());
+    setFiberGoal((settings.goals.fiber ?? 25).toString());
+    setSugarGoal((settings.goals.sugar ?? 50).toString());
     setWaterGoalInput(settings.waterGoal.toString());
     prevSugarRef.current = settings.goals.sugar?.toString() || '';
   }, [settings.goals.calories, settings.goals.protein, settings.goals.fiber, settings.goals.sugar, settings.waterGoal]);
