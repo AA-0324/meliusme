@@ -7,7 +7,7 @@ import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge
 import { initEncryption } from '@/lib/crypto';
 import { migrateAllToEncrypted } from '@/lib/encryptedStorage';
 
-type ToastVariant = 'primary' | 'success' | 'warning' | 'destructive';
+type ToastVariant = 'primary' | 'success' | 'warning' | 'destructive' | 'challenge';
 
 const goalToastKey = (date: string) => `meliusme-goal-toasts-${date}`;
 
