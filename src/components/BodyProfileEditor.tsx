@@ -289,8 +289,8 @@ export function BodyProfileEditor({ open, onClose }: BodyProfileEditorProps) {
                 <User2 className="w-5 h-5 text-primary" />
                 <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Sex</Label>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                {(['male', 'female', 'prefer_not_to_say'] as const).map((option) => (
+              <div className="grid grid-cols-2 gap-2">
+                {(['male', 'female'] as const).map((option) => (
                   <button
                     key={option}
                     onClick={() => setSex(option)}
@@ -300,7 +300,7 @@ export function BodyProfileEditor({ open, onClose }: BodyProfileEditorProps) {
                         : 'bg-secondary/50 text-secondary-foreground border-border/50 hover:bg-secondary'
                     }`}
                   >
-                    {option === 'prefer_not_to_say' ? 'Skip' : option.charAt(0).toUpperCase() + option.slice(1)}
+                    {option.charAt(0).toUpperCase() + option.slice(1)}
                   </button>
                 ))}
               </div>
