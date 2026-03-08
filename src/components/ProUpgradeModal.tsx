@@ -44,7 +44,7 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
             exit={{ scale: 0.85, opacity: 0, y: 30 }}
             transition={{ type: 'spring', damping: 18, stiffness: 200 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-[380px] mx-4 bg-white/[0.04] border border-white/[0.08] rounded-3xl px-8 py-10 flex flex-col items-center justify-center"
+            className="w-full max-w-[380px] mx-4 bg-white/[0.04] border border-white/[0.08] rounded-3xl px-8 py-8 flex flex-col items-center justify-center"
           >
             {/* Logo */}
             <motion.div
