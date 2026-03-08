@@ -28,7 +28,7 @@ const themes = [
   { id: 'midnight', name: 'Midnight', color: 'hsl(230, 70%, 55%)' },
 ];
 
-const proGoldBorder = 'ring-1 ring-amber-500/50 shadow-[0_0_12px_-3px_hsl(43_96%_50%/0.4)]';
+const proLocked = 'relative opacity-75';
 
 export default function Profile() {
   const { settings, isPro, setDarkMode, updateUserGoals, setWaterGoal, setTheme, userProfile, setUserName, setUserAvatar, bodyProfile } = useApp();
