@@ -136,7 +136,7 @@ export default function Dashboard() {
           <motion.div variants={noMotion ? {} : fadeUpBounce} className="px-6 mb-6">
             <div className={`bg-card rounded-3xl p-6 border border-border ${animationsEnabled ? 'animate-shine' : ''}`}>
               <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">Today's Goals</h2>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-2">
                 {settings.goals.protein && (
                   <motion.div 
                     className="flex flex-col items-center gap-1.5"
