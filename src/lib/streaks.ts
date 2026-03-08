@@ -383,7 +383,11 @@ export function getDailyChallenges(
   todayProtein?: number
 ): DailyChallenge[] {
   const today = new Date().toISOString().split('T')[0];
-  const seed = today.split('-').reduce((acc, v) => acc * 31 + parseInt(v), 0);
+  // Use a stronger hash so consecutive days produce very different seeds
+  let seed = 0;
+  for (let i = 0; i < today.length; i++) {
+    seed = ((seed << 5) - seed + today.charCodeAt(i)) | 0;
+  }
   const shuffled = seededShuffle(DAILY_CHALLENGE_POOL, seed);
   const picked = shuffled.slice(0, 3);
 
