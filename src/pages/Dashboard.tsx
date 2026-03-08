@@ -316,18 +316,19 @@ export default function Dashboard() {
         </motion.div>
 
         {/* Weekly Averages */}
-        {isPro && (
-          <motion.div variants={noMotion ? {} : fadeUpBounce} className="px-6 mb-6">
-            <div className="bg-card rounded-3xl p-6 border border-border">
-              <div className="flex items-center gap-2 mb-4">
-                <motion.div
-                  animate={noMotion ? {} : { y: [0, -4, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                >
-                  <TrendingUp className="w-5 h-5 text-primary" />
-                </motion.div>
-                <h2 className="text-lg font-semibold">Weekly Averages</h2>
-              </div>
+        <motion.div variants={noMotion ? {} : fadeUpBounce} className="px-6 mb-6">
+          <div className={`bg-card rounded-3xl p-6 border border-border relative overflow-hidden ${animationsEnabled ? 'animate-shine' : ''}`}>
+            <div className="flex items-center gap-2 mb-4">
+              <motion.div
+                animate={noMotion ? {} : { y: [0, -4, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              >
+                <TrendingUp className="w-5 h-5 text-primary" />
+              </motion.div>
+              <h2 className="text-lg font-semibold">Weekly Averages</h2>
+              {!isPro && <ProBadge />}
+            </div>
+            {isPro ? (
               <div className="grid grid-cols-2 gap-4">
                 {[
                   { label: 'Protein', value: Math.round(weekData.flatMap(d => d.meals).reduce((s, m) => s + (m.protein || 0), 0) / Math.max(weeklyStats.daysWithMeals, 1)), suffix: 'g' },
@@ -349,9 +350,24 @@ export default function Dashboard() {
                   </motion.div>
                 ))}
               </div>
-            </div>
-          </motion.div>
-        )}
+            ) : (
+              <motion.button 
+                whileTap={noMotion ? {} : { scale: 0.95 }}
+                whileHover={noMotion ? {} : { scale: 1.03 }}
+                onClick={() => setShowProModal(true)} 
+                className="w-full h-32 flex flex-col items-center justify-center gap-3 bg-secondary/50 rounded-2xl hover:bg-secondary transition-colors"
+              >
+                <motion.div
+                  animate={noMotion ? {} : { y: [0, -5, 0], scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <Lock className="w-8 h-8 text-muted-foreground" />
+                </motion.div>
+                <span className="text-muted-foreground">Unlock with Pro</span>
+              </motion.button>
+            )}
+          </div>
+        </motion.div>
       </motion.div>
 
       <ProUpgradeModal open={showProModal} onClose={() => setShowProModal(false)} />
