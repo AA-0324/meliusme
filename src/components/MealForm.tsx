@@ -214,7 +214,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
             </div>
 
             {/* Scrollable form content */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 pt-5 pb-4 space-y-5">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 pt-5 pb-4 space-y-5 overscroll-contain">
               {/* Meal Type selector */}
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08, type: 'spring', damping: 20 }}>
                 <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 block">
