@@ -49,7 +49,7 @@ export function BottomNav() {
         {/* Single persistent indicator — never unmounts */}
         {indicatorStyle && (
           <motion.div
-            className={`absolute top-[calc(50%+4px)] h-[calc(100%-18px)] bg-primary/15 rounded-2xl ${animationsEnabled ? 'animate-glow-pulse' : ''}`}
+            className={`absolute top-[calc(50%+8px)] h-[calc(100%-18px)] bg-primary/15 rounded-2xl ${animationsEnabled ? 'animate-glow-pulse' : ''}`}
             initial={false}
             animate={{
               left: indicatorStyle.left - indicatorStyle.width / 2,
