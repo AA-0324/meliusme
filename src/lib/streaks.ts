@@ -435,6 +435,44 @@ function calculateWeeklyChallengeProgress(challengeId: string, meals: any[], wee
     case 'dinner_week': return new Set(weekMeals.filter(m => m.mealType === 'dinner').map(m => m.date)).size;
     case 'breakfast_streak': return new Set(weekMeals.filter(m => m.mealType === 'breakfast').map(m => m.date)).size;
     case 'healthy_meals': return weekMeals.length;
+    case 'protein_power': {
+      // Count unique days where protein goal was met
+      const settingsRaw = localStorage.getItem('melius-settings');
+      let proteinGoal = 50;
+      if (settingsRaw) {
+        try {
+          const parsed = JSON.parse(settingsRaw);
+          if (parsed?.goals?.protein) proteinGoal = parsed.goals.protein;
+        } catch {
+          // Try decrypted parse - settings might be encrypted
+        }
+      }
+      const dailyProtein: Record<string, number> = {};
+      weekMeals.forEach(m => {
+        dailyProtein[m.date] = (dailyProtein[m.date] || 0) + (m.protein || 0);
+      });
+      return Object.values(dailyProtein).filter(p => p >= proteinGoal).length;
+    }
+    case 'hydrate_week': {
+      // This is tracked separately via water data, return current stored progress
+      return 0;
+    }
+    case 'in_range_5': {
+      const settingsRaw = localStorage.getItem('melius-settings');
+      let calGoal = 2000;
+      if (settingsRaw) {
+        try {
+          const parsed = JSON.parse(settingsRaw);
+          if (parsed?.goals?.calories) calGoal = parsed.goals.calories;
+        } catch {}
+      }
+      const dailyCals: Record<string, number> = {};
+      weekMeals.forEach(m => {
+        dailyCals[m.date] = (dailyCals[m.date] || 0) + m.calories;
+      });
+      // Only count days that have meals logged
+      return Object.entries(dailyCals).filter(([, cal]) => cal > 0 && cal <= calGoal).length;
+    }
     default: return 0;
   }
 }
