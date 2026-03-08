@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Crown, Zap, Shield, Palette, Heart } from 'lucide-react';
+import { Crown, Zap, Shield, Palette, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useApp } from '@/contexts/AppContext';
 import logo from '@/assets/meliusme-logo-new.png';
