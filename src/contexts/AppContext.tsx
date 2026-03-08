@@ -113,9 +113,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const dismissLevelUp = useCallback(() => setLevelUpPending(null), []);
 
-  // Sync animations preference to window for motion.ts
+  // Sync animations preference to window for motion.ts + CSS
   useEffect(() => {
     (window as any).__melius_animations_enabled = animationsEnabled;
+    document.documentElement.setAttribute('data-animations-disabled', String(!animationsEnabled));
   }, [animationsEnabled]);
 
   // ─── Async init ──────────────────────

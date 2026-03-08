@@ -34,16 +34,17 @@ const mealTypeDotColors = {
 };
 
 export function MealCard({ meal, onClick, compact }: MealCardProps) {
-  const { settings } = useApp();
+  const { settings, animationsEnabled } = useApp();
+  const noMotion = !animationsEnabled;
   const warnings = getHealthWarnings(meal.calories, meal.protein, meal.fiber, meal.sugar, meal.mealType);
   const hasWarnings = hasAnyWarning(warnings);
 
   if (compact) {
     return (
       <motion.button
-        whileTap={{ scale: 0.92 }}
-        whileHover={{ scale: 1.05 }}
-        transition={{ type: 'spring', damping: 15, stiffness: 300 }}
+        whileTap={noMotion ? {} : { scale: 0.82, rotate: -5 }}
+        whileHover={noMotion ? {} : { scale: 1.12, y: -4 }}
+        transition={{ type: 'spring', damping: 10, stiffness: 250 }}
         onClick={onClick}
         className="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden relative border border-border/50"
       >
@@ -62,11 +63,11 @@ export function MealCard({ meal, onClick, compact }: MealCardProps) {
 
   return (
     <motion.button
-      whileTap={{ scale: 0.98 }}
-      whileHover={{ y: -3 }}
-      transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+      whileTap={noMotion ? {} : { scale: 0.95 }}
+      whileHover={noMotion ? {} : { y: -6, scale: 1.02 }}
+      transition={{ type: 'spring', damping: 12, stiffness: 200 }}
       onClick={onClick}
-      className="w-full glass rounded-xl overflow-hidden text-left card-interactive"
+      className={`w-full glass rounded-xl overflow-hidden text-left card-interactive ${animationsEnabled ? 'animate-shine' : ''}`}
     >
       <div className="aspect-video relative">
         <img src={meal.photo} alt={mealTypeLabels[meal.mealType]} className="w-full h-full object-cover" />
@@ -80,10 +81,14 @@ export function MealCard({ meal, onClick, compact }: MealCardProps) {
           </span>
         </div>
         {hasWarnings && (
-          <div className="absolute top-3 right-3 px-2 py-1 bg-warning/90 rounded-lg flex items-center gap-1">
+          <motion.div 
+            animate={noMotion ? {} : { scale: [1, 1.2, 1] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+            className="absolute top-3 right-3 px-2 py-1 bg-warning/90 rounded-lg flex items-center gap-1"
+          >
             <AlertTriangle className="w-3 h-3 text-white" />
             <span className="text-white text-[10px] font-bold">!</span>
-          </div>
+          </motion.div>
         )}
       </div>
       <div className="p-4">

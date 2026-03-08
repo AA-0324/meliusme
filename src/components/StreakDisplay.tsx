@@ -11,6 +11,7 @@ interface StreakDisplayProps {
 
 export function StreakDisplay({ streak, compact }: StreakDisplayProps) {
   const { animationsEnabled } = useApp();
+  const noMotion = !animationsEnabled;
   const streakColor = streak.currentStreak > 0 
     ? 'text-orange-500' 
     : 'text-muted-foreground';
@@ -32,26 +33,27 @@ export function StreakDisplay({ streak, compact }: StreakDisplayProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -2 }}
-      transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-      className="bg-card rounded-2xl p-4 border border-border/50 card-interactive"
+      initial={noMotion ? false : { opacity: 0, y: 30, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      whileHover={noMotion ? {} : { y: -4, scale: 1.02 }}
+      transition={{ type: 'spring', damping: 12, stiffness: 200 }}
+      className={`bg-card rounded-2xl p-4 border border-border/50 card-interactive ${hasActiveStreak && animationsEnabled ? 'animate-glow-pulse' : ''}`}
     >
       <div className="flex items-center justify-between">
         <div className="min-w-0 flex items-center gap-3">
           <motion.div
             animate={
-              hasActiveStreak && animationsEnabled
+              hasActiveStreak && !noMotion
                 ? {
-                    scale: [1, 1.2, 1],
-                    rotate: [0, 5, -5, 0],
+                    scale: [1, 1.35, 1],
+                    rotate: [0, 12, -12, 0],
+                    y: [0, -6, 0],
                   }
                 : {}
             }
             transition={
-              hasActiveStreak && animationsEnabled
-                ? { duration: 1.8, repeat: Infinity, ease: 'easeInOut' }
+              hasActiveStreak && !noMotion
+                ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }
                 : {}
             }
             className={`w-10 h-10 rounded-xl flex items-center justify-center ${hasActiveStreak ? 'bg-orange-500/20' : 'bg-muted/20'}`}
@@ -65,10 +67,14 @@ export function StreakDisplay({ streak, compact }: StreakDisplayProps) {
             </p>
           </div>
         </div>
-        <div className="text-right">
+        <motion.div 
+          className="text-right"
+          animate={noMotion ? {} : { scale: [1, 1.05, 1] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+        >
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Best</p>
           <p className="text-sm font-bold text-muted-foreground"><AnimatedNumber value={streak.longestStreak} /></p>
-        </div>
+        </motion.div>
       </div>
     </motion.div>
   );

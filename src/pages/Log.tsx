@@ -6,11 +6,12 @@ import { MealDetail } from '@/components/MealDetail';
 import { PageTransition } from '@/components/PageTransition';
 import { Meal } from '@/lib/db';
 import { Calendar } from 'lucide-react';
-import { staggerContainer, fadeUp } from '@/lib/motion';
+import { staggerContainer, fadeUpBounce } from '@/lib/motion';
 
 export default function Log() {
-  const { meals } = useApp();
+  const { meals, animationsEnabled } = useApp();
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
+  const noMotion = !animationsEnabled;
 
   const mealsByDate = useMemo(() => {
     const grouped: Record<string, Meal[]> = {};
@@ -42,21 +43,36 @@ export default function Log() {
     <PageTransition className="min-h-screen pb-24 flex flex-col">
       {/* Header */}
       <div className="px-6 pt-8 pb-4 safe-top">
-        <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-3xl font-bold">
+        <motion.h1 
+          initial={noMotion ? false : { opacity: 0, y: -30, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ type: 'spring', damping: 12, stiffness: 150 }}
+          className="text-3xl font-bold"
+        >
           Food Timeline
         </motion.h1>
-        <p className="text-muted-foreground mt-1">Your meal history</p>
+        <motion.p
+          initial={noMotion ? false : { opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1, type: 'spring', damping: 15 }}
+          className="text-muted-foreground mt-1"
+        >
+          Your meal history
+        </motion.p>
       </div>
 
       {/* Timeline */}
       <div className="px-6 space-y-8 flex-1">
         {sortedDates.length === 0 ? (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: 'spring', damping: 20 }}
-            className="flex flex-col items-center justify-center flex-1 min-h-[50vh]">
+          <motion.div 
+            initial={noMotion ? false : { opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: 'spring', damping: 12 }}
+            className="flex flex-col items-center justify-center flex-1 min-h-[50vh]"
+          >
             <motion.div
-              animate={{ y: [0, -6, 0] }}
-              transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+              animate={noMotion ? {} : { y: [0, -12, 0], rotate: [0, 5, -5, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
               className="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
               <Calendar className="w-10 h-10 text-muted-foreground" />
             </motion.div>
@@ -64,23 +80,35 @@ export default function Log() {
             <p className="text-sm text-muted-foreground mt-1">Start by logging your first meal</p>
           </motion.div>
         ) : (
-          <motion.div variants={staggerContainer(0.08)} initial="hidden" animate="show">
-            {sortedDates.map((date) => {
+          <motion.div variants={staggerContainer(0.12)} initial={noMotion ? false : "hidden"} animate="show">
+            {sortedDates.map((date, dateIndex) => {
               const dateMeals = mealsByDate[date];
               const totals = getDayTotals(dateMeals);
               return (
-                <motion.div key={date} variants={fadeUp} className="mb-8">
-                  <div className="flex items-center justify-between mb-4">
+                <motion.div key={date} variants={noMotion ? {} : fadeUpBounce} className="mb-8">
+                  <motion.div 
+                    className="flex items-center justify-between mb-4"
+                    initial={noMotion ? false : { opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: dateIndex * 0.05, type: 'spring', damping: 15 }}
+                  >
                     <div>
                       <h2 className="text-lg font-semibold">{formatDate(date)}</h2>
                       <p className="text-sm text-muted-foreground">
                         {totals.count} meal{totals.count !== 1 ? 's' : ''} • {totals.calories} cal
                       </p>
                     </div>
-                  </div>
+                  </motion.div>
                   <div className="space-y-3">
-                    {dateMeals.map((meal) => (
-                      <MealCard key={meal.id} meal={meal} onClick={() => setSelectedMeal(meal)} />
+                    {dateMeals.map((meal, i) => (
+                      <motion.div
+                        key={meal.id}
+                        initial={noMotion ? false : { opacity: 0, y: 25, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ delay: 0.1 + i * 0.08, type: 'spring', damping: 14, stiffness: 150 }}
+                      >
+                        <MealCard meal={meal} onClick={() => setSelectedMeal(meal)} />
+                      </motion.div>
                     ))}
                   </div>
                 </motion.div>

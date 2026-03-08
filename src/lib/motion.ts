@@ -13,17 +13,19 @@ export const ease = {
   out: [0.16, 1, 0.3, 1] as const,
   inOut: [0.4, 0, 0.2, 1] as const,
   spring: { type: 'spring' as const, damping: 20, stiffness: 300 },
-  springBouncy: { type: 'spring' as const, damping: 12, stiffness: 200 },
+  springBouncy: { type: 'spring' as const, damping: 10, stiffness: 180 },
   springGentle: { type: 'spring' as const, damping: 25, stiffness: 150 },
-  springSnappy: { type: 'spring' as const, damping: 15, stiffness: 400 },
+  springSnappy: { type: 'spring' as const, damping: 12, stiffness: 400 },
+  springDramatic: { type: 'spring' as const, damping: 8, stiffness: 120 },
 };
 
 // Standard durations (seconds)
 export const duration = {
   micro: 0.15,
   fast: 0.25,
-  normal: 0.35,
-  emphasis: 0.5,
+  normal: 0.4,
+  emphasis: 0.6,
+  dramatic: 0.8,
 };
 
 // Reduced-motion-safe wrapper
@@ -44,36 +46,77 @@ export function motionProps(props: Record<string, any>): Record<string, any> {
   return props;
 }
 
-// ─── Page Transition Variants ───
+// ─── Page Transition Variants (BOLDER) ───
 export const pageVariants: Variants = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -12 },
+  initial: { opacity: 0, y: 30, scale: 0.96 },
+  animate: { opacity: 1, y: 0, scale: 1 },
+  exit: { opacity: 0, y: -20, scale: 0.98 },
 };
 
 export const pageTransition: Transition = {
-  duration: duration.normal,
+  duration: duration.emphasis,
   ease: ease.out as any,
 };
 
-// ─── Stagger Container ───
-export const staggerContainer = (staggerDelay = 0.07): Variants => {
+// ─── Stagger Container (more dramatic delays) ───
+export const staggerContainer = (staggerDelay = 0.1): Variants => {
   if (prefersReducedMotion()) return { hidden: {}, show: {} };
   return {
     hidden: {},
     show: {
-      transition: { staggerChildren: staggerDelay },
+      transition: { staggerChildren: staggerDelay, delayChildren: 0.05 },
     },
   };
 };
 
-// ─── Fade Up Item ───
+// ─── Fade Up Item (BIGGER movement) ───
 export const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 24 },
+  hidden: { opacity: 0, y: 40, scale: 0.95 },
   show: {
     opacity: 1,
     y: 0,
-    transition: { duration: duration.normal, ease: ease.out as any },
+    scale: 1,
+    transition: { 
+      duration: duration.emphasis, 
+      ease: ease.out as any,
+    },
+  },
+};
+
+// ─── Fade Up with spring bounce ───
+export const fadeUpBounce: Variants = {
+  hidden: { opacity: 0, y: 50, scale: 0.9 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { 
+      type: 'spring',
+      damping: 12,
+      stiffness: 150,
+    },
+  },
+};
+
+// ─── Slide in from left ───
+export const slideInLeft: Variants = {
+  hidden: { opacity: 0, x: -60, scale: 0.9 },
+  show: {
+    opacity: 1,
+    x: 0,
+    scale: 1,
+    transition: { type: 'spring', damping: 14, stiffness: 150 },
+  },
+};
+
+// ─── Slide in from right ───
+export const slideInRight: Variants = {
+  hidden: { opacity: 0, x: 60, scale: 0.9 },
+  show: {
+    opacity: 1,
+    x: 0,
+    scale: 1,
+    transition: { type: 'spring', damping: 14, stiffness: 150 },
   },
 };
 
@@ -83,33 +126,33 @@ export const safeFadeUp = (): Variants => {
   return fadeUp;
 };
 
-// ─── Fade In Scale ───
+// ─── Fade In Scale (BIGGER) ───
 export const fadeInScale: Variants = {
-  hidden: { opacity: 0, scale: 0.92 },
+  hidden: { opacity: 0, scale: 0.7 },
   show: {
     opacity: 1,
     scale: 1,
-    transition: { duration: duration.fast, ease: ease.out as any },
+    transition: { type: 'spring', damping: 12, stiffness: 200 },
   },
 };
 
 // ─── Card Hover (desktop) ───
 export const cardHover = {
   rest: { y: 0, scale: 1 },
-  hover: { y: -6, scale: 1.02 },
-  tap: { scale: 0.97 },
+  hover: { y: -8, scale: 1.03 },
+  tap: { scale: 0.95 },
 };
 
 // ─── Button Press ───
 export const buttonPress = {
-  whileTap: { scale: 0.95 },
+  whileTap: { scale: 0.9 },
   transition: ease.spring,
 };
 
 export const buttonPressPrimary = {
-  whileTap: { scale: 0.94 },
-  whileHover: { scale: 1.02 },
-  transition: ease.spring,
+  whileTap: { scale: 0.88 },
+  whileHover: { scale: 1.05, y: -3 },
+  transition: ease.springBouncy,
 };
 
 // ─── Slide from right (sheets/modals) ───
@@ -127,26 +170,53 @@ export const modalOverlay: Variants = {
 };
 
 export const modalContent: Variants = {
-  initial: { opacity: 0, scale: 0.88, y: 30 },
+  initial: { opacity: 0, scale: 0.75, y: 50 },
   animate: { opacity: 1, scale: 1, y: 0 },
-  exit: { opacity: 0, scale: 0.92, y: 15 },
+  exit: { opacity: 0, scale: 0.85, y: 30 },
 };
 
 // ─── Pop in (for success states, badges, etc.) ───
 export const popIn: Variants = {
-  hidden: { opacity: 0, scale: 0.5 },
+  hidden: { opacity: 0, scale: 0.3, rotate: -15 },
   show: {
     opacity: 1,
     scale: 1,
-    transition: { type: 'spring', damping: 12, stiffness: 200 },
+    rotate: 0,
+    transition: { type: 'spring', damping: 10, stiffness: 200 },
   },
 };
 
 // ─── Bounce subtle ───
 export const bounceSubtle = {
   animate: {
-    y: [0, -8, 0],
+    y: [0, -12, 0],
     transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
+  },
+};
+
+// ─── Dramatic idle float ───
+export const idleFloat = {
+  animate: {
+    y: [0, -10, 0],
+    rotate: [0, 2, -2, 0],
+    transition: { duration: 3, repeat: Infinity, ease: 'easeInOut' },
+  },
+};
+
+// ─── Breathing scale ───
+export const idleBreathe = {
+  animate: {
+    scale: [1, 1.06, 1],
+    transition: { duration: 2.5, repeat: Infinity, ease: 'easeInOut' },
+  },
+};
+
+// ─── Pulsing glow (for active elements) ───
+export const idlePulse = {
+  animate: {
+    scale: [1, 1.08, 1],
+    opacity: [0.8, 1, 0.8],
+    transition: { duration: 1.5, repeat: Infinity, ease: 'easeInOut' },
   },
 };
 
