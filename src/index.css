@@ -400,8 +400,7 @@
   }
 
   .shadow-neon {
-    box-shadow: 0 0 20px -5px hsl(var(--primary) / 0.6),
-                0 0 40px -10px hsl(var(--primary) / 0.4);
+    box-shadow: none;
   }
 
   .scrollbar-hide {
@@ -529,10 +528,10 @@
   }
   @keyframes glow-pulse {
     0%, 100% { 
-      box-shadow: 0 0 8px -2px hsl(var(--primary) / 0.3);
+      opacity: 1;
     }
     50% { 
-      box-shadow: 0 0 24px -2px hsl(var(--primary) / 0.6), 0 0 48px -4px hsl(var(--primary) / 0.3);
+      opacity: 0.85;
     }
   }
 
@@ -597,8 +596,8 @@
     animation: ring-pulse 2s ease-in-out infinite;
   }
   @keyframes ring-pulse {
-    0%, 100% { filter: drop-shadow(0 0 4px hsl(var(--primary) / 0.3)); }
-    50% { filter: drop-shadow(0 0 16px hsl(var(--primary) / 0.7)); }
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
   }
 
   .animate-wave {

@@ -69,9 +69,6 @@ export function ProgressRing({
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset }}
           transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-          style={{
-            filter: progress >= 60 ? `drop-shadow(0 0 10px ${getGlowColor()})` : undefined,
-          }}
         />
         
         {/* Completion animation - pulsing ring */}
@@ -114,9 +111,6 @@ export function ProgressRing({
               duration: 1.5,
               repeat: Infinity,
               ease: 'easeInOut',
-            }}
-            style={{
-              filter: `drop-shadow(0 0 6px ${getGlowColor()})`,
             }}
           />
         )}
