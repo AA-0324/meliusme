@@ -63,8 +63,8 @@ export function ProgressRing({
         
         {/* Progress circle */}
         <motion.circle
-          cx={size / 2}
-          cy={size / 2}
+          cx={totalSize / 2}
+          cy={totalSize / 2}
           r={radius}
           fill="none"
           stroke={getColor()}
