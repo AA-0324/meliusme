@@ -14,7 +14,7 @@ import { getGreeting, formatMemberSince } from '@/lib/userProfile';
 import { validateName } from '@/lib/validation';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { staggerContainer, fadeUp } from '@/lib/motion';
+import { staggerContainer, fadeUp, idleBreathe, idleFloat, prefersReducedMotion } from '@/lib/motion';
 import logo from '@/assets/meliusme-logo-new.png';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
