@@ -48,6 +48,12 @@ export function StreakTracker({
     );
   }
 
+  const streaks = [
+    { icon: Flame, label: 'Logging Streak', value: loggingStreak, color: 'text-orange-500', bg: 'bg-orange-500/10' },
+    { icon: Target, label: 'Calorie Target', value: calorieTargetStreak, color: 'text-green-500', bg: 'bg-green-500/10' },
+    { icon: TrendingUp, label: 'Protein Goal', value: proteinGoalStreak, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+  ];
+
   return (
     <motion.div variants={noMotion ? {} : fadeUpBounce} className="px-6 mb-6">
       <div className={`bg-card rounded-3xl p-6 border border-border ${animationsEnabled ? 'animate-shine' : ''}`}>
@@ -56,11 +62,7 @@ export function StreakTracker({
           <h2 className="text-lg font-semibold">Streaks</h2>
         </div>
         <div className="grid gap-3">
-          {[
-            { icon: Flame, label: 'Logging Streak', value: loggingStreak, color: 'text-orange-500' },
-            { icon: Target, label: 'Calorie Target Streak', value: calorieTargetStreak, color: 'text-green-500' },
-            { icon: TrendingUp, label: 'Protein Goal Streak', value: proteinGoalStreak, color: 'text-blue-500' },
-          ].map((streak, i) => (
+          {streaks.map((streak, i) => (
             <motion.div
               key={streak.label}
               initial={noMotion ? false : { opacity: 0, x: -20 }}
@@ -69,12 +71,14 @@ export function StreakTracker({
               className="flex items-center justify-between bg-secondary/30 rounded-xl p-4"
             >
               <div className="flex items-center gap-3">
-                <streak.icon className={`w-5 h-5 ${streak.color}`} />
-                <span className="font-medium">{streak.label}</span>
+                <div className={`w-9 h-9 rounded-lg ${streak.bg} flex items-center justify-center`}>
+                  <streak.icon className={`w-4.5 h-4.5 ${streak.color}`} />
+                </div>
+                <span className="font-medium text-sm">{streak.label}</span>
               </div>
               <div className="text-right">
                 <div className="text-2xl font-bold">{streak.value}</div>
-                <div className="text-xs text-muted-foreground">days</div>
+                <div className="text-xs text-muted-foreground">{streak.value === 1 ? 'day' : 'days'}</div>
               </div>
             </motion.div>
           ))}
