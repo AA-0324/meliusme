@@ -302,17 +302,17 @@ export default function Profile() {
 
         {/* Meal Templates (locked for non-Pro) */}
         {!isPro && (
-          <div
-            onClick={() => setShowProModal(true)}
-            className="bg-card rounded-2xl p-4 border border-border/50 relative opacity-75 cursor-pointer active:scale-[0.98] transition-transform">
+          <motion.div variants={fadeUp}
+            className={`bg-card rounded-2xl p-4 border border-border/50 ${proLocked} cursor-pointer`}
+            onClick={() => setShowProModal(true)}>
             <div className="flex items-center gap-3">
               <BookmarkPlus className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-              <div className="text-left">
+              <div className="text-left flex-1">
                 <span className="block text-sm font-semibold">Meal Templates</span>
                 <span className="text-xs text-muted-foreground font-normal">Save and reuse your favorite meals</span>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
 
         <motion.div variants={fadeUp}
