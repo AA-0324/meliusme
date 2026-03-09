@@ -528,37 +528,25 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Filters row with layout editor button */}
-      <div className="px-6 mb-4">
-        <div className="flex items-center gap-2">
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none flex-1">
-            {filterOptions.map((option) => {
-              const isLocked = option.proOnly && !isPro;
-              return (
+      {/* Filters row - Pro only */}
+      {isPro && (
+        <div className="px-6 mb-4">
+          <div className="flex items-center gap-2">
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none flex-1">
+              {filterOptions.map((option) => (
                 <button
                   key={option.value}
-                  onClick={() => {
-                    if (isLocked) {
-                      setShowProModal(true);
-                    } else {
-                      setDashboardFilter(option.value);
-                    }
-                  }}
+                  onClick={() => setDashboardFilter(option.value)}
                   className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors ${
-                    dashboardFilter === option.value && !isLocked
+                    dashboardFilter === option.value
                       ? 'bg-primary text-primary-foreground'
-                      : isLocked
-                        ? 'bg-secondary/30 text-muted-foreground'
-                        : 'bg-secondary/50 text-muted-foreground hover:bg-secondary'
+                      : 'bg-secondary/50 text-muted-foreground hover:bg-secondary'
                   }`}
                 >
                   {option.label}
-                  {isLocked && <ProBadge showLock={false} className="scale-75" />}
                 </button>
-              );
-            })}
-          </div>
-          {isPro && (
+              ))}
+            </div>
             <motion.button
               initial={noMotion ? false : { opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -569,9 +557,9 @@ export default function Dashboard() {
             >
               <Settings2 className="w-5 h-5 text-muted-foreground" />
             </motion.button>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       <motion.div variants={staggerContainer(0.12)} initial={noMotion ? false : "hidden"} animate="show">
         {orderedWidgetIds.map(id => {
