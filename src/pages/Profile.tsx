@@ -202,7 +202,11 @@ export default function Profile() {
                 className="text-muted-foreground text-sm mt-0.5">{formatMemberSince(userProfile.createdAt)}</motion.p>
             )}
           </div>
-          <motion.div whileTap={{ scale: 0.9 }} transition={{ type: 'spring', damping: 15 }}>
+          <motion.div 
+            whileTap={{ scale: 0.9 }} 
+            transition={{ type: 'spring', damping: 15 }}
+            {...(animationsEnabled ? { animate: { rotate: [0, 90, 0], transition: { duration: 8, repeat: Infinity, ease: 'easeInOut' } } } : {})}
+          >
             <Button variant="ghost" size="icon" onClick={() => navigate('/settings')} className="rounded-xl">
               <Settings className="w-5 h-5" />
             </Button>
