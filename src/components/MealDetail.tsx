@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Flame, Clock, Trash2, Beef, Apple, Candy, BookmarkPlus } from 'lucide-react';
+import { X, Flame, Clock, Trash2, Beef, Apple, Candy, BookmarkPlus, Check } from 'lucide-react';
 import { Meal, Goals } from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
