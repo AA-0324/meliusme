@@ -305,7 +305,7 @@ export default function Profile() {
           <motion.div variants={fadeUp}
             onClick={() => setShowProModal(true)}
             className="bg-card rounded-2xl p-4 border border-border/50 cursor-pointer active:scale-[0.98] transition-transform">
-            <div className="flex items-center gap-3 opacity-60">
+            <div className="flex items-center gap-3 opacity-45">
               <BookmarkPlus className="w-5 h-5 text-muted-foreground flex-shrink-0" />
               <div className="text-left flex-1">
                 <span className="block text-sm font-semibold">Meal Templates</span>
