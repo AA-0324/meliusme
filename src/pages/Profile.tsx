@@ -417,12 +417,16 @@ export default function Profile() {
 
         {/* Export */}
         <motion.div variants={fadeUp}>
-          <motion.div whileTap={{ scale: 0.97 }}>
-            <Button onClick={handleExport} variant="outline" className={`w-full h-12 rounded-xl justify-between font-semibold ${!isPro ? proLocked : ''}`}>
-              <div className="flex items-center gap-3">
-                <Download className="w-5 h-5" /><span>Export Data (CSV)</span>
+          <motion.div whileTap={{ scale: 0.97 }}
+            onClick={handleExport}
+            className={`bg-card rounded-2xl p-4 border border-border/50 cursor-pointer active:scale-[0.98] transition-transform ${!isPro ? '' : ''}`}>
+            <div className={`flex items-center gap-3 ${!isPro ? 'opacity-50' : ''}`}>
+              <Download className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+              <div className="text-left flex-1">
+                <span className="block text-sm font-semibold">Export Data (CSV)</span>
+                <span className="text-xs text-muted-foreground font-normal">Download your meal history</span>
               </div>
-            </Button>
+            </div>
           </motion.div>
         </motion.div>
       </motion.div>
