@@ -32,7 +32,7 @@ const themes = [
 const proLocked = 'relative opacity-75';
 
 export default function Profile() {
-  const { settings, isPro, setDarkMode, updateUserGoals, setWaterGoal, setTheme, userProfile, setUserName, setUserAvatar, bodyProfile } = useApp();
+  const { settings, isPro, setDarkMode, updateUserGoals, setWaterGoal, setTheme, userProfile, setUserName, setUserAvatar, bodyProfile, animationsEnabled } = useApp();
   const navigate = useNavigate();
   const [showProModal, setShowProModal] = useState(false);
   const [showBodyProfile, setShowBodyProfile] = useState(false);
