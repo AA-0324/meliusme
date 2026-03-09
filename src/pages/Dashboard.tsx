@@ -222,7 +222,7 @@ export default function Dashboard() {
         <div className={`bg-card rounded-3xl p-6 border border-border ${animationsEnabled ? 'animate-shine' : ''}`}>
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">Today's Goals</h2>
           <div className="grid grid-cols-3 gap-2">
-            {settings.goals.protein && (
+            {(() => { const goal = settings.goals.protein ?? 50; return (
               <motion.div 
                 className="flex flex-col items-center gap-1.5 min-w-0 overflow-hidden"
                 initial={noMotion ? false : { scale: 0.5, opacity: 0 }}
@@ -230,20 +230,20 @@ export default function Dashboard() {
                 transition={{ delay: 0.3, type: 'spring', damping: 10 }}
               >
                 <ProgressRing
-                  progress={Math.min((todayTotals.protein / settings.goals.protein) * 100, 100)}
+                  progress={Math.min((todayTotals.protein / goal) * 100, 100)}
                   size={64}
                   strokeWidth={5}
-                  showAnimation={todayTotals.protein >= settings.goals.protein}
+                  showAnimation={todayTotals.protein >= goal}
                 >
                   <Beef className="w-3.5 h-3.5 text-muted-foreground" />
                 </ProgressRing>
                 <div className="text-center">
                   <p className="text-sm font-bold leading-tight"><AnimatedNumber value={todayTotals.protein} suffix="g" /></p>
-                  <p className="text-[10px] text-muted-foreground leading-tight">/ {settings.goals.protein}g protein</p>
+                  <p className="text-[10px] text-muted-foreground leading-tight">/ {goal}g protein</p>
                 </div>
               </motion.div>
-            )}
-            {settings.goals.fiber && (
+            ); })()}
+            {(() => { const goal = settings.goals.fiber ?? 25; return (
               <motion.div 
                 className="flex flex-col items-center gap-1.5 min-w-0 overflow-hidden"
                 initial={noMotion ? false : { scale: 0.5, opacity: 0 }}
@@ -251,20 +251,20 @@ export default function Dashboard() {
                 transition={{ delay: 0.4, type: 'spring', damping: 10 }}
               >
                 <ProgressRing
-                  progress={Math.min((todayTotals.fiber / settings.goals.fiber) * 100, 100)}
+                  progress={Math.min((todayTotals.fiber / goal) * 100, 100)}
                   size={64}
                   strokeWidth={5}
-                  showAnimation={todayTotals.fiber >= settings.goals.fiber}
+                  showAnimation={todayTotals.fiber >= goal}
                 >
                   <Apple className="w-3.5 h-3.5 text-muted-foreground" />
                 </ProgressRing>
                 <div className="text-center">
                   <p className="text-sm font-bold leading-tight"><AnimatedNumber value={todayTotals.fiber} suffix="g" /></p>
-                  <p className="text-[10px] text-muted-foreground leading-tight">/ {settings.goals.fiber}g fiber</p>
+                  <p className="text-[10px] text-muted-foreground leading-tight">/ {goal}g fiber</p>
                 </div>
               </motion.div>
-            )}
-            {settings.goals.sugar && (
+            ); })()}
+            {(() => { const goal = settings.goals.sugar ?? 50; return (
               <motion.div 
                 className="flex flex-col items-center gap-1.5 min-w-0 overflow-hidden"
                 initial={noMotion ? false : { scale: 0.5, opacity: 0 }}
@@ -272,7 +272,7 @@ export default function Dashboard() {
                 transition={{ delay: 0.5, type: 'spring', damping: 10 }}
               >
                 <ProgressRing
-                  progress={Math.min((todayTotals.sugar / settings.goals.sugar) * 100, 100)}
+                  progress={Math.min((todayTotals.sugar / goal) * 100, 100)}
                   size={64}
                   strokeWidth={5}
                   showAnimation={false}
@@ -281,10 +281,10 @@ export default function Dashboard() {
                 </ProgressRing>
                 <div className="text-center">
                   <p className="text-sm font-bold leading-tight"><AnimatedNumber value={todayTotals.sugar} suffix="g" /></p>
-                  <p className="text-[10px] text-muted-foreground leading-tight">/ {settings.goals.sugar}g sugar</p>
+                  <p className="text-[10px] text-muted-foreground leading-tight">/ {goal}g sugar</p>
                 </div>
               </motion.div>
-            )}
+            ); })()}
           </div>
         </div>
       </motion.div>
