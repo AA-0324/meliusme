@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Tag, ChevronLeft, Flame, Beef, Apple, Candy, UtensilsCrossed } from 'lucide-react';
+import { X, Tag, ChevronLeft, Flame, Beef, Apple, Candy, UtensilsCrossed, BookmarkPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +10,8 @@ import { ProUpgradeModal } from '@/components/ProUpgradeModal';
 import { HealthWarning, HealthPositive } from '@/components/HealthWarning';
 import { validateNutrition, validateTag } from '@/lib/validation';
 import { toast } from 'sonner';
+import { TemplatePicker } from './TemplatePicker';
+import { MealTemplate } from '@/lib/proFeatures';
 
 interface MealFormProps {
   open: boolean;
@@ -51,6 +53,7 @@ const nutritionFields = [
 export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
   const { logMeal, isPro, settings, meals } = useApp();
   const [showProModal, setShowProModal] = useState(false);
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
 
   const now = new Date();
   const [calories, setCalories] = useState('');
@@ -61,6 +64,16 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleTemplateSelect = (template: MealTemplate) => {
+    setCalories(template.calories.toString());
+    setProtein(template.protein?.toString() || '');
+    setFiber(template.fiber?.toString() || '');
+    setSugar(template.sugar?.toString() || '');
+    setMealType(template.mealType);
+    if (template.tags) setTags(template.tags);
+    toast.success(`Template "${template.name}" loaded`);
+  };
 
   const values: Record<string, string> = { calories, protein, fiber, sugar };
   const setters: Record<string, (v: string) => void> = { calories: setCalories, protein: setProtein, fiber: setFiber, sugar: setSugar };
@@ -244,6 +257,19 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
 
             {/* Scrollable form content */}
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 pt-5 pb-4 space-y-5 isolate" style={{ overscrollBehavior: 'contain', touchAction: 'pan-y' }}>
+              {/* Template picker button */}
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, type: 'spring', damping: 18 }}>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowTemplatePicker(true)}
+                  className="w-full h-12 rounded-xl justify-center gap-2 font-semibold border-dashed"
+                >
+                  <BookmarkPlus className="w-4 h-4" />
+                  Load from Template
+                  {!isPro && <ProBadge className="ml-1" />}
+                </Button>
+              </motion.div>
+
               {/* Meal Type selector */}
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, type: 'spring', damping: 18, stiffness: 200 }}>
                 <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2.5 block">
@@ -494,6 +520,13 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
         )}
       </AnimatePresence>
       <ProUpgradeModal open={showProModal} onClose={() => setShowProModal(false)} />
+      <TemplatePicker
+        open={showTemplatePicker}
+        onClose={() => setShowTemplatePicker(false)}
+        onSelect={handleTemplateSelect}
+        isPro={isPro}
+        onUpgradeClick={() => { setShowTemplatePicker(false); setShowProModal(true); }}
+      />
     </>
   );
 }
