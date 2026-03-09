@@ -217,7 +217,7 @@ export default function Dashboard() {
       </motion.div>
     ) : null,
 
-    'goals': () => isWidgetVisible('goals') && (settings.goals.protein || settings.goals.fiber || settings.goals.sugar) ? (
+    'goals': () => isWidgetVisible('goals') && ((settings.goals.protein ?? 50) || (settings.goals.fiber ?? 25) || (settings.goals.sugar ?? 50)) ? (
       <motion.div key="goals" variants={noMotion ? {} : fadeUpBounce} className="px-6 mb-6">
         <div className={`bg-card rounded-3xl p-6 border border-border ${animationsEnabled ? 'animate-shine' : ''}`}>
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4">Today's Goals</h2>
