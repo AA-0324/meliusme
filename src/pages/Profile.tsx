@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { MotionConfig } from 'framer-motion';
 import { Moon, Sun, Sparkles, Download, Settings, Target, Check, Lock, Droplets, Palette, User, Scale, AlertTriangle, Camera, Crown, BookmarkPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -13,7 +14,7 @@ import { getGreeting, formatMemberSince } from '@/lib/userProfile';
 import { validateName } from '@/lib/validation';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { staggerContainer, fadeUp } from '@/lib/motion';
+import { staggerContainer, fadeUp, idleBreathe, idleFloat, prefersReducedMotion } from '@/lib/motion';
 import logo from '@/assets/meliusme-logo-new.png';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -31,7 +32,7 @@ const themes = [
 const proLocked = 'relative opacity-75';
 
 export default function Profile() {
-  const { settings, isPro, setDarkMode, updateUserGoals, setWaterGoal, setTheme, userProfile, setUserName, setUserAvatar, bodyProfile } = useApp();
+  const { settings, isPro, setDarkMode, updateUserGoals, setWaterGoal, setTheme, userProfile, setUserName, setUserAvatar, bodyProfile, animationsEnabled } = useApp();
   const navigate = useNavigate();
   const [showProModal, setShowProModal] = useState(false);
   const [showBodyProfile, setShowBodyProfile] = useState(false);
@@ -201,7 +202,11 @@ export default function Profile() {
                 className="text-muted-foreground text-sm mt-0.5">{formatMemberSince(userProfile.createdAt)}</motion.p>
             )}
           </div>
-          <motion.div whileTap={{ scale: 0.9 }} transition={{ type: 'spring', damping: 15 }}>
+          <motion.div 
+            whileTap={{ scale: 0.9 }} 
+            transition={{ type: 'spring', damping: 15 }}
+            {...(animationsEnabled ? { animate: { rotate: [0, 90, 0], transition: { duration: 8, repeat: Infinity, ease: 'easeInOut' } } } : {})}
+          >
             <Button variant="ghost" size="icon" onClick={() => navigate('/settings')} className="rounded-xl">
               <Settings className="w-5 h-5" />
             </Button>
@@ -216,13 +221,23 @@ export default function Profile() {
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Your Profile</h2>
           <div className="flex items-center gap-4">
             <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
-            <motion.button whileTap={{ scale: 0.9 }} onClick={() => avatarInputRef.current?.click()} className="relative group flex-shrink-0 cursor-pointer" title="Change profile picture">
+            <motion.button 
+              whileTap={{ scale: 0.9 }} 
+              onClick={() => avatarInputRef.current?.click()} 
+              className="relative group flex-shrink-0 cursor-pointer" 
+              title="Change profile picture"
+              {...(animationsEnabled ? { whileHover: { scale: 1.08, transition: { type: 'spring', damping: 10 } } } : {})}
+            >
               {userProfile?.avatar ? (
                 <img src={userProfile.avatar} alt="Avatar" className="w-16 h-16 rounded-2xl object-cover" />
               ) : (
-                <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center">
+                <motion.div 
+                  className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center"
+                  animate={animationsEnabled ? { scale: [1, 1.06, 1] } : undefined}
+                  transition={animationsEnabled ? { duration: 2.5, repeat: Infinity, ease: 'easeInOut' as const } : undefined}
+                >
                   <User className="w-8 h-8 text-primary" />
-                </div>
+                </motion.div>
               )}
               <div className="absolute inset-0 rounded-2xl bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <Camera className="w-5 h-5 text-white" />
@@ -251,15 +266,20 @@ export default function Profile() {
             <motion.button 
               onClick={() => setShowProModal(true)}
               whileTap={{ scale: 0.97 }}
-              className="w-full rounded-2xl p-5 text-left relative overflow-hidden bg-gradient-to-br from-primary/10 via-card to-primary/5 border border-border/50"
+              whileHover={animationsEnabled ? { scale: 1.02, y: -2 } : undefined}
+              className="w-full rounded-2xl p-5 text-left relative overflow-hidden bg-gradient-to-br from-primary/10 via-card to-primary/5 border border-primary/20 shadow-[0_0_20px_-5px_hsl(var(--primary)/0.3)]"
             >
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/70 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
+                <motion.div 
+                  className="w-12 h-12 bg-gradient-to-br from-primary to-primary/70 rounded-xl flex items-center justify-center shadow-lg overflow-hidden"
+                  animate={animationsEnabled ? { scale: [1, 1.08, 1] } : undefined}
+                  transition={animationsEnabled ? { duration: 2.5, repeat: Infinity, ease: 'easeInOut' as const } : undefined}
+                >
                   <img src={logo} alt="" className="w-8 h-8" />
-                </div>
+                </motion.div>
                 <div className="flex-1">
                   <h2 className="text-lg font-extrabold">Upgrade to Pro</h2>
-                  <p className="text-primary font-bold text-sm">$9.99 • One-time • Lifetime</p>
+                  <p className="text-primary font-bold text-sm">$9.99 - One-time - Lifetime</p>
                 </div>
               </div>
             </motion.button>
