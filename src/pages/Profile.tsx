@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Moon, Sun, Sparkles, Download, Settings, Target, Check, Lock, Droplets, Palette, User, Scale, AlertTriangle, Camera, Crown } from 'lucide-react';
+import { Moon, Sun, Sparkles, Download, Settings, Target, Check, Lock, Droplets, Palette, User, Scale, AlertTriangle, Camera, Crown, BookmarkPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
@@ -300,7 +300,22 @@ export default function Profile() {
           </div>
         </motion.div>
 
-        {/* Appearance */}
+        {/* Meal Templates (locked for non-Pro) */}
+        {!isPro && (
+          <motion.div variants={fadeUp}
+            className={`bg-card rounded-2xl p-4 border border-border/50 ${proLocked}`}
+            onClick={() => setShowProModal(true)}
+            style={{ cursor: 'pointer' }}>
+            <div className="flex items-center gap-3">
+              <BookmarkPlus className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+              <div className="text-left">
+                <span className="block text-sm font-semibold">Meal Templates</span>
+                <span className="text-xs text-muted-foreground font-normal">Save and reuse your favorite meals</span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         <motion.div variants={fadeUp}
           className="bg-card rounded-2xl p-5 border border-border/50">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Appearance</h2>
