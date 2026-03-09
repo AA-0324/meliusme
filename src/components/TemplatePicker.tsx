@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookmarkPlus, X, Trash2, Sparkles } from 'lucide-react';
 import { Button } from './ui/button';
@@ -18,22 +18,15 @@ export function TemplatePicker({ open, onClose, onSelect, isPro, onUpgradeClick 
   const [templates, setTemplates] = useState<MealTemplate[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const loadTemplates = async () => {
-    setLoading(true);
-    const loaded = await getMealTemplates();
-    setTemplates(loaded);
-    setLoading(false);
-  };
-
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    await deleteMealTemplate(id);
-    setTemplates(prev => prev.filter(t => t.id !== id));
-  };
-
-  if (open && templates.length === 0 && !loading) {
-    loadTemplates();
-  }
+  useEffect(() => {
+    if (open) {
+      setLoading(true);
+      getMealTemplates().then((loaded) => {
+        setTemplates(loaded);
+        setLoading(false);
+      });
+    }
+  }, [open]);
 
   if (!isPro) {
     return (
