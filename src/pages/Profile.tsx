@@ -221,13 +221,22 @@ export default function Profile() {
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Your Profile</h2>
           <div className="flex items-center gap-4">
             <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
-            <motion.button whileTap={{ scale: 0.9 }} onClick={() => avatarInputRef.current?.click()} className="relative group flex-shrink-0 cursor-pointer" title="Change profile picture">
+            <motion.button 
+              whileTap={{ scale: 0.9 }} 
+              onClick={() => avatarInputRef.current?.click()} 
+              className="relative group flex-shrink-0 cursor-pointer" 
+              title="Change profile picture"
+              {...(animationsEnabled ? { whileHover: { scale: 1.08, transition: { type: 'spring', damping: 10 } } } : {})}
+            >
               {userProfile?.avatar ? (
                 <img src={userProfile.avatar} alt="Avatar" className="w-16 h-16 rounded-2xl object-cover" />
               ) : (
-                <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center">
+                <motion.div 
+                  className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center"
+                  {...(animationsEnabled ? idleBreathe : {})}
+                >
                   <User className="w-8 h-8 text-primary" />
-                </div>
+                </motion.div>
               )}
               <div className="absolute inset-0 rounded-2xl bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <Camera className="w-5 h-5 text-white" />
