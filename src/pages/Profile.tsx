@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MotionConfig } from 'framer-motion';
-import { Moon, Sun, Sparkles, Download, Settings, Target, Check, Lock, Droplets, Palette, User, Scale, AlertTriangle, Camera, Crown, BookmarkPlus } from 'lucide-react';
+import { Moon, Sun, Sparkles, Download, Settings, Target, Check, Lock, Palette, User, Scale, AlertTriangle, Camera, Crown, BookmarkPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
@@ -189,7 +189,7 @@ export default function Profile() {
   return (
     <div className="min-h-screen pb-24">
       {/* Header */}
-      <div className="px-6 pt-8 pb-4 safe-top">
+      <div className="px-6 pt-10 pb-4 safe-top">
         <div className="flex items-center justify-between">
           <div>
             <motion.h1 initial={{ opacity: 0, y: -15 }} animate={{ opacity: 1, y: 0 }}
@@ -269,8 +269,8 @@ export default function Profile() {
               className="w-full rounded-2xl p-5 text-left relative overflow-hidden bg-gradient-to-br from-primary/10 via-card to-primary/5 border border-border/50"
             >
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/70 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
-                  <img src={logo} alt="" className="w-8 h-8" />
+                <div className="w-14 h-14 bg-gradient-to-br from-primary to-primary/70 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
+                  <img src={logo} alt="" className="w-11 h-11" />
                 </div>
                 <div className="flex-1">
                   <h2 className="text-lg font-extrabold">Upgrade to Pro</h2>
@@ -384,15 +384,6 @@ export default function Profile() {
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Droplets className="w-4 h-4 text-sky-500" />
-                <Label htmlFor="water-goal" className="text-sm font-semibold">Water Goal (glasses)</Label>
-              </div>
-              <Input id="water-goal" type="number" inputMode="numeric" value={waterGoalInput}
-                onChange={(e) => setWaterGoalInput(e.target.value)} className="h-11 rounded-xl bg-secondary border-0" />
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="protein-goal" className="text-sm font-semibold">Protein Goal (g)</Label>
               <Input id="protein-goal" type="number" inputMode="numeric" value={proteinGoal}
                 onChange={(e) => setProteinGoal(e.target.value)} className="h-11 rounded-xl bg-secondary border-0" />
@@ -410,6 +401,12 @@ export default function Profile() {
                 onChange={(e) => setSugarGoal(e.target.value)} className="h-11 rounded-xl bg-secondary border-0" />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="water-goal" className="text-sm font-semibold">Water Goal (glasses)</Label>
+              <Input id="water-goal" type="number" inputMode="numeric" value={waterGoalInput}
+                onChange={(e) => setWaterGoalInput(e.target.value)} className="h-11 rounded-xl bg-secondary border-0" />
+            </div>
+
             <motion.div whileTap={{ scale: 0.97 }}>
               <Button onClick={handleSaveGoals} disabled={!goalsChanged || goalsBlank} className="w-full h-11 rounded-xl font-bold">
                 Save Goals
@@ -420,12 +417,16 @@ export default function Profile() {
 
         {/* Export */}
         <motion.div variants={fadeUp}>
-          <motion.div whileTap={{ scale: 0.97 }}>
-            <Button onClick={handleExport} variant="outline" className={`w-full h-12 rounded-xl justify-between font-semibold ${!isPro ? proLocked : ''}`}>
-              <div className="flex items-center gap-3">
-                <Download className="w-5 h-5" /><span>Export Data (CSV)</span>
+          <motion.div whileTap={{ scale: 0.97 }}
+            onClick={handleExport}
+            className={`bg-card rounded-2xl p-4 border border-border/50 cursor-pointer active:scale-[0.98] transition-transform ${!isPro ? '' : ''}`}>
+            <div className={`flex items-center gap-3 ${!isPro ? 'opacity-50' : ''}`}>
+              <Download className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+              <div className="text-left flex-1">
+                <span className="block text-sm font-semibold">Export Data (CSV)</span>
+                <span className="text-xs text-muted-foreground font-normal">Download your meal history</span>
               </div>
-            </Button>
+            </div>
           </motion.div>
         </motion.div>
       </motion.div>

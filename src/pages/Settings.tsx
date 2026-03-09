@@ -35,7 +35,7 @@ import { staggerContainer, fadeUp } from '@/lib/motion';
 import { getMealTemplates, deleteMealTemplate, MealTemplate } from '@/lib/proFeatures';
 import logo from '@/assets/meliusme-logo-new.png';
 
-const APP_VERSION = '0.8.0-alpha';
+const APP_VERSION = '0.9.0-alpha';
 
 export default function Settings() {
   const { 
@@ -94,7 +94,7 @@ export default function Settings() {
   return (
     <div className="min-h-screen pb-24">
       {/* Header */}
-      <div className="px-6 pt-8 pb-4 safe-top">
+      <div className="px-6 pt-10 pb-4 safe-top">
         <div className="flex items-center gap-3">
           <motion.div whileTap={{ scale: 0.85 }}>
             <Button variant="ghost" size="icon" onClick={() => navigate('/profile')} className="rounded-xl">
@@ -281,7 +281,7 @@ export default function Settings() {
             <motion.div whileTap={{ scale: 0.97 }}>
               <Button onClick={() => setShowProModal(true)}
                 className="w-full h-12 rounded-xl justify-start gap-3 font-semibold bg-primary hover:bg-primary/90 text-primary-foreground">
-                <img src={logo} alt="" className="w-5 h-5" />
+                <img src={logo} alt="" className="w-7 h-7" />
                 <span>Upgrade to MeliusMe Pro</span>
               </Button>
             </motion.div>
