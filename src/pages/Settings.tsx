@@ -10,7 +10,7 @@ import {
   RefreshCw,
   Bell,
   BellOff,
-  Sparkles,
+  
   Eye,
   EyeOff,
   BookmarkPlus,
@@ -211,8 +211,8 @@ export default function Settings() {
               </div>
             )
           ) : (
-            <div className="flex flex-col items-center py-6 gap-2">
-              <Sparkles className="w-10 h-10 text-muted-foreground/40" />
+            <div className="flex items-center gap-3 py-2">
+              <BookmarkPlus className="w-5 h-5 text-muted-foreground/50 flex-shrink-0" />
               <p className="text-sm text-muted-foreground">Upgrade to Pro to save and manage meal templates</p>
             </div>
           )}
