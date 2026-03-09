@@ -40,7 +40,7 @@ const APP_VERSION = '0.9.0-alpha';
 
 export default function Settings() {
   const { 
-    settings, isPro, setDevMode, resetDailyData,
+    settings, isPro, setPro, setDevMode, resetDailyData,
     notificationsEnabled, toggleNotifications,
     setUse24Hour, animationsEnabled, setAnimationsEnabled,
   } = useApp();
