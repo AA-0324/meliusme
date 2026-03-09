@@ -2,6 +2,10 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Tag, ChevronLeft, Flame, Beef, Apple, Candy, UtensilsCrossed, BookmarkPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useApp } from '@/contexts/AppContext';
@@ -54,6 +58,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
   const { logMeal, isPro, settings, meals } = useApp();
   const [showProModal, setShowProModal] = useState(false);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   const now = new Date();
   const [calories, setCalories] = useState('');
@@ -228,7 +233,14 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
               <div className="absolute top-0 left-0 right-0 safe-top flex items-center justify-between px-4 pt-3">
                 <motion.button
                   whileTap={{ scale: 0.85 }}
-                  onClick={onClose}
+                  onClick={() => {
+                    const hasData = calories || protein || fiber || sugar || tags.length > 0;
+                    if (hasData) {
+                      setShowExitConfirm(true);
+                    } else {
+                      onClose();
+                    }
+                  }}
                   className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center"
                 >
                   <ChevronLeft className="w-5 h-5 text-white" />
@@ -519,6 +531,18 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
           </>
         )}
       </AnimatePresence>
+      <AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
+        <AlertDialogContent className="border-border bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard this meal?</AlertDialogTitle>
+            <AlertDialogDescription>You have unsaved nutrition data. Are you sure you want to go back? Your progress will be lost.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Editing</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setShowExitConfirm(false); onClose(); setCalories(''); setProtein(''); setFiber(''); setSugar(''); setTags([]); }}>Discard</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <ProUpgradeModal open={showProModal} onClose={() => setShowProModal(false)} />
       <TemplatePicker
         open={showTemplatePicker}

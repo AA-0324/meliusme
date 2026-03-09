@@ -23,7 +23,7 @@ const MEAL_TYPE_COLORS = {
   snack: 'hsl(199, 89%, 48%)',
 };
 
-type DashboardFilter = 'today' | '7days' | '30days' | '90days' | 'custom';
+type DashboardFilter = 'today' | '7days' | '30days' | '90days';
 
 export default function Dashboard() {
   const { meals, settings, isPro, animationsEnabled } = useApp();
@@ -167,7 +167,6 @@ export default function Dashboard() {
     { value: '7days', label: '7 Days', proOnly: false },
     { value: '30days', label: '30 Days', proOnly: true },
     { value: '90days', label: '90 Days', proOnly: true },
-    { value: 'custom', label: 'Custom', proOnly: true },
   ];
 
   // Chart data — for longer ranges, aggregate to avoid overcrowding
@@ -526,48 +525,51 @@ export default function Dashboard() {
               {filterLabel}
             </motion.p>
           </div>
+        </div>
+      </div>
+
+      {/* Filters row with layout editor button */}
+      <div className="px-6 mb-4">
+        <div className="flex items-center gap-2">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none flex-1">
+            {filterOptions.map((option) => {
+              const isLocked = option.proOnly && !isPro;
+              return (
+                <button
+                  key={option.value}
+                  onClick={() => {
+                    if (isLocked) {
+                      setShowProModal(true);
+                    } else {
+                      setDashboardFilter(option.value);
+                    }
+                  }}
+                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors ${
+                    dashboardFilter === option.value && !isLocked
+                      ? 'bg-primary text-primary-foreground'
+                      : isLocked
+                        ? 'bg-secondary/30 text-muted-foreground'
+                        : 'bg-secondary/50 text-muted-foreground hover:bg-secondary'
+                  }`}
+                >
+                  {option.label}
+                  {isLocked && <ProBadge showLock={false} className="scale-75" />}
+                </button>
+              );
+            })}
+          </div>
           {isPro && (
             <motion.button
               initial={noMotion ? false : { opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => setShowLayoutEditor(true)}
-              className="p-2.5 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors"
+              className="p-2.5 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors flex-shrink-0"
+              title="Customize layout"
             >
               <Settings2 className="w-5 h-5 text-muted-foreground" />
             </motion.button>
           )}
-        </div>
-      </div>
-
-      {/* Advanced Filters */}
-      <div className="px-6 mb-4">
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {filterOptions.map((option) => {
-            const isLocked = option.proOnly && !isPro;
-            return (
-              <button
-                key={option.value}
-                onClick={() => {
-                  if (isLocked) {
-                    setShowProModal(true);
-                  } else {
-                    setDashboardFilter(option.value);
-                  }
-                }}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors ${
-                  dashboardFilter === option.value && !isLocked
-                    ? 'bg-primary text-primary-foreground'
-                    : isLocked
-                      ? 'bg-secondary/30 text-muted-foreground'
-                      : 'bg-secondary/50 text-muted-foreground hover:bg-secondary'
-                }`}
-              >
-                {option.label}
-                {isLocked && <ProBadge showLock={false} className="scale-75" />}
-              </button>
-            );
-          })}
         </div>
       </div>
 
