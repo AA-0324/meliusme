@@ -6,6 +6,7 @@ import { requestNotificationPermission, areNotificationsSupported } from '@/lib/
 import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge, getEarnedBadges, Badge, awardBadge, addXP, LevelUpResult, TempProUnlock, getTempProUnlocks, getXPData, XPData, getDailyChallenges } from '@/lib/streaks';
 import { initEncryption } from '@/lib/crypto';
 import { migrateAllToEncrypted } from '@/lib/encryptedStorage';
+import { initRevenueCat, checkProEntitlement } from '@/lib/revenuecat';
 
 type ToastVariant = 'primary' | 'success' | 'warning' | 'destructive' | 'challenge';
 
@@ -125,6 +126,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try {
         await initEncryption();
         await migrateAllToEncrypted();
+        
+        // Initialize RevenueCat
+        try {
+          initRevenueCat();
+        } catch (rcError) {
+          console.warn('[RevenueCat] Init failed (non-blocking):', rcError);
+        }
+
         const [s, profile, body, streakD, challenge, bdgs, allMeals, water, xp, unlocks] = await Promise.all([
           getSettings(),
           getUserProfile(),
@@ -157,6 +166,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setSettingsState(updated);
         }
         if (!migrated) localStorage.setItem('meliusme-pro-reset-v1.1', 'true');
+
+        // Check RevenueCat entitlement for Pro status
+        try {
+          const rcPro = await checkProEntitlement();
+          if (rcPro && !s.proStatus) {
+            const updated = await saveSettings({ proStatus: true });
+            setSettingsState(updated);
+          }
+        } catch (rcError) {
+          console.warn('[RevenueCat] Entitlement check failed (non-blocking):', rcError);
+        }
 
         // Apply auto-generated goals if the user has them but settings.goals is missing protein/fiber/sugar
         const autoGoals = await getAutoGoals();

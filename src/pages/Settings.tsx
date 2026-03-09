@@ -33,13 +33,14 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { staggerContainer, fadeUp } from '@/lib/motion';
 import { getMealTemplates, deleteMealTemplate, MealTemplate } from '@/lib/proFeatures';
+import { restorePurchases, checkProEntitlement } from '@/lib/revenuecat';
 import logo from '@/assets/meliusme-logo-new.png';
 
 const APP_VERSION = '0.9.0-alpha';
 
 export default function Settings() {
   const { 
-    settings, isPro, setDevMode, resetDailyData,
+    settings, isPro, setPro, setDevMode, resetDailyData,
     notificationsEnabled, toggleNotifications,
     setUse24Hour, animationsEnabled, setAnimationsEnabled,
   } = useApp();
@@ -72,8 +73,24 @@ export default function Settings() {
 
   const handleRestorePurchase = async () => {
     toast.info('Checking for previous purchases...');
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    toast.error('No previous purchase detected');
+    try {
+      const result = await restorePurchases();
+      if (result.success) {
+        setPro(true);
+        toast.success('Pro restored successfully!');
+      } else {
+        // Double-check entitlement
+        const hasPro = await checkProEntitlement();
+        if (hasPro) {
+          setPro(true);
+          toast.success('Pro restored successfully!');
+        } else {
+          toast.error('No previous purchase detected');
+        }
+      }
+    } catch {
+      toast.error('Failed to restore. Please try again.');
+    }
   };
 
   const handleToggleNotifications = async () => {
