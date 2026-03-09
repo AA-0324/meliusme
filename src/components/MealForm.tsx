@@ -53,6 +53,7 @@ const nutritionFields = [
 export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
   const { logMeal, isPro, settings, meals } = useApp();
   const [showProModal, setShowProModal] = useState(false);
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
 
   const now = new Date();
   const [calories, setCalories] = useState('');
@@ -63,6 +64,16 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleTemplateSelect = (template: MealTemplate) => {
+    setCalories(template.calories.toString());
+    setProtein(template.protein?.toString() || '');
+    setFiber(template.fiber?.toString() || '');
+    setSugar(template.sugar?.toString() || '');
+    setMealType(template.mealType);
+    if (template.tags) setTags(template.tags);
+    toast.success(`Template "${template.name}" loaded`);
+  };
 
   const values: Record<string, string> = { calories, protein, fiber, sugar };
   const setters: Record<string, (v: string) => void> = { calories: setCalories, protein: setProtein, fiber: setFiber, sugar: setSugar };
