@@ -269,8 +269,8 @@ export default function Profile() {
               className="w-full rounded-2xl p-5 text-left relative overflow-hidden bg-gradient-to-br from-primary/10 via-card to-primary/5 border border-border/50"
             >
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/70 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
-                  <img src={logo} alt="" className="w-8 h-8" />
+                <div className="w-14 h-14 bg-gradient-to-br from-primary to-primary/70 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
+                  <img src={logo} alt="" className="w-11 h-11" />
                 </div>
                 <div className="flex-1">
                   <h2 className="text-lg font-extrabold">Upgrade to Pro</h2>
