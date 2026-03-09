@@ -211,7 +211,8 @@ export default function Settings() {
         ) : (
           <motion.div variants={fadeUp}
             onClick={() => setShowProModal(true)}
-            className="bg-card rounded-2xl p-5 border border-border/50 opacity-75 cursor-pointer active:scale-[0.98] transition-transform">
+            style={{ opacity: 0.55 }}
+            className="bg-card rounded-2xl p-5 border border-border/50 cursor-pointer active:scale-[0.98] transition-transform">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <BookmarkPlus className="w-5 h-5 text-muted-foreground" />
