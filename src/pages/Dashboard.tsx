@@ -23,7 +23,7 @@ const MEAL_TYPE_COLORS = {
   snack: 'hsl(199, 89%, 48%)',
 };
 
-type DashboardFilter = 'today' | '7days' | '30days' | '90days' | 'custom';
+type DashboardFilter = 'today' | '7days' | '30days' | '90days';
 
 export default function Dashboard() {
   const { meals, settings, isPro, animationsEnabled } = useApp();
