@@ -222,7 +222,7 @@ export default function Settings() {
               </div>
               <LockIcon className="w-4 h-4 text-muted-foreground" />
             </div>
-          </motion.div>
+          </div>
         )}
 
         {/* Data Management */}
