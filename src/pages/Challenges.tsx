@@ -61,7 +61,7 @@ export default function Challenges() {
 
   return (
     <div className="min-h-screen pb-24">
-      <div className="px-6 pt-8 pb-4 safe-top">
+      <div className="px-6 pt-10 pb-4 safe-top">
         <motion.h1 
           initial={noMotion ? false : { opacity: 0, y: -30, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}

@@ -273,7 +273,13 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, type: 'spring', damping: 18 }}>
                 <Button
                   variant="outline"
-                  onClick={() => setShowTemplatePicker(true)}
+                  onClick={() => {
+                    if (!isPro) {
+                      setShowProModal(true);
+                    } else {
+                      setShowTemplatePicker(true);
+                    }
+                  }}
                   className="w-full h-12 rounded-xl justify-center gap-2 font-semibold border-dashed"
                 >
                   <BookmarkPlus className="w-4 h-4" />

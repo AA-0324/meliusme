@@ -503,7 +503,7 @@ export default function Dashboard() {
   return (
     <PageTransition className="min-h-screen pb-24">
       {/* Header */}
-      <div className="px-6 pt-8 pb-4 safe-top">
+      <div className="px-6 pt-10 pb-4 safe-top">
         <div className="flex items-center justify-between">
           <div>
             <motion.h1 

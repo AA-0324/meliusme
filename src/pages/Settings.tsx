@@ -35,7 +35,7 @@ import { staggerContainer, fadeUp } from '@/lib/motion';
 import { getMealTemplates, deleteMealTemplate, MealTemplate } from '@/lib/proFeatures';
 import logo from '@/assets/meliusme-logo-new.png';
 
-const APP_VERSION = '0.8.0-alpha';
+const APP_VERSION = '0.9.0-alpha';
 
 export default function Settings() {
   const { 
