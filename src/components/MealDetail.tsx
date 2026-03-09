@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Flame, Clock, Trash2, Beef, Apple, Candy, BookmarkPlus } from 'lucide-react';
+import { X, Flame, Clock, Trash2, Beef, Apple, Candy, BookmarkPlus, Check } from 'lucide-react';
 import { Meal, Goals } from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,7 @@ import { HealthWarning, HealthPositive, getHealthWarnings } from '@/components/H
 import { formatTime } from '@/lib/validation';
 import { ProBadge } from '@/components/ProBadge';
 import { ProUpgradeModal } from '@/components/ProUpgradeModal';
-import { saveMealTemplate } from '@/lib/proFeatures';
+import { saveMealTemplate, getMealTemplates, MealTemplate } from '@/lib/proFeatures';
 import { toast } from 'sonner';
 
 interface MealDetailProps {
@@ -57,6 +57,22 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
   const [showProModal, setShowProModal] = useState(false);
   const [showTemplateNameDialog, setShowTemplateNameDialog] = useState(false);
   const [templateName, setTemplateName] = useState('');
+  const [alreadyTemplate, setAlreadyTemplate] = useState(false);
+
+  useEffect(() => {
+    if (meal && isPro) {
+      getMealTemplates().then((templates) => {
+        const exists = templates.some(t =>
+          t.mealType === meal.mealType &&
+          t.calories === meal.calories &&
+          t.protein === meal.protein &&
+          t.fiber === meal.fiber &&
+          t.sugar === meal.sugar
+        );
+        setAlreadyTemplate(exists);
+      });
+    }
+  }, [meal, isPro]);
 
   const handleDelete = async () => {
     if (meal) { await removeMeal(meal.id); onClose(); }
@@ -85,6 +101,7 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
     });
     toast.success('Saved as template');
     setShowTemplateNameDialog(false);
+    setAlreadyTemplate(true);
   };
 
   return (
@@ -160,15 +177,22 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
               )}
 
               {/* Save as Template */}
-              <Button
-                variant="outline"
-                onClick={handleSaveAsTemplate}
-                className="w-full h-12 rounded-xl justify-center gap-2 font-semibold"
-              >
-                <BookmarkPlus className="w-5 h-5" />
-                Save as Template
-                {!isPro && <ProBadge className="ml-1" />}
-              </Button>
+              {alreadyTemplate ? (
+                <div className="w-full h-12 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm text-muted-foreground bg-secondary/30 border border-border/50">
+                  <Check className="w-5 h-5 text-primary" />
+                  Already saved as template
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={handleSaveAsTemplate}
+                  className="w-full h-12 rounded-xl justify-center gap-2 font-semibold"
+                >
+                  <BookmarkPlus className="w-5 h-5" />
+                  Save as Template
+                  {!isPro && <ProBadge className="ml-1" />}
+                </Button>
+              )}
 
               {/* Edit History removed — no editing flow exists */}
 
