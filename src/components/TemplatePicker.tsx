@@ -28,7 +28,12 @@ export function TemplatePicker({ open, onClose, onSelect, isPro, onUpgradeClick 
     }
   }, [open]);
 
-  if (!isPro) {
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await deleteMealTemplate(id);
+    setTemplates(prev => prev.filter(t => t.id !== id));
+  };
+
     return (
       <AnimatePresence>
         {open && (
