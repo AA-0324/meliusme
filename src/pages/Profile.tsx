@@ -233,7 +233,8 @@ export default function Profile() {
               ) : (
                 <motion.div 
                   className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center"
-                  {...(animationsEnabled ? idleBreathe : {})}
+                  animate={animationsEnabled ? { scale: [1, 1.06, 1] } : undefined}
+                  transition={animationsEnabled ? { duration: 2.5, repeat: Infinity, ease: 'easeInOut' as const } : undefined}
                 >
                   <User className="w-8 h-8 text-primary" />
                 </motion.div>
