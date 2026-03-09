@@ -520,6 +520,13 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
         )}
       </AnimatePresence>
       <ProUpgradeModal open={showProModal} onClose={() => setShowProModal(false)} />
+      <TemplatePicker
+        open={showTemplatePicker}
+        onClose={() => setShowTemplatePicker(false)}
+        onSelect={handleTemplateSelect}
+        isPro={isPro}
+        onUpgradeClick={() => { setShowTemplatePicker(false); setShowProModal(true); }}
+      />
     </>
   );
 }
