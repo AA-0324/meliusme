@@ -176,15 +176,22 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
               )}
 
               {/* Save as Template */}
-              <Button
-                variant="outline"
-                onClick={handleSaveAsTemplate}
-                className="w-full h-12 rounded-xl justify-center gap-2 font-semibold"
-              >
-                <BookmarkPlus className="w-5 h-5" />
-                Save as Template
-                {!isPro && <ProBadge className="ml-1" />}
-              </Button>
+              {alreadyTemplate ? (
+                <div className="w-full h-12 rounded-xl flex items-center justify-center gap-2 font-semibold text-sm text-muted-foreground bg-secondary/30 border border-border/50">
+                  <Check className="w-5 h-5 text-primary" />
+                  Already saved as template
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={handleSaveAsTemplate}
+                  className="w-full h-12 rounded-xl justify-center gap-2 font-semibold"
+                >
+                  <BookmarkPlus className="w-5 h-5" />
+                  Save as Template
+                  {!isPro && <ProBadge className="ml-1" />}
+                </Button>
+              )}
 
               {/* Edit History removed — no editing flow exists */}
 
