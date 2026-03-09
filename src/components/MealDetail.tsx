@@ -1,5 +1,6 @@
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Flame, Clock, Trash2, Beef, Apple, Candy } from 'lucide-react';
+import { X, Flame, Clock, Trash2, Beef, Apple, Candy, BookmarkPlus, History, Lock } from 'lucide-react';
 import { Meal, Goals } from '@/lib/db';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,6 +10,11 @@ import {
 import { useApp } from '@/contexts/AppContext';
 import { HealthWarning, HealthPositive, getHealthWarnings } from '@/components/HealthWarning';
 import { formatTime } from '@/lib/validation';
+import { ProBadge } from '@/components/ProBadge';
+import { ProUpgradeModal } from '@/components/ProUpgradeModal';
+import { saveMealTemplate, getMealEditHistory, MealEdit } from '@/lib/proFeatures';
+import { toast } from 'sonner';
+import { format } from 'date-fns';
 
 interface MealDetailProps {
   meal: Meal | null;
@@ -46,14 +52,41 @@ function getNutritionColor(type: 'calories' | 'protein' | 'fiber' | 'sugar', val
 }
 
 export function MealDetail({ meal, onClose }: MealDetailProps) {
-  const { removeMeal, settings } = useApp();
+  const { removeMeal, settings, isPro } = useApp();
   const userGoals = settings.goals;
+  const [showProModal, setShowProModal] = useState(false);
+  const [editHistory, setEditHistory] = useState<MealEdit[]>([]);
+
+  useEffect(() => {
+    if (meal && isPro) {
+      getMealEditHistory(meal.id).then(setEditHistory);
+    }
+  }, [meal, isPro]);
 
   const handleDelete = async () => {
     if (meal) { await removeMeal(meal.id); onClose(); }
   };
 
+  const handleSaveAsTemplate = async () => {
+    if (!meal) return;
+    if (!isPro) {
+      setShowProModal(true);
+      return;
+    }
+    await saveMealTemplate({
+      name: `${mealTypeLabels[meal.mealType]} - ${meal.date}`,
+      mealType: meal.mealType,
+      calories: meal.calories,
+      protein: meal.protein,
+      fiber: meal.fiber,
+      sugar: meal.sugar,
+      tags: meal.tags,
+    });
+    toast.success('Saved as template');
+  };
+
   return (
+    <>
     <AnimatePresence>
       {meal && (
         <motion.div
@@ -124,6 +157,54 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
                 </div>
               )}
 
+              {/* Save as Template */}
+              <Button
+                variant="outline"
+                onClick={handleSaveAsTemplate}
+                className="w-full h-12 rounded-xl justify-center gap-2 font-semibold"
+              >
+                <BookmarkPlus className="w-5 h-5" />
+                Save as Template
+                {!isPro && <ProBadge className="ml-1" />}
+              </Button>
+
+              {/* Edit History (Pro) */}
+              <div className="bg-secondary/20 rounded-2xl p-4 border border-border/50">
+                <div className="flex items-center gap-2 mb-3">
+                  <History className="w-4 h-4 text-primary" />
+                  <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Edit History</h3>
+                  {!isPro && <ProBadge />}
+                </div>
+                {isPro ? (
+                  editHistory.length > 0 ? (
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {editHistory.map((edit) => (
+                        <div key={edit.id} className="bg-card rounded-lg p-3 border border-border/50">
+                          <div className="text-xs text-muted-foreground mb-1">
+                            {format(new Date(edit.timestamp), 'MMM d, yyyy HH:mm')}
+                          </div>
+                          {edit.changes.map((change, i) => (
+                            <div key={i} className="text-sm">
+                              <span className="font-medium capitalize">{change.field}</span>:
+                              <span className="text-muted-foreground"> {String(change.oldValue)}</span>
+                              <span className="text-primary mx-1">&rarr;</span>
+                              <span>{String(change.newValue)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No edits recorded</p>
+                  )
+                ) : (
+                  <div className="flex items-center justify-center py-4 gap-2 text-muted-foreground">
+                    <Lock className="w-4 h-4" />
+                    <span className="text-sm">Unlock with Pro</span>
+                  </div>
+                )}
+              </div>
+
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" className="w-full h-14 text-lg rounded-xl">
@@ -146,5 +227,7 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
         </motion.div>
       )}
     </AnimatePresence>
+    <ProUpgradeModal open={showProModal} onClose={() => setShowProModal(false)} />
+    </>
   );
 }
