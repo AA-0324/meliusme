@@ -326,7 +326,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                 <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1 block">
                   Nutrition Info
                 </Label>
-                <p className="text-[10px] text-muted-foreground/60 italic -mt-1">Be honest — fudging the numbers only cheats yourself.</p>
+                <p className="text-[10px] text-muted-foreground/60 italic -mt-1">Accurate entries lead to better insights.</p>
 
                 {/* Calories - full width hero card */}
                 <motion.div
