@@ -220,7 +220,7 @@ export default function Settings() {
                   <p className="text-xs text-muted-foreground">Save and reuse your favorite meals</p>
                 </div>
               </div>
-              <Lock className="w-4 h-4 text-muted-foreground" />
+              <LockIcon className="w-4 h-4 text-muted-foreground" />
             </div>
           </motion.div>
         )}
