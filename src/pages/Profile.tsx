@@ -205,7 +205,7 @@ export default function Profile() {
           <motion.div 
             whileTap={{ scale: 0.9 }} 
             transition={{ type: 'spring', damping: 15 }}
-            {...(animationsEnabled ? { animate: { rotate: [0, 90, 0], transition: { duration: 8, repeat: Infinity, ease: 'easeInOut' } } } : {})}
+            {...(animationsEnabled ? { animate: { rotate: [0, 360], transition: { duration: 12, repeat: Infinity, ease: 'linear' as const } } } : {})}
           >
             <Button variant="ghost" size="icon" onClick={() => navigate('/settings')} className="rounded-xl">
               <Settings className="w-5 h-5" />
@@ -233,8 +233,8 @@ export default function Profile() {
               ) : (
                 <motion.div 
                   className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center"
-                  animate={animationsEnabled ? { scale: [1, 1.06, 1] } : undefined}
-                  transition={animationsEnabled ? { duration: 2.5, repeat: Infinity, ease: 'easeInOut' as const } : undefined}
+                  animate={animationsEnabled ? { scale: [1, 1.15, 1], rotate: [0, 3, -3, 0] } : undefined}
+                  transition={animationsEnabled ? { duration: 2, repeat: Infinity, ease: 'easeInOut' as const } : undefined}
                 >
                   <User className="w-8 h-8 text-primary" />
                 </motion.div>
@@ -266,17 +266,12 @@ export default function Profile() {
             <motion.button 
               onClick={() => setShowProModal(true)}
               whileTap={{ scale: 0.97 }}
-              whileHover={animationsEnabled ? { scale: 1.02, y: -2 } : undefined}
-              className="w-full rounded-2xl p-5 text-left relative overflow-hidden bg-gradient-to-br from-primary/10 via-card to-primary/5 border border-primary/20 shadow-[0_0_20px_-5px_hsl(var(--primary)/0.3)]"
+              className="w-full rounded-2xl p-5 text-left relative overflow-hidden bg-gradient-to-br from-primary/10 via-card to-primary/5 border border-border/50"
             >
               <div className="flex items-center gap-3">
-                <motion.div 
-                  className="w-12 h-12 bg-gradient-to-br from-primary to-primary/70 rounded-xl flex items-center justify-center shadow-lg overflow-hidden"
-                  animate={animationsEnabled ? { scale: [1, 1.08, 1] } : undefined}
-                  transition={animationsEnabled ? { duration: 2.5, repeat: Infinity, ease: 'easeInOut' as const } : undefined}
-                >
+                <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/70 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
                   <img src={logo} alt="" className="w-8 h-8" />
-                </motion.div>
+                </div>
                 <div className="flex-1">
                   <h2 className="text-lg font-extrabold">Upgrade to Pro</h2>
                   <p className="text-primary font-bold text-sm">$9.99 - One-time - Lifetime</p>
