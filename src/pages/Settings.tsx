@@ -10,7 +10,6 @@ import {
   RefreshCw,
   Bell,
   BellOff,
-  
   Eye,
   EyeOff,
   BookmarkPlus,
@@ -19,6 +18,7 @@ import {
   Beef,
   Apple,
   Candy,
+  Lock as LockIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
