@@ -57,6 +57,22 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
   const [showProModal, setShowProModal] = useState(false);
   const [showTemplateNameDialog, setShowTemplateNameDialog] = useState(false);
   const [templateName, setTemplateName] = useState('');
+  const [alreadyTemplate, setAlreadyTemplate] = useState(false);
+
+  useEffect(() => {
+    if (meal && isPro) {
+      getMealTemplates().then((templates) => {
+        const exists = templates.some(t =>
+          t.mealType === meal.mealType &&
+          t.calories === meal.calories &&
+          t.protein === meal.protein &&
+          t.fiber === meal.fiber &&
+          t.sugar === meal.sugar
+        );
+        setAlreadyTemplate(exists);
+      });
+    }
+  }, [meal, isPro]);
 
   const handleDelete = async () => {
     if (meal) { await removeMeal(meal.id); onClose(); }
