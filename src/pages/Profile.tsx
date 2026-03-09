@@ -272,7 +272,8 @@ export default function Profile() {
               <div className="flex items-center gap-3">
                 <motion.div 
                   className="w-12 h-12 bg-gradient-to-br from-primary to-primary/70 rounded-xl flex items-center justify-center shadow-lg overflow-hidden"
-                  {...(animationsEnabled ? { animate: { scale: [1, 1.08, 1], transition: { duration: 2.5, repeat: Infinity, ease: 'easeInOut' } } } : {})}
+                  animate={animationsEnabled ? { scale: [1, 1.08, 1] } : undefined}
+                  transition={animationsEnabled ? { duration: 2.5, repeat: Infinity, ease: 'easeInOut' as const } : undefined}
                 >
                   <img src={logo} alt="" className="w-8 h-8" />
                 </motion.div>
