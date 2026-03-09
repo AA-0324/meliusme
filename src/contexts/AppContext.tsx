@@ -126,6 +126,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try {
         await initEncryption();
         await migrateAllToEncrypted();
+        
+        // Initialize RevenueCat
+        try {
+          initRevenueCat();
+        } catch (rcError) {
+          console.warn('[RevenueCat] Init failed (non-blocking):', rcError);
+        }
+
         const [s, profile, body, streakD, challenge, bdgs, allMeals, water, xp, unlocks] = await Promise.all([
           getSettings(),
           getUserProfile(),
