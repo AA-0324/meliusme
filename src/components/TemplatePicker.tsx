@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BookmarkPlus, X, Trash2, Sparkles } from 'lucide-react';
 import { Button } from './ui/button';
 import { MealTemplate, getMealTemplates, deleteMealTemplate } from '@/lib/proFeatures';
-import { ProBadge } from './ProBadge';
 import { fadeUp } from '@/lib/motion';
 
 interface TemplatePickerProps {
@@ -34,6 +33,7 @@ export function TemplatePicker({ open, onClose, onSelect, isPro, onUpgradeClick 
     setTemplates(prev => prev.filter(t => t.id !== id));
   };
 
+  if (!isPro) {
     return (
       <AnimatePresence>
         {open && (
@@ -41,7 +41,7 @@ export function TemplatePicker({ open, onClose, onSelect, isPro, onUpgradeClick 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+            className="fixed inset-0 z-[110] bg-black/60 flex items-center justify-center p-4"
             onClick={onClose}
           >
             <motion.div
@@ -78,7 +78,7 @@ export function TemplatePicker({ open, onClose, onSelect, isPro, onUpgradeClick 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[110] bg-black/60 flex items-center justify-center p-4"
           onClick={onClose}
         >
           <motion.div
