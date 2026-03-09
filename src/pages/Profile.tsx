@@ -205,7 +205,7 @@ export default function Profile() {
           <motion.div 
             whileTap={{ scale: 0.9 }} 
             transition={{ type: 'spring', damping: 15 }}
-            {...(animationsEnabled ? { animate: { rotate: [0, 90, 0], transition: { duration: 8, repeat: Infinity, ease: 'easeInOut' } } } : {})}
+            {...(animationsEnabled ? { animate: { rotate: [0, 360], transition: { duration: 12, repeat: Infinity, ease: 'linear' as const } } } : {})}
           >
             <Button variant="ghost" size="icon" onClick={() => navigate('/settings')} className="rounded-xl">
               <Settings className="w-5 h-5" />
