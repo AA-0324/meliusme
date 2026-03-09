@@ -531,6 +531,18 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
           </>
         )}
       </AnimatePresence>
+      <AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
+        <AlertDialogContent className="border-border bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard this meal?</AlertDialogTitle>
+            <AlertDialogDescription>You have unsaved nutrition data. Are you sure you want to go back? Your progress will be lost.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Editing</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setShowExitConfirm(false); onClose(); setCalories(''); setProtein(''); setFiber(''); setSugar(''); setTags([]); }}>Discard</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <ProUpgradeModal open={showProModal} onClose={() => setShowProModal(false)} />
       <TemplatePicker
         open={showTemplatePicker}

@@ -170,42 +170,7 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
                 {!isPro && <ProBadge className="ml-1" />}
               </Button>
 
-              {/* Edit History (Pro) */}
-              <div className="bg-secondary/20 rounded-2xl p-4 border border-border/50">
-                <div className="flex items-center gap-2 mb-3">
-                  <History className="w-4 h-4 text-primary" />
-                  <h3 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Edit History</h3>
-                  {!isPro && <ProBadge />}
-                </div>
-                {isPro ? (
-                  editHistory.length > 0 ? (
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {editHistory.map((edit) => (
-                        <div key={edit.id} className="bg-card rounded-lg p-3 border border-border/50">
-                          <div className="text-xs text-muted-foreground mb-1">
-                            {format(new Date(edit.timestamp), 'MMM d, yyyy HH:mm')}
-                          </div>
-                          {edit.changes.map((change, i) => (
-                            <div key={i} className="text-sm">
-                              <span className="font-medium capitalize">{change.field}</span>:
-                              <span className="text-muted-foreground"> {String(change.oldValue)}</span>
-                              <span className="text-primary mx-1">&rarr;</span>
-                              <span>{String(change.newValue)}</span>
-                            </div>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">No edits recorded</p>
-                  )
-                ) : (
-                  <div className="flex items-center justify-center py-4 gap-2 text-muted-foreground">
-                    <Lock className="w-4 h-4" />
-                    <span className="text-sm">Unlock with Pro</span>
-                  </div>
-                )}
-              </div>
+              {/* Edit History removed — no editing flow exists */}
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -229,6 +194,29 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
         </motion.div>
       )}
     </AnimatePresence>
+
+    {/* Template Name Dialog */}
+    <AlertDialog open={showTemplateNameDialog} onOpenChange={setShowTemplateNameDialog}>
+      <AlertDialogContent className="border-border bg-card">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Name your template</AlertDialogTitle>
+          <AlertDialogDescription>Give this template a memorable name so you can find it later.</AlertDialogDescription>
+        </AlertDialogHeader>
+        <Input
+          value={templateName}
+          onChange={(e) => setTemplateName(e.target.value)}
+          placeholder="e.g. Morning Oatmeal"
+          className="mt-2"
+          autoFocus
+          onKeyDown={(e) => e.key === 'Enter' && confirmSaveTemplate()}
+        />
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmSaveTemplate} disabled={!templateName.trim()}>Save Template</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
     <ProUpgradeModal open={showProModal} onClose={() => setShowProModal(false)} />
     </>
   );
