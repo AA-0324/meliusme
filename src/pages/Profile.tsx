@@ -384,15 +384,6 @@ export default function Profile() {
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Droplets className="w-4 h-4 text-sky-500" />
-                <Label htmlFor="water-goal" className="text-sm font-semibold">Water Goal (glasses)</Label>
-              </div>
-              <Input id="water-goal" type="number" inputMode="numeric" value={waterGoalInput}
-                onChange={(e) => setWaterGoalInput(e.target.value)} className="h-11 rounded-xl bg-secondary border-0" />
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="protein-goal" className="text-sm font-semibold">Protein Goal (g)</Label>
               <Input id="protein-goal" type="number" inputMode="numeric" value={proteinGoal}
                 onChange={(e) => setProteinGoal(e.target.value)} className="h-11 rounded-xl bg-secondary border-0" />
@@ -408,6 +399,12 @@ export default function Profile() {
               <Label htmlFor="sugar-goal" className="text-sm font-semibold">Sugar Limit (g)</Label>
               <Input id="sugar-goal" type="number" inputMode="numeric" value={sugarGoal}
                 onChange={(e) => setSugarGoal(e.target.value)} className="h-11 rounded-xl bg-secondary border-0" />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="water-goal" className="text-sm font-semibold">Water Goal (glasses)</Label>
+              <Input id="water-goal" type="number" inputMode="numeric" value={waterGoalInput}
+                onChange={(e) => setWaterGoalInput(e.target.value)} className="h-11 rounded-xl bg-secondary border-0" />
             </div>
 
             <motion.div whileTap={{ scale: 0.97 }}>
