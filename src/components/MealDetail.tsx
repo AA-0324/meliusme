@@ -55,26 +55,27 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
   const { removeMeal, settings, isPro } = useApp();
   const userGoals = settings.goals;
   const [showProModal, setShowProModal] = useState(false);
-  const [editHistory, setEditHistory] = useState<MealEdit[]>([]);
-
-  useEffect(() => {
-    if (meal && isPro) {
-      getMealEditHistory(meal.id).then(setEditHistory);
-    }
-  }, [meal, isPro]);
+  const [showTemplateNameDialog, setShowTemplateNameDialog] = useState(false);
+  const [templateName, setTemplateName] = useState('');
 
   const handleDelete = async () => {
     if (meal) { await removeMeal(meal.id); onClose(); }
   };
 
-  const handleSaveAsTemplate = async () => {
+  const handleSaveAsTemplate = () => {
     if (!meal) return;
     if (!isPro) {
       setShowProModal(true);
       return;
     }
+    setTemplateName(`${mealTypeLabels[meal.mealType]} - ${meal.date}`);
+    setShowTemplateNameDialog(true);
+  };
+
+  const confirmSaveTemplate = async () => {
+    if (!meal || !templateName.trim()) return;
     await saveMealTemplate({
-      name: `${mealTypeLabels[meal.mealType]} - ${meal.date}`,
+      name: templateName.trim(),
       mealType: meal.mealType,
       calories: meal.calories,
       protein: meal.protein,
@@ -83,6 +84,7 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
       tags: meal.tags,
     });
     toast.success('Saved as template');
+    setShowTemplateNameDialog(false);
   };
 
   return (
