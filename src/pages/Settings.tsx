@@ -281,7 +281,7 @@ export default function Settings() {
             <motion.div whileTap={{ scale: 0.97 }}>
               <Button onClick={() => setShowProModal(true)}
                 className="w-full h-12 rounded-xl justify-start gap-3 font-semibold bg-primary hover:bg-primary/90 text-primary-foreground">
-                <img src={logo} alt="" className="w-5 h-5" />
+                <img src={logo} alt="" className="w-7 h-7" />
                 <span>Upgrade to MeliusMe Pro</span>
               </Button>
             </motion.div>
