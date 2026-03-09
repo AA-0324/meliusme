@@ -94,7 +94,7 @@ export default function Settings() {
   return (
     <div className="min-h-screen pb-24">
       {/* Header */}
-      <div className="px-6 pt-8 pb-4 safe-top">
+      <div className="px-6 pt-10 pb-4 safe-top">
         <div className="flex items-center gap-3">
           <motion.div whileTap={{ scale: 0.85 }}>
             <Button variant="ghost" size="icon" onClick={() => navigate('/profile')} className="rounded-xl">
