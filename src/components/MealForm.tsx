@@ -229,7 +229,14 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
               <div className="absolute top-0 left-0 right-0 safe-top flex items-center justify-between px-4 pt-3">
                 <motion.button
                   whileTap={{ scale: 0.85 }}
-                  onClick={onClose}
+                  onClick={() => {
+                    const hasData = calories || protein || fiber || sugar || tags.length > 0;
+                    if (hasData) {
+                      setShowExitConfirm(true);
+                    } else {
+                      onClose();
+                    }
+                  }}
                   className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center"
                 >
                   <ChevronLeft className="w-5 h-5 text-white" />
