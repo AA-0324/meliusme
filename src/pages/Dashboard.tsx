@@ -417,7 +417,6 @@ export default function Dashboard() {
             <h2 className="text-lg font-semibold">
               {filterDays <= 7 ? 'Weekly' : `${filterDays}-Day`} Averages
             </h2>
-            {!isPro && <ProBadge />}
           </div>
           {isPro ? (
             <div className="grid grid-cols-2 gap-4">
