@@ -167,7 +167,6 @@ export default function Dashboard() {
     { value: '7days', label: '7 Days', proOnly: false },
     { value: '30days', label: '30 Days', proOnly: true },
     { value: '90days', label: '90 Days', proOnly: true },
-    { value: 'custom', label: 'Custom', proOnly: true },
   ];
 
   // Chart data — for longer ranges, aggregate to avoid overcrowding
