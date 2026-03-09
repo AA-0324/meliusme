@@ -163,11 +163,10 @@ export async function updateStreaksData(
 ): Promise<StreaksData> {
   const streaks = await getStreaksData();
 
-  // Update logging streak
   if (hasLogged) {
     if (streaks.lastLoggingDate === null) {
       streaks.loggingStreak = 1;
-    } else {
+    } else if (streaks.lastLoggingDate !== date) {
       const lastDate = new Date(streaks.lastLoggingDate);
       const currentDate = new Date(date);
       const diffDays = Math.floor((currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -180,11 +179,10 @@ export async function updateStreaksData(
     streaks.lastLoggingDate = date;
   }
 
-  // Update calorie target streak
   if (metCalorieTarget) {
     if (streaks.lastCalorieDate === null) {
       streaks.calorieTargetStreak = 1;
-    } else {
+    } else if (streaks.lastCalorieDate !== date) {
       const lastDate = new Date(streaks.lastCalorieDate);
       const currentDate = new Date(date);
       const diffDays = Math.floor((currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -197,11 +195,10 @@ export async function updateStreaksData(
     streaks.lastCalorieDate = date;
   }
 
-  // Update protein goal streak
   if (metProteinGoal) {
     if (streaks.lastProteinDate === null) {
       streaks.proteinGoalStreak = 1;
-    } else {
+    } else if (streaks.lastProteinDate !== date) {
       const lastDate = new Date(streaks.lastProteinDate);
       const currentDate = new Date(date);
       const diffDays = Math.floor((currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -225,8 +222,12 @@ export function calculateNutritionScore(
   protein: number,
   fiber: number,
   sugar: number,
-  goals: Goals
+  goals: Goals,
+  hasMealsToday: boolean
 ): number {
+  // No meals logged = no score
+  if (!hasMealsToday || calories === 0) return 0;
+
   let score = 0;
 
   // Calorie adherence (40 points max)
@@ -242,7 +243,7 @@ export function calculateNutritionScore(
       score += 10;
     }
   } else {
-    score += 20; // Partial credit if no goal set
+    score += 20;
   }
 
   // Protein goal completion (25 points max)
@@ -258,7 +259,9 @@ export function calculateNutritionScore(
       score += 5;
     }
   } else {
-    score += 15; // Partial credit
+    if (protein >= 50) score += 25;
+    else if (protein >= 30) score += 15;
+    else if (protein > 0) score += 10;
   }
 
   // Fiber intake (20 points max)
@@ -270,15 +273,14 @@ export function calculateNutritionScore(
       score += 15;
     } else if (fiberRatio >= 0.6) {
       score += 10;
-    } else {
+    } else if (fiber > 0) {
       score += 5;
     }
   } else {
-    // Award points based on absolute fiber intake
     if (fiber >= 25) score += 20;
     else if (fiber >= 20) score += 15;
     else if (fiber >= 15) score += 10;
-    else score += 5;
+    else if (fiber > 0) score += 5;
   }
 
   // Sugar limit adherence (15 points max)
@@ -291,10 +293,10 @@ export function calculateNutritionScore(
       score += 5;
     }
   } else {
-    // Penalize high sugar
-    if (sugar <= 30) score += 15;
-    else if (sugar <= 50) score += 10;
-    else if (sugar <= 75) score += 5;
+    if (sugar === 0) score += 15;
+    else if (sugar <= 30) score += 12;
+    else if (sugar <= 50) score += 8;
+    else if (sugar <= 75) score += 4;
   }
 
   return Math.min(100, Math.max(0, score));

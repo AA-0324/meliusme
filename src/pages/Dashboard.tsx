@@ -7,9 +7,9 @@ import { ProUpgradeModal } from '@/components/ProUpgradeModal';
 import { AnimatedNumber } from '@/components/AnimatedNumber';
 import { PageTransition } from '@/components/PageTransition';
 import { Meal } from '@/lib/db';
-import { TrendingUp, Calendar, Flame, Lock, Beef, Apple, Candy, Settings2, Filter } from 'lucide-react';
+import { TrendingUp, Calendar, Flame, Lock, Beef, Apple, Candy, Settings2 } from 'lucide-react';
 import { ProgressRing } from '@/components/ProgressRing';
-import { staggerContainer, fadeUp, fadeUpBounce, slideInLeft, slideInRight } from '@/lib/motion';
+import { staggerContainer, fadeUpBounce } from '@/lib/motion';
 import { TrendCharts } from '@/components/TrendCharts';
 import { StreakTracker } from '@/components/StreakTracker';
 import { NutritionScore } from '@/components/NutritionScore';
@@ -53,17 +53,12 @@ export default function Dashboard() {
   }, [meals, settings.goals]);
 
   const isWidgetVisible = (id: string) => {
-    if (!isPro) return true; // Free users see fixed layout
+    if (!isPro) return true;
     const widget = dashboardLayout.find(w => w.id === id);
     return widget ? widget.visible : true;
   };
 
-  const getWidgetOrder = (id: string) => {
-    if (!isPro) return 0;
-    const widget = dashboardLayout.find(w => w.id === id);
-    return widget ? widget.order : 0;
-  };
-
+  // Compute the number of days for the active filter
   const filterDays = useMemo(() => {
     switch (dashboardFilter) {
       case 'today': return 1;
@@ -74,23 +69,29 @@ export default function Dashboard() {
     }
   }, [dashboardFilter]);
 
-  const weekData = useMemo(() => {
+  // Filtered meals based on the selected time range
+  const filteredMeals = useMemo(() => {
     const today = new Date();
-    const dayOfWeek = today.getDay();
-    const monday = new Date(today);
-    monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+    const startDate = new Date(today);
+    startDate.setDate(today.getDate() - (filterDays - 1));
+    const startStr = startDate.toISOString().split('T')[0];
+    return meals.filter(m => m.date >= startStr);
+  }, [meals, filterDays]);
 
+  // Build day-by-day data for the active range
+  const rangeData = useMemo(() => {
+    const today = new Date();
     const days: { date: string; day: string; calories: number; protein: number; fiber: number; sugar: number; meals: Meal[] }[] = [];
-    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(monday);
-      date.setDate(monday.getDate() + i);
+    for (let i = filterDays - 1; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
       const dayMeals = meals.filter((m) => m.date === dateStr);
       days.push({
         date: dateStr,
-        day: dayNames[i],
+        day: filterDays <= 7 ? dayNames[date.getDay()] : `${date.getMonth() + 1}/${date.getDate()}`,
         calories: dayMeals.reduce((sum, m) => sum + m.calories, 0),
         protein: dayMeals.reduce((sum, m) => sum + (m.protein || 0), 0),
         fiber: dayMeals.reduce((sum, m) => sum + (m.fiber || 0), 0),
@@ -98,29 +99,32 @@ export default function Dashboard() {
         meals: dayMeals,
       });
     }
-
     return days;
-  }, [meals]);
+  }, [meals, filterDays]);
 
-  const weeklyStats = useMemo(() => {
-    const totalCalories = weekData.reduce((sum, d) => sum + d.calories, 0);
-    const totalMeals = weekData.reduce((sum, d) => sum + d.meals.length, 0);
-    const daysWithMeals = weekData.filter((d) => d.meals.length > 0).length;
+  const rangeStats = useMemo(() => {
+    const totalCalories = rangeData.reduce((sum, d) => sum + d.calories, 0);
+    const totalMeals = rangeData.reduce((sum, d) => sum + d.meals.length, 0);
+    const daysWithMeals = rangeData.filter((d) => d.meals.length > 0).length;
     const avgCalories = daysWithMeals > 0 ? Math.round(totalCalories / daysWithMeals) : 0;
-
     return { totalCalories, totalMeals, avgCalories, daysWithMeals };
-  }, [weekData]);
+  }, [rangeData]);
 
   const todayTotals = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
-    const todayData = weekData.find(d => d.date === today);
+    const todayData = rangeData.find(d => d.date === today);
     return {
       calories: todayData?.calories || 0,
       protein: todayData?.protein || 0,
       fiber: todayData?.fiber || 0,
       sugar: todayData?.sugar || 0,
     };
-  }, [weekData]);
+  }, [rangeData]);
+
+  const hasMealsToday = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return meals.some(m => m.date === today);
+  }, [meals]);
 
   const nutritionScore = useMemo(() => {
     return calculateNutritionScore(
@@ -128,14 +132,15 @@ export default function Dashboard() {
       todayTotals.protein,
       todayTotals.fiber,
       todayTotals.sugar,
-      settings.goals
+      settings.goals,
+      hasMealsToday
     );
-  }, [todayTotals, settings.goals]);
+  }, [todayTotals, settings.goals, hasMealsToday]);
 
   const mealsByType = useMemo(() => {
-    const allWeekMeals = weekData.flatMap((d) => d.meals);
+    const allMeals = filteredMeals;
     const grouped = { breakfast: 0, lunch: 0, dinner: 0, snack: 0 };
-    allWeekMeals.forEach((meal) => { grouped[meal.mealType] += meal.calories; });
+    allMeals.forEach((meal) => { grouped[meal.mealType] += meal.calories; });
     return Object.entries(grouped)
       .filter(([, value]) => value > 0)
       .map(([name, value]) => ({
@@ -143,9 +148,19 @@ export default function Dashboard() {
         value,
         color: MEAL_TYPE_COLORS[name as keyof typeof MEAL_TYPE_COLORS],
       }));
-  }, [weekData]);
+  }, [filteredMeals]);
 
-  const maxCalories = Math.max(...weekData.map((d) => d.calories), settings.goals.calories);
+  const maxCalories = Math.max(...rangeData.map((d) => d.calories), settings.goals.calories);
+
+  const filterLabel = useMemo(() => {
+    switch (dashboardFilter) {
+      case 'today': return "Today's overview";
+      case '7days': return 'Weekly overview';
+      case '30days': return '30-day overview';
+      case '90days': return '90-day overview';
+      default: return 'Overview';
+    }
+  }, [dashboardFilter]);
 
   const filterOptions: { value: DashboardFilter; label: string; proOnly: boolean }[] = [
     { value: 'today', label: 'Today', proOnly: false },
@@ -155,14 +170,36 @@ export default function Dashboard() {
     { value: 'custom', label: 'Custom', proOnly: true },
   ];
 
+  // Chart data — for longer ranges, aggregate to avoid overcrowding
+  const chartData = useMemo(() => {
+    if (filterDays <= 7) return rangeData;
+    // For 30/90 days, show weekly averages
+    const weeks: typeof rangeData = [];
+    const chunkSize = 7;
+    for (let i = 0; i < rangeData.length; i += chunkSize) {
+      const chunk = rangeData.slice(i, i + chunkSize);
+      const daysWithMeals = chunk.filter(d => d.meals.length > 0).length;
+      weeks.push({
+        date: chunk[0].date,
+        day: chunk[0].day,
+        calories: daysWithMeals > 0 ? Math.round(chunk.reduce((s, d) => s + d.calories, 0) / daysWithMeals) : 0,
+        protein: daysWithMeals > 0 ? Math.round(chunk.reduce((s, d) => s + d.protein, 0) / daysWithMeals) : 0,
+        fiber: daysWithMeals > 0 ? Math.round(chunk.reduce((s, d) => s + d.fiber, 0) / daysWithMeals) : 0,
+        sugar: daysWithMeals > 0 ? Math.round(chunk.reduce((s, d) => s + d.sugar, 0) / daysWithMeals) : 0,
+        meals: chunk.flatMap(d => d.meals),
+      });
+    }
+    return weeks;
+  }, [rangeData, filterDays]);
+
   // Build ordered widget list
   const widgetRenderers: Record<string, () => React.ReactNode> = {
     'stats': () => isWidgetVisible('stats') ? (
       <motion.div key="stats" variants={noMotion ? {} : fadeUpBounce} className="px-6 grid grid-cols-3 gap-3 mb-6">
         {[
-          { label: 'Avg/Day', value: weeklyStats.avgCalories, unit: 'cal' },
-          { label: 'Total', value: weeklyStats.totalCalories, unit: 'cal' },
-          { label: 'Meals', value: weeklyStats.totalMeals, unit: 'this week' },
+          { label: dashboardFilter === 'today' ? 'Today' : 'Avg/Day', value: dashboardFilter === 'today' ? rangeStats.totalCalories : rangeStats.avgCalories, unit: 'cal' },
+          { label: 'Total', value: rangeStats.totalCalories, unit: 'cal' },
+          { label: 'Meals', value: rangeStats.totalMeals, unit: filterDays === 1 ? 'today' : `in ${filterDays}d` },
         ].map((stat, i) => (
           <motion.div 
             key={stat.label} 
@@ -264,17 +301,20 @@ export default function Dashboard() {
             >
               <Calendar className="w-5 h-5 text-primary" />
             </motion.div>
-            <h2 className="text-lg font-semibold">This Week</h2>
+            <h2 className="text-lg font-semibold">
+              {filterDays <= 7 ? 'This Week' : filterDays <= 30 ? 'Last 30 Days' : 'Last 90 Days'}
+            </h2>
+            {filterDays > 7 && <span className="text-xs text-muted-foreground">(weekly avg)</span>}
           </div>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weekData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} domain={[0, maxCalories]} />
                 <Tooltip
                   contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px', padding: '8px 12px' }}
                   labelStyle={{ fontWeight: 'bold' }}
-                  formatter={(value: number) => [`${value} cal`, 'Calories']}
+                  formatter={(value: number) => [`${value} cal`, filterDays > 7 ? 'Avg Calories' : 'Calories']}
                 />
                 <Bar dataKey="calories" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} animationDuration={1200} animationEasing="ease-out" />
               </BarChart>
@@ -344,7 +384,7 @@ export default function Dashboard() {
                 </div>
               </div>
             ) : (
-              <p className="text-center text-muted-foreground py-8">No meals logged this week</p>
+              <p className="text-center text-muted-foreground py-8">No meals logged in this period</p>
             )
           ) : (
             <motion.button 
@@ -376,16 +416,18 @@ export default function Dashboard() {
             >
               <TrendingUp className="w-5 h-5 text-primary" />
             </motion.div>
-            <h2 className="text-lg font-semibold">Weekly Averages</h2>
+            <h2 className="text-lg font-semibold">
+              {filterDays <= 7 ? 'Weekly' : `${filterDays}-Day`} Averages
+            </h2>
             {!isPro && <ProBadge />}
           </div>
           {isPro ? (
             <div className="grid grid-cols-2 gap-4">
               {[
-                { label: 'Protein', value: Math.round(weekData.flatMap(d => d.meals).reduce((s, m) => s + (m.protein || 0), 0) / Math.max(weeklyStats.daysWithMeals, 1)), suffix: 'g' },
-                { label: 'Fiber', value: Math.round(weekData.flatMap(d => d.meals).reduce((s, m) => s + (m.fiber || 0), 0) / Math.max(weeklyStats.daysWithMeals, 1)), suffix: 'g' },
-                { label: 'Sugar', value: Math.round(weekData.flatMap(d => d.meals).reduce((s, m) => s + (m.sugar || 0), 0) / Math.max(weeklyStats.daysWithMeals, 1)), suffix: 'g' },
-                { label: 'Meals', value: Math.round(weeklyStats.totalMeals / Math.max(weeklyStats.daysWithMeals, 1)), suffix: '' },
+                { label: 'Protein', value: Math.round(filteredMeals.reduce((s, m) => s + (m.protein || 0), 0) / Math.max(rangeStats.daysWithMeals, 1)), suffix: 'g' },
+                { label: 'Fiber', value: Math.round(filteredMeals.reduce((s, m) => s + (m.fiber || 0), 0) / Math.max(rangeStats.daysWithMeals, 1)), suffix: 'g' },
+                { label: 'Sugar', value: Math.round(filteredMeals.reduce((s, m) => s + (m.sugar || 0), 0) / Math.max(rangeStats.daysWithMeals, 1)), suffix: 'g' },
+                { label: 'Meals', value: Math.round(rangeStats.totalMeals / Math.max(rangeStats.daysWithMeals, 1)), suffix: '' },
               ].map((item, i) => (
                 <motion.div 
                   key={item.label} 
@@ -437,6 +479,7 @@ export default function Dashboard() {
       <NutritionScore
         key="nutrition-score"
         score={nutritionScore}
+        hasMealsToday={hasMealsToday}
         isPro={isPro}
         onUpgradeClick={() => setShowProModal(true)}
         animationsEnabled={animationsEnabled}
@@ -480,7 +523,7 @@ export default function Dashboard() {
               transition={{ delay: 0.1, type: 'spring', damping: 15 }}
               className="text-muted-foreground mt-1"
             >
-              Weekly overview
+              {filterLabel}
             </motion.p>
           </div>
           {isPro && (
