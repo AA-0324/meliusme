@@ -243,7 +243,7 @@ export default function Challenges() {
         {/* Weekly Reflection */}
         <motion.div variants={noMotion ? {} : fadeUpBounce}
           className="bg-card rounded-2xl p-5 border border-border/50">
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-3">
             <motion.div
               animate={noMotion ? {} : { scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
               transition={{ duration: 2, repeat: Infinity, repeatDelay: 2 }}
@@ -252,7 +252,7 @@ export default function Challenges() {
             </motion.div>
             <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Last Week's Reflection</h2>
           </div>
-          <p className="font-medium mb-4">{reflectionQuestion}</p>
+          <p className="font-medium mb-3">{reflectionQuestion}</p>
           {hasReflectedLastWeek ? (
             <motion.div 
               initial={noMotion ? false : { scale: 0.7 }}
