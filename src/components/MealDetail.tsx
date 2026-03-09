@@ -101,6 +101,7 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
     });
     toast.success('Saved as template');
     setShowTemplateNameDialog(false);
+    setAlreadyTemplate(true);
   };
 
   return (

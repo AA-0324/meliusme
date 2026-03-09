@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Settings as SettingsIcon, 
@@ -13,6 +13,12 @@ import {
   Sparkles,
   Eye,
   EyeOff,
+  BookmarkPlus,
+  Trash2,
+  Flame,
+  Beef,
+  Apple,
+  Candy,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -22,9 +28,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useApp } from '@/contexts/AppContext';
 import { ProUpgradeModal } from '@/components/ProUpgradeModal';
+import { ProBadge } from '@/components/ProBadge';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { staggerContainer, fadeUp } from '@/lib/motion';
+import { getMealTemplates, deleteMealTemplate, MealTemplate } from '@/lib/proFeatures';
 import logo from '@/assets/meliusme-logo-new.png';
 
 const APP_VERSION = '1.0.0';
@@ -38,6 +46,19 @@ export default function Settings() {
   const navigate = useNavigate();
   const [showProModal, setShowProModal] = useState(false);
   const [showFinalConfirm, setShowFinalConfirm] = useState(false);
+  const [templates, setTemplates] = useState<MealTemplate[]>([]);
+
+  useEffect(() => {
+    if (isPro) {
+      getMealTemplates().then(setTemplates);
+    }
+  }, [isPro]);
+
+  const handleDeleteTemplate = async (id: string) => {
+    await deleteMealTemplate(id);
+    setTemplates(prev => prev.filter(t => t.id !== id));
+    toast.success('Template deleted');
+  };
 
   const handleResetDaily = () => {
     resetDailyData();
@@ -63,6 +84,13 @@ export default function Settings() {
     await toggleNotifications();
   };
 
+  const macroIcon = (type: string) => {
+    switch (type) {
+      case 'breakfast': case 'lunch': case 'dinner': case 'snack': return Flame;
+      default: return Flame;
+    }
+  };
+
   return (
     <div className="min-h-screen pb-24">
       {/* Header */}
@@ -85,7 +113,7 @@ export default function Settings() {
       </div>
 
       <motion.div variants={staggerContainer(0.06)} initial="hidden" animate="show" className="px-6 space-y-4">
-        {/* Animations toggle (#13) */}
+        {/* Animations toggle */}
         <motion.div variants={fadeUp}
           className="bg-card rounded-2xl p-5 border border-border/50">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Accessibility</h2>
@@ -129,6 +157,65 @@ export default function Settings() {
               onCheckedChange={handleToggleNotifications} 
             />
           </div>
+        </motion.div>
+
+        {/* Meal Templates */}
+        <motion.div variants={fadeUp}
+          className="bg-card rounded-2xl p-5 border border-border/50">
+          <div className="flex items-center gap-2 mb-4">
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Meal Templates</h2>
+            {!isPro && <ProBadge />}
+          </div>
+          {isPro ? (
+            templates.length > 0 ? (
+              <div className="space-y-2">
+                {templates.map((template) => (
+                  <div key={template.id} className="flex items-center gap-3 bg-secondary/30 rounded-xl p-3 border border-border/50">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate">{template.name}</p>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                        <span className="capitalize">{template.mealType}</span>
+                        <span className="flex items-center gap-1"><Flame className="w-3 h-3" />{template.calories}</span>
+                        {template.protein !== undefined && <span className="flex items-center gap-1"><Beef className="w-3 h-3" />{template.protein}g</span>}
+                        {template.fiber !== undefined && <span className="flex items-center gap-1"><Apple className="w-3 h-3" />{template.fiber}g</span>}
+                        {template.sugar !== undefined && <span className="flex items-center gap-1"><Candy className="w-3 h-3" />{template.sugar}g</span>}
+                      </div>
+                    </div>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <button className="p-2 hover:bg-destructive/20 rounded-lg transition-colors flex-shrink-0">
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="border-border bg-card">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete template?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Remove "{template.name}" from your saved templates.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDeleteTemplate(template.id)}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center py-6 gap-2">
+                <BookmarkPlus className="w-10 h-10 text-muted-foreground/40" />
+                <p className="text-sm text-muted-foreground">No templates saved yet</p>
+                <p className="text-xs text-muted-foreground/60">Save a meal as a template from the meal detail view</p>
+              </div>
+            )
+          ) : (
+            <div className="flex flex-col items-center py-6 gap-2">
+              <Sparkles className="w-10 h-10 text-muted-foreground/40" />
+              <p className="text-sm text-muted-foreground">Upgrade to Pro to save and manage meal templates</p>
+            </div>
+          )}
         </motion.div>
 
         {/* Data Management */}
@@ -279,7 +366,7 @@ export default function Settings() {
 
         {/* Copyright */}
         <motion.div variants={fadeUp} className="text-center py-6">
-          <p className="text-xs text-muted-foreground/60">© 2026 Melius. All rights reserved.</p>
+          <p className="text-xs text-muted-foreground/60">&copy; 2026 Melius. All rights reserved.</p>
         </motion.div>
       </motion.div>
 
