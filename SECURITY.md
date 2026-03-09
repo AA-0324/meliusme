@@ -22,7 +22,7 @@ No external scripts are loaded dynamically. Inline script execution is prevented
 
 | Version | Supported |
 |---|---|
-| v0.8.0-alpha (Current) | Yes |
+| v0.9.0-alpha (Current) | Yes |
 
 ## Reporting Vulnerabilities
 
