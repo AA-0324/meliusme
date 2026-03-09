@@ -158,6 +158,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
         if (!migrated) localStorage.setItem('meliusme-pro-reset-v1.1', 'true');
 
+        // Apply auto-generated goals if the user has them but settings.goals is missing protein/fiber/sugar
+        const autoGoals = await getAutoGoals();
+        if (autoGoals && autoGoals.acceptedAt) {
+          const currentGoals = s.goals;
+          const needsUpdate =
+            !currentGoals.protein || !currentGoals.fiber || !currentGoals.sugar;
+          if (needsUpdate) {
+            const goalsUpdate: Partial<Goals> = {};
+            if (!currentGoals.protein && autoGoals.protein) goalsUpdate.protein = autoGoals.protein;
+            if (!currentGoals.fiber && autoGoals.fiber) goalsUpdate.fiber = autoGoals.fiber;
+            if (!currentGoals.sugar && autoGoals.sugarLimit) goalsUpdate.sugar = autoGoals.sugarLimit;
+            if (!currentGoals.calories && autoGoals.calories) goalsUpdate.calories = autoGoals.calories;
+            if (Object.keys(goalsUpdate).length > 0) {
+              const updatedSettings = await updateGoals(goalsUpdate);
+              setSettingsState(updatedSettings);
+            }
+          }
+        }
+
       } catch (error) {
         console.error('Failed to initialize app:', error);
       } finally {

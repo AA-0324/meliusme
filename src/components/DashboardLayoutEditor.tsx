@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { X, GripVertical, Eye, EyeOff, RotateCcw } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, ChevronUp, ChevronDown, Eye, EyeOff, RotateCcw } from 'lucide-react';
 import { Button } from './ui/button';
 import { DashboardWidget, getDashboardLayout, saveDashboardLayout, resetDashboardLayout } from '@/lib/proFeatures';
 
@@ -23,6 +23,24 @@ export function DashboardLayoutEditor({ open, onClose, onSave }: DashboardLayout
     setWidgets(prev =>
       prev.map(w => w.id === id ? { ...w, visible: !w.visible } : w)
     );
+  };
+
+  const moveUp = (index: number) => {
+    if (index === 0) return;
+    setWidgets(prev => {
+      const next = [...prev];
+      [next[index - 1], next[index]] = [next[index], next[index - 1]];
+      return next;
+    });
+  };
+
+  const moveDown = (index: number) => {
+    if (index >= widgets.length - 1) return;
+    setWidgets(prev => {
+      const next = [...prev];
+      [next[index], next[index + 1]] = [next[index + 1], next[index]];
+      return next;
+    });
   };
 
   const handleSave = async () => {
@@ -63,34 +81,51 @@ export function DashboardLayoutEditor({ open, onClose, onSave }: DashboardLayout
             </div>
 
             <p className="text-sm text-muted-foreground mb-4">
-              Drag to reorder, toggle to show/hide widgets
+              Use arrows to reorder, toggle to show/hide widgets
             </p>
 
-            <div className="flex-1 overflow-y-auto mb-4">
-              <Reorder.Group axis="y" values={widgets} onReorder={setWidgets} className="space-y-2">
-                {widgets.map((widget) => (
-                  <Reorder.Item
-                    key={widget.id}
-                    value={widget}
-                    className="flex items-center gap-3 bg-secondary/30 rounded-xl p-3 cursor-grab active:cursor-grabbing border border-border/50"
-                  >
-                    <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    <span className={`flex-1 font-medium text-sm ${!widget.visible ? 'text-muted-foreground' : ''}`}>
-                      {widget.name}
-                    </span>
+            <div className="flex-1 overflow-y-auto mb-4 space-y-2">
+              {widgets.map((widget, index) => (
+                <div
+                  key={widget.id}
+                  className="flex items-center gap-2 bg-secondary/30 rounded-xl p-3 border border-border/50"
+                >
+                  {/* Move buttons */}
+                  <div className="flex flex-col gap-0.5 flex-shrink-0">
                     <button
-                      onClick={() => toggleVisibility(widget.id)}
-                      className="p-1.5 rounded-lg hover:bg-secondary transition-colors"
+                      onClick={() => moveUp(index)}
+                      disabled={index === 0}
+                      className="p-0.5 rounded hover:bg-secondary transition-colors disabled:opacity-20"
                     >
-                      {widget.visible ? (
-                        <Eye className="w-4 h-4 text-primary" />
-                      ) : (
-                        <EyeOff className="w-4 h-4 text-muted-foreground" />
-                      )}
+                      <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" />
                     </button>
-                  </Reorder.Item>
-                ))}
-              </Reorder.Group>
+                    <button
+                      onClick={() => moveDown(index)}
+                      disabled={index === widgets.length - 1}
+                      className="p-0.5 rounded hover:bg-secondary transition-colors disabled:opacity-20"
+                    >
+                      <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                    </button>
+                  </div>
+
+                  {/* Widget name */}
+                  <span className={`flex-1 font-medium text-sm ${!widget.visible ? 'text-muted-foreground line-through' : ''}`}>
+                    {widget.name}
+                  </span>
+
+                  {/* Visibility toggle */}
+                  <button
+                    onClick={() => toggleVisibility(widget.id)}
+                    className="p-1.5 rounded-lg hover:bg-secondary transition-colors"
+                  >
+                    {widget.visible ? (
+                      <Eye className="w-4 h-4 text-primary" />
+                    ) : (
+                      <EyeOff className="w-4 h-4 text-muted-foreground" />
+                    )}
+                  </button>
+                </div>
+              ))}
             </div>
 
             <div className="flex gap-2">
