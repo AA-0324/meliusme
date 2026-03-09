@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Tag, ChevronLeft, Flame, Beef, Apple, Candy, UtensilsCrossed } from 'lucide-react';
+import { X, Tag, ChevronLeft, Flame, Beef, Apple, Candy, UtensilsCrossed, BookmarkPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +10,8 @@ import { ProUpgradeModal } from '@/components/ProUpgradeModal';
 import { HealthWarning, HealthPositive } from '@/components/HealthWarning';
 import { validateNutrition, validateTag } from '@/lib/validation';
 import { toast } from 'sonner';
+import { TemplatePicker } from './TemplatePicker';
+import { MealTemplate } from '@/lib/proFeatures';
 
 interface MealFormProps {
   open: boolean;
