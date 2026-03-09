@@ -13,7 +13,7 @@ import { HealthWarning, HealthPositive, getHealthWarnings } from '@/components/H
 import { formatTime } from '@/lib/validation';
 import { ProBadge } from '@/components/ProBadge';
 import { ProUpgradeModal } from '@/components/ProUpgradeModal';
-import { saveMealTemplate } from '@/lib/proFeatures';
+import { saveMealTemplate, getMealTemplates, MealTemplate } from '@/lib/proFeatures';
 import { toast } from 'sonner';
 
 interface MealDetailProps {
