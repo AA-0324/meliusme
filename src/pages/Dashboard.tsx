@@ -338,7 +338,6 @@ export default function Dashboard() {
               <Flame className="w-5 h-5 text-primary" />
             </motion.div>
             <h2 className="text-lg font-semibold">By Meal Type</h2>
-            {!isPro && <ProBadge />}
           </div>
           {isPro ? (
             mealsByType.length > 0 ? (
