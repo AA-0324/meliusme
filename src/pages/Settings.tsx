@@ -160,14 +160,11 @@ export default function Settings() {
         </motion.div>
 
         {/* Meal Templates */}
-        <motion.div variants={fadeUp}
-          className="bg-card rounded-2xl p-5 border border-border/50">
-          <div className="flex items-center gap-2 mb-4">
-            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Meal Templates</h2>
-            {!isPro && <ProBadge />}
-          </div>
-          {isPro ? (
-            templates.length > 0 ? (
+        {isPro ? (
+          <motion.div variants={fadeUp}
+            className="bg-card rounded-2xl p-5 border border-border/50">
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Meal Templates</h2>
+            {templates.length > 0 ? (
               <div className="space-y-2">
                 {templates.map((template) => (
                   <div key={template.id} className="flex items-center gap-3 bg-secondary/30 rounded-xl p-3 border border-border/50">
@@ -209,14 +206,24 @@ export default function Settings() {
                 <p className="text-sm text-muted-foreground">No templates saved yet</p>
                 <p className="text-xs text-muted-foreground/60">Save a meal as a template from the meal detail view</p>
               </div>
-            )
-          ) : (
-            <div className="flex items-center gap-3 py-2">
-              <BookmarkPlus className="w-5 h-5 text-muted-foreground/50 flex-shrink-0" />
-              <p className="text-sm text-muted-foreground">Upgrade to Pro to save and manage meal templates</p>
+            )}
+          </motion.div>
+        ) : (
+          <motion.div variants={fadeUp}
+            onClick={() => setShowProModal(true)}
+            className="bg-card rounded-2xl p-5 border border-border/50 opacity-75 cursor-pointer active:scale-[0.98] transition-transform">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <BookmarkPlus className="w-5 h-5 text-muted-foreground" />
+                <div>
+                  <span className="font-semibold">Meal Templates</span>
+                  <p className="text-xs text-muted-foreground">Save and reuse your favorite meals</p>
+                </div>
+              </div>
+              <Lock className="w-4 h-4 text-muted-foreground" />
             </div>
-          )}
-        </motion.div>
+          </motion.div>
+        )}
 
         {/* Data Management */}
         <motion.div variants={fadeUp}
