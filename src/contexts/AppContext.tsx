@@ -6,6 +6,7 @@ import { requestNotificationPermission, areNotificationsSupported } from '@/lib/
 import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge, getEarnedBadges, Badge, awardBadge, addXP, LevelUpResult, TempProUnlock, getTempProUnlocks, getXPData, XPData, getDailyChallenges } from '@/lib/streaks';
 import { initEncryption } from '@/lib/crypto';
 import { migrateAllToEncrypted } from '@/lib/encryptedStorage';
+import { initRevenueCat, checkProEntitlement } from '@/lib/revenuecat';
 
 type ToastVariant = 'primary' | 'success' | 'warning' | 'destructive' | 'challenge';
 
