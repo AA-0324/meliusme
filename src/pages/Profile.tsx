@@ -265,15 +265,19 @@ export default function Profile() {
             <motion.button 
               onClick={() => setShowProModal(true)}
               whileTap={{ scale: 0.97 }}
-              className="w-full rounded-2xl p-5 text-left relative overflow-hidden bg-gradient-to-br from-primary/10 via-card to-primary/5 border border-border/50"
+              whileHover={animationsEnabled ? { scale: 1.02, y: -2 } : undefined}
+              className="w-full rounded-2xl p-5 text-left relative overflow-hidden bg-gradient-to-br from-primary/10 via-card to-primary/5 border border-primary/20 shadow-[0_0_20px_-5px_hsl(var(--primary)/0.3)]"
             >
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/70 rounded-xl flex items-center justify-center shadow-lg overflow-hidden">
+                <motion.div 
+                  className="w-12 h-12 bg-gradient-to-br from-primary to-primary/70 rounded-xl flex items-center justify-center shadow-lg overflow-hidden"
+                  {...(animationsEnabled ? { animate: { scale: [1, 1.08, 1], transition: { duration: 2.5, repeat: Infinity, ease: 'easeInOut' } } } : {})}
+                >
                   <img src={logo} alt="" className="w-8 h-8" />
-                </div>
+                </motion.div>
                 <div className="flex-1">
                   <h2 className="text-lg font-extrabold">Upgrade to Pro</h2>
-                  <p className="text-primary font-bold text-sm">$9.99 • One-time • Lifetime</p>
+                  <p className="text-primary font-bold text-sm">$9.99 - One-time - Lifetime</p>
                 </div>
               </div>
             </motion.button>
