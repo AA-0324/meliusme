@@ -73,8 +73,24 @@ export default function Settings() {
 
   const handleRestorePurchase = async () => {
     toast.info('Checking for previous purchases...');
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    toast.error('No previous purchase detected');
+    try {
+      const result = await restorePurchases();
+      if (result.success) {
+        setPro(true);
+        toast.success('Pro restored successfully!');
+      } else {
+        // Double-check entitlement
+        const hasPro = await checkProEntitlement();
+        if (hasPro) {
+          setPro(true);
+          toast.success('Pro restored successfully!');
+        } else {
+          toast.error('No previous purchase detected');
+        }
+      }
+    } catch {
+      toast.error('Failed to restore. Please try again.');
+    }
   };
 
   const handleToggleNotifications = async () => {
