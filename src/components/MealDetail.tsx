@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Flame, Clock, Trash2, Beef, Apple, Candy, BookmarkPlus, History, Lock } from 'lucide-react';
+import { X, Flame, Clock, Trash2, Beef, Apple, Candy, BookmarkPlus } from 'lucide-react';
 import { Meal, Goals } from '@/lib/db';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -12,9 +13,8 @@ import { HealthWarning, HealthPositive, getHealthWarnings } from '@/components/H
 import { formatTime } from '@/lib/validation';
 import { ProBadge } from '@/components/ProBadge';
 import { ProUpgradeModal } from '@/components/ProUpgradeModal';
-import { saveMealTemplate, getMealEditHistory, MealEdit } from '@/lib/proFeatures';
+import { saveMealTemplate } from '@/lib/proFeatures';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
 
 interface MealDetailProps {
   meal: Meal | null;
