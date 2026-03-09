@@ -167,6 +167,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
         if (!migrated) localStorage.setItem('meliusme-pro-reset-v1.1', 'true');
 
+        // Check RevenueCat entitlement for Pro status
+        try {
+          const rcPro = await checkProEntitlement();
+          if (rcPro && !s.proStatus) {
+            const updated = await saveSettings({ proStatus: true });
+            setSettingsState(updated);
+          }
+        } catch (rcError) {
+          console.warn('[RevenueCat] Entitlement check failed (non-blocking):', rcError);
+        }
+
         // Apply auto-generated goals if the user has them but settings.goals is missing protein/fiber/sugar
         const autoGoals = await getAutoGoals();
         if (autoGoals && autoGoals.acceptedAt) {
