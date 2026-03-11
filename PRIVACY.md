@@ -1,6 +1,6 @@
 Privacy Policy
 
-Last Updated: March 3, 2026
+Last Updated: March 3, 2026 (updated regularly, policy subject to change)
 
 MeliusMe is a local-first application. All user data is stored only on the user's device and encrypted locally using browser-native cryptography. No personal data is transmitted to external servers.
 
