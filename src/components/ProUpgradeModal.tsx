@@ -2,13 +2,15 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
-import { getRevenueCatInstance, checkProEntitlement } from '@/lib/revenuecat';
+import { getRevenueCatInstance } from '@/lib/revenuecat';
 import { toast } from 'sonner';
 
 interface ProUpgradeModalProps {
   open: boolean;
   onClose: () => void;
 }
+
+const ENTITLEMENT_ID = 'MeliusMe Pro';
 
 export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
   const { setPro, animationsEnabled } = useApp();
@@ -27,14 +29,18 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
 
     try {
       const rc = getRevenueCatInstance();
-      const purchaseResult = await rc.presentPaywall({
+      const result = await rc.presentPaywall({
         htmlTarget: paywallContainerRef.current,
+        onBack: (closePaywall) => {
+          closePaywall();
+          onClose();
+        },
       });
 
-      console.log('[ProUpgrade] Paywall result:', purchaseResult);
+      console.log('[ProUpgrade] Paywall result:', result);
 
-      // Check if user now has pro entitlement
-      const hasPro = await checkProEntitlement();
+      // Check entitlement directly from result
+      const hasPro = ENTITLEMENT_ID in result.customerInfo.entitlements.active;
       if (hasPro) {
         setPro(true);
         toast.success('Welcome to MeliusMe Pro!');
@@ -50,9 +56,9 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
     }
   }, [setPro, onClose]);
 
+  // Present paywall when modal opens
   useEffect(() => {
     if (open) {
-      // Small delay to ensure container is mounted
       const timer = setTimeout(() => {
         presentPaywall();
       }, 100);
@@ -63,6 +69,13 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
       setError(null);
     }
   }, [open, presentPaywall]);
+
+  // Clean up paywall DOM when modal closes
+  useEffect(() => {
+    if (!open && paywallContainerRef.current) {
+      paywallContainerRef.current.innerHTML = '';
+    }
+  }, [open]);
 
   return (
     <AnimatePresence>
