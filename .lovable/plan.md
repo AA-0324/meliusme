@@ -1,76 +1,119 @@
 
+The current app does not fully work yet. The screen you are seeing is consistent with a real blocking issue in the app, not just a temporary purchase error.
 
-# Fix RevenueCat Pro Purchase Integration
+What I found:
+- The modal is rendering, but RevenueCat cannot load its web paywall/offering data.
+- Your runtime logs show repeated failures for:
+  - `GET https://api.revenuecat.com/.../offerings`
+  - `POST https://e.revenue.cat/v1/events`
+- There is also a warning: `Failed to load Stripe.js`
+- Your `index.html` CSP is currently too strict for RevenueCat Web Paywalls:
+  - `script-src 'self'`
+  - `connect-src 'self' https://*.supabase.co https://*.lovable.app;`
+- That policy blocks the external domains the RevenueCat web purchase flow depends on.
 
-## Problem Analysis
+Root cause
+1. RevenueCat Web SDK is initialized.
+2. But the browser is blocked from reaching RevenueCat and Stripe origins.
+3. So offerings cannot load, Stripe.js cannot load, and the paywall falls into your error state.
 
-The current code uses `presentPaywall()` correctly from the SDK, but has these issues:
+Code/design issues I would correct
+1. Fix CSP in `index.html`
+   - Allow RevenueCat and Stripe domains required for web checkout.
+   - At minimum this likely needs:
+     - `connect-src` for RevenueCat + Stripe APIs
+     - `script-src` for `https://js.stripe.com`
+     - `frame-src` for Stripe checkout/payment frames
+   - This is the main blocker behind the screenshot you shared.
 
-1. **No `onBack` handler** -- when the user closes/backs out of the paywall, there's no handler, so the modal may hang or not close properly.
-2. **Missing offering identifier** -- the RevenueCat offering is named `"sale"` (not the default), but the code doesn't pass a specific offering to `presentPaywall`. The SDK should pick it up if it's set as "Current" in the dashboard, but this should be explicit as a safeguard.
-3. **Paywall result not properly handled** -- `presentPaywall` returns a `PaywallPurchaseResult` with `customerInfo` that should be checked for the entitlement directly, rather than making a separate API call.
-4. **Pro status reset migration conflicts** -- on app load, lines 163-168 in AppContext reset proStatus to `false` (migration `meliusme-pro-reset-v1.1`), which could override a legitimate RevenueCat entitlement on first load.
-5. **No cleanup of paywall DOM** -- when modal closes, the paywall container's inner HTML is never cleared, potentially causing stale state on re-open.
+2. Unify the purchase system instead of keeping half-used helpers
+   - `src/lib/revenuecat.ts` already has:
+     - SDK init
+     - offerings fetch
+     - package purchase
+     - restore helper
+   - But the current modal bypasses most of that and only calls `rc.presentPaywall(...)`.
+   - I would make the paywall integration use one clear path:
+     - load current offering
+     - verify the one-time Pro package exists
+     - present the existing RevenueCat-hosted paywall
+     - on success, unlock Pro immediately
+   - If you want the existing MeliusMe design to stay unchanged, I would keep the outer modal shell exactly as-is and only correct the internal RevenueCat flow/state handling.
 
-## Plan
+3. Correct restore purchases logic
+   - Current `restorePurchases()` in `src/lib/revenuecat.ts` only calls `getCustomerInfo()`.
+   - That is not a true restore flow.
+   - I would replace it with the SDK’s actual restore/sync behavior for web, then re-check entitlements and persist `proStatus`.
 
-### 1. Fix `ProUpgradeModal.tsx`
+4. Improve purchase state handling
+   - On success:
+     - call `setPro(true)` immediately
+     - persist local `proStatus`
+     - close modal
+     - show success toast
+   - On reload:
+     - keep the existing startup entitlement sync in `AppContext`
+     - but ensure it remains authoritative after restore/purchase
+   - On failure:
+     - show a friendly error
+     - do not leave the modal stuck in a broken retry loop
 
-- Add `onBack` callback to `presentPaywall` that calls `onClose()` -- this lets users dismiss the paywall via the paywall's own back button.
-- Check `customerInfo.entitlements.active` directly from the paywall result instead of making a second `checkProEntitlement()` call.
-- Clear the paywall container innerHTML when the modal closes to prevent stale renders.
-- Remove the separate close button since `onBack` handles dismissal (or keep it and wire it to clean up properly).
-- Add proper error handling distinguishing between user cancellation and real errors.
+5. Make offering/package validation explicit
+   - Right now `getAvailablePackages()` exists but is never used.
+   - I would validate that the active offering contains exactly the expected one-time Pro package before trying to present/purchase.
+   - If not found, show a clear configuration error instead of a generic network error.
 
-### 2. Fix `revenuecat.ts`
+Files I would update
+- `index.html`
+  - relax CSP for RevenueCat/Stripe web paywall requirements
+- `src/lib/revenuecat.ts`
+  - fix restore implementation
+  - add clearer offering/package lookup helpers
+  - normalize error handling for one-time purchase only
+- `src/components/ProUpgradeModal.tsx`
+  - keep current design unchanged
+  - improve paywall loading logic
+  - handle “offering missing”, “network blocked”, “user cancelled”, and “purchase success” cleanly
+- `src/pages/Settings.tsx`
+  - keep Restore Pro button
+  - wire it to the corrected restore flow
 
-- Keep the existing helper functions as-is (they are correct).
-- No changes needed -- the SDK is initialized properly and `presentPaywall` is called directly on the Purchases instance in the modal.
+Expected outcome after implementation
+- Upgrade buttons open the same MeliusMe modal shell
+- RevenueCat paywall loads instead of showing the error screen
+- Tapping the paywall’s CTA completes the one-time Pro purchase flow
+- Pro unlocks immediately
+- Pro stays unlocked after reload
+- Restore Pro works for returning users
+- Errors fail gracefully without breaking the UI
 
-### 3. Fix `AppContext.tsx` initialization
+Important note
+The earlier “it should work now” conclusion was premature. Based on the current code plus the logs you provided, the app still has a real blocker: CSP/network access for RevenueCat Web Paywalls. That needs to be fixed before the purchase flow can succeed.
 
-- Ensure the migration reset (lines 163-168) does NOT override a valid RevenueCat entitlement. Move the RevenueCat check to happen AFTER the migration so it can re-enable Pro if the user has a valid purchase.
-- This is already the case in the current code (RC check is on lines 170-179, after migration), so no change needed here.
+Implementation sequence
+1. Update CSP to allow RevenueCat + Stripe web paywall dependencies
+2. Fix RevenueCat restore flow
+3. Tighten modal paywall loading and entitlement success handling
+4. Validate active offering/package and improve user-facing errors
+5. Re-test upgrade + restore end to end on mobile viewport
 
-### 4. Settings restore flow
+Technical details
+```text
+Current blocker:
+index.html CSP only allows:
+- script-src 'self'
+- connect-src 'self' https://*.supabase.co https://*.lovable.app
 
-- Already correct -- calls `restorePurchases()` then `checkProEntitlement()` as fallback.
-
-## Technical Details
-
-**Key change in ProUpgradeModal:**
-```typescript
-const rc = getRevenueCatInstance();
-const result = await rc.presentPaywall({
-  htmlTarget: paywallContainerRef.current,
-  onBack: (closePaywall) => {
-    closePaywall();
-    onClose();
-  },
-});
-
-// Check result directly
-const hasPro = 'MeliusMe Pro' in result.customerInfo.entitlements.active;
-if (hasPro) {
-  setPro(true);
-  toast.success('Welcome to MeliusMe Pro!');
-  onClose();
-}
+But runtime requests need external access to:
+- api.revenuecat.com
+- e.revenue.cat
+- js.stripe.com
+- Stripe API / frame origins used by the RevenueCat web checkout flow
 ```
 
-**Cleanup on close:**
-```typescript
-useEffect(() => {
-  if (!open && paywallContainerRef.current) {
-    paywallContainerRef.current.innerHTML = '';
-  }
-}, [open]);
+```text
+Current restore issue:
+src/lib/revenuecat.ts
+restorePurchases() currently calls getCustomerInfo()
+That checks status, but does not perform a true restore operation.
 ```
-
-## Files to Edit
-
-1. **`src/components/ProUpgradeModal.tsx`** -- Add `onBack` handler, improve result handling, add DOM cleanup
-2. **`src/lib/revenuecat.ts`** -- No changes needed (existing code is correct)
-3. **`src/contexts/AppContext.tsx`** -- No changes needed (initialization order is correct)
-4. **`src/pages/Settings.tsx`** -- No changes needed (restore flow is correct)
-
