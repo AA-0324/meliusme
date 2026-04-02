@@ -91,6 +91,26 @@ export async function getAvailablePackages(): Promise<Package[]> {
   }
 }
 
+/**
+ * Validate that the current offering has packages available.
+ * Returns a descriptive error string if something is wrong, or null if OK.
+ */
+export async function validateOffering(): Promise<string | null> {
+  try {
+    const offering = await getCurrentOffering();
+    if (!offering) {
+      return 'No active offering found in RevenueCat. Please check your dashboard configuration.';
+    }
+    if (offering.availablePackages.length === 0) {
+      return 'The active offering has no packages. Please add a product in RevenueCat.';
+    }
+    return null;
+  } catch (error) {
+    console.error('[RevenueCat] Offering validation failed:', error);
+    return 'Could not reach RevenueCat. Please check your internet connection.';
+  }
+}
+
 // ─── Purchases ─────────────────────────────────────────────────────
 
 export interface PurchaseResult {
@@ -151,7 +171,11 @@ export async function presentPaywall(
 
 export async function restorePurchases(): Promise<PurchaseResult> {
   try {
-    const customerInfo = await getCustomerInfo();
+    // On the web SDK, "restoring" means re-initializing with the same
+    // anonymous user ID and fetching the latest customer info from the
+    // RevenueCat backend. This picks up any purchases tied to this user.
+    const rc = getRevenueCatInstance();
+    const customerInfo = await rc.getCustomerInfo();
     const hasPro = ENTITLEMENT_ID in customerInfo.entitlements.active;
     return { success: hasPro, customerInfo };
   } catch (error: unknown) {
@@ -161,12 +185,7 @@ export async function restorePurchases(): Promise<PurchaseResult> {
 }
 
 // ─── Customer Center (Web) ─────────────────────────────────────────
-// Note: RevenueCat Customer Center is currently only available on 
-// native iOS/Android SDKs. For web, we provide a manual management
-// experience via the app's Settings page. When Customer Center becomes
-// available for web, this can be updated.
 
 export function isCustomerCenterAvailable(): boolean {
-  // Customer Center is not yet supported on web SDK
   return false;
 }
