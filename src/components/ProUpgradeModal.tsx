@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
-import { getRevenueCatInstance } from '@/lib/revenuecat';
+import { getRevenueCatInstance, validateOffering } from '@/lib/revenuecat';
 import { toast } from 'sonner';
 
 interface ProUpgradeModalProps {
@@ -28,9 +28,18 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
     paywallActiveRef.current = true;
 
     try {
+      // Validate offering exists before presenting paywall
+      const validationError = await validateOffering();
+      if (validationError) {
+        setError(validationError);
+        setIsLoading(false);
+        paywallActiveRef.current = false;
+        return;
+      }
+
       const rc = getRevenueCatInstance();
       const result = await rc.presentPaywall({
-        htmlTarget: paywallContainerRef.current,
+        htmlTarget: paywallContainerRef.current!,
         onBack: (closePaywall) => {
           closePaywall();
           onClose();
@@ -49,7 +58,10 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
     } catch (e: unknown) {
       console.error('[ProUpgrade] Paywall error:', e);
       const message = (e as Error)?.message || 'Something went wrong';
-      setError(message);
+      // Don't show error if user just cancelled/closed
+      if (!message.includes('cancel') && !message.includes('close')) {
+        setError(message);
+      }
     } finally {
       setIsLoading(false);
       paywallActiveRef.current = false;
