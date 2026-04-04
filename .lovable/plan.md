@@ -1,53 +1,43 @@
 
+The issue is not in RevenueCat itself. I checked the live offerings payload, and RevenueCat is already returning the green styling you expect for the paywall title/button (`#1ebc73` in the light theme). That means the red accents are being introduced after the paywall is rendered inside your app.
 
-# Fix ProUpgradeModal Visual Issues
+Plan:
+1. Isolate the RevenueCat paywall from app-wide CSS
+   - Update `src/components/ProUpgradeModal.tsx` so the paywall mounts inside a fully isolated host element rather than inheriting app theme/styles.
+   - If the RevenueCat SDK supports rendering into a shadow-safe container, use that pattern; otherwise wrap it in a neutral container and remove any inherited classes/attributes that can affect descendants.
 
-## Problems Identified
+2. Prevent root theme classes from leaking into the paywall
+   - Your app applies global theme classes on `<html>` (`dark`, `theme-sunset`, etc.) in `src/contexts/AppContext.tsx`.
+   - Add a targeted guard so the paywall render path does not inherit app theme overrides while it is open.
 
-From the screenshot:
-1. **Two X buttons** — Our modal renders its own close button (line 103-109), but RevenueCat's paywall also renders one via `onBack`. Result: duplicate close buttons.
-2. **Loading spinner overlapping paywall** — The spinner (line 112-120) renders at `z-[201]` on top of the paywall content even after the paywall has started rendering, because `isLoading` stays `true` until `presentPaywall` fully resolves (which only happens after a purchase or dismissal).
-3. **Background/color conflicts** — The modal wrapper has `bg-black/90 backdrop-blur-xl` which darkens/blurs behind the paywall. The RevenueCat paywall has its own background, so these layer and cause the washed-out look.
-4. **Layout conflict** — The wrapper uses `flex items-center justify-center` which fights with RevenueCat's own full-height layout.
+3. Audit and neutralize global CSS selectors that can affect third-party markup
+   - Review `src/index.css` base rules like global typography, border, button/link touch rules, and any selectors that may cascade into the RevenueCat DOM.
+   - Scope those rules more carefully so they style your app UI, not third-party hosted content.
 
-## Fix
+4. Keep RevenueCat’s hosted UI in control
+   - Preserve the current minimal modal approach in `src/components/ProUpgradeModal.tsx`.
+   - Do not restyle the paywall locally; only stop your app from overriding it so the result matches RevenueCat exactly.
 
-**File: `src/components/ProUpgradeModal.tsx`**
+5. Verify against the configured paywall
+   - Re-test the paywall in the preview and compare it to the RevenueCat-configured version:
+     - green title accent
+     - green CTA button
+     - correct white text
+     - no unexpected tinting from app theme classes
 
-The modal should be a minimal full-screen container that just hosts the RevenueCat paywall — no extra UI chrome:
-
-1. **Remove the custom close button** — RevenueCat's paywall has its own back/close button wired via `onBack`
-2. **Remove the loading spinner** — or hide it once `presentPaywall` is called (not when it resolves). The paywall SDK handles its own loading state internally.
-3. **Simplify the wrapper** — Use a plain `fixed inset-0` container with no background color, no backdrop blur, no centering. Let the RevenueCat paywall own the entire viewport.
-4. **Keep error state** — Only show our custom UI if the offering validation fails before the paywall even renders.
-
+Technical details:
 ```text
-Before:
-┌─────────────────────────┐
-│ bg-black/90 + blur      │
-│  ┌───────────────────┐  │
-│  │ [X] (ours)        │  │
-│  │ [spinner overlay]  │  │
-│  │ ┌───────────────┐  │  │
-│  │ │ RC Paywall    │  │  │
-│  │ │ [X] (theirs)  │  │  │
-│  │ └───────────────┘  │  │
-│  └───────────────────┘  │
-└─────────────────────────┘
-
-After:
-┌─────────────────────────┐
-│ RC Paywall (full screen)│
-│ [X] (theirs via onBack) │
-│                         │
-│ ...paywall content...   │
-└─────────────────────────┘
-(error state only if validation fails)
+What I confirmed:
+- RevenueCat offerings response contains green light-theme values:
+  title accent = #1ebc73
+- Current app also applies global theme classes at the document root:
+  dark / theme-ocean / theme-sunset / theme-berry / etc.
+- Global CSS in src/index.css applies broad base styles to body, *, button, a, and root layout.
 ```
 
-## Scope
-- **1 file**: `src/components/ProUpgradeModal.tsx`
-- Remove close button, spinner, dark background
-- Keep error/retry state for pre-paywall failures
-- Keep cleanup logic and entitlement check on success
-
+```text
+Most likely root cause:
+RevenueCat is rendering the correct hosted paywall config,
+but your app’s global CSS/theme context is cascading into the embedded paywall DOM,
+causing red/accent substitutions and formatting drift.
+```
