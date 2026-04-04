@@ -10,11 +10,34 @@ interface ProUpgradeModalProps {
 
 const ENTITLEMENT_ID = 'MeliusMe Pro';
 
+// Theme classes that the app applies to <html> and that can leak into the paywall
+const THEME_CLASSES = ['dark', 'theme-ocean', 'theme-sunset', 'theme-berry', 'theme-midnight', 'theme-cyber'];
+
 export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
   const { setPro } = useApp();
   const [error, setError] = useState<string | null>(null);
   const paywallContainerRef = useRef<HTMLDivElement>(null);
   const paywallActiveRef = useRef(false);
+  const savedClassesRef = useRef<string[]>([]);
+
+  // Strip app theme classes from <html> while paywall is open so they don't cascade
+  useEffect(() => {
+    const root = document.documentElement;
+    if (open) {
+      // Save and remove theme classes
+      savedClassesRef.current = THEME_CLASSES.filter(cls => root.classList.contains(cls));
+      savedClassesRef.current.forEach(cls => root.classList.remove(cls));
+    } else {
+      // Restore theme classes
+      savedClassesRef.current.forEach(cls => root.classList.add(cls));
+      savedClassesRef.current = [];
+    }
+    return () => {
+      // Cleanup on unmount
+      savedClassesRef.current.forEach(cls => root.classList.add(cls));
+      savedClassesRef.current = [];
+    };
+  }, [open]);
 
   const presentPaywall = useCallback(async () => {
     if (!paywallContainerRef.current || paywallActiveRef.current) return;
@@ -79,19 +102,24 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[200]">
-      {/* Error state - only shown if validation fails before paywall renders */}
+    <div
+      className="fixed inset-0 z-[200]"
+      style={{
+        // Reset all inherited styles so app theme CSS doesn't cascade into paywall
+        colorScheme: 'light',
+      }}
+    >
       {error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background z-[201]">
+        <div className="absolute inset-0 flex items-center justify-center bg-white z-[201]">
           <div className="text-center px-6">
-            <p className="text-muted-foreground text-sm mb-4">Unable to load paywall</p>
-            <p className="text-muted-foreground/60 text-xs mb-6">{error}</p>
+            <p className="text-gray-500 text-sm mb-4">Unable to load paywall</p>
+            <p className="text-gray-400 text-xs mb-6">{error}</p>
             <button
               onClick={() => {
                 setError(null);
                 presentPaywall();
               }}
-              className="px-6 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
+              className="px-6 py-2 rounded-xl bg-[#1ebc73] text-white text-sm font-semibold hover:bg-[#19a564] transition-colors"
             >
               Retry
             </button>
@@ -99,10 +127,11 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
         </div>
       )}
 
-      {/* RevenueCat Paywall Container - full screen */}
+      {/* RevenueCat Paywall Container - fully isolated from app styles */}
       <div
         ref={paywallContainerRef}
         className="w-full h-full"
+        style={{ all: 'initial', width: '100%', height: '100%' }}
       />
     </div>
   );
