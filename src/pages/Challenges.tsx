@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, Trophy, CheckCircle2, Circle, ChevronRight, Zap, Gift, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { REFLECTION_QUESTIONS, saveLastReflection, getDailyChallenges, getLastWeekNumber, getLastWeekStart, ReflectionData } from '@/lib/streaks';
+import { REFLECTION_QUESTIONS, saveLastReflection, getDailyChallenges, getLastReflection, getLastWeekNumber, getLastWeekStart, ReflectionData } from '@/lib/streaks';
 import { useApp } from '@/contexts/AppContext';
 import { staggerContainer, fadeUpBounce } from '@/lib/motion';
 
@@ -20,7 +20,6 @@ export default function Challenges() {
 
   useEffect(() => {
     const run = async () => {
-      const { getLastReflection } = await import('@/lib/streaks');
       setLastReflection(await getLastReflection());
     };
     void run();
