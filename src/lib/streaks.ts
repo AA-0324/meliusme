@@ -1,6 +1,8 @@
 // Streak and Gamification System for MeliusMe — encrypted storage
 
 import { encrypt, decrypt, isEncrypted } from './crypto';
+import { getAllMeals, getAllWaterData, getSettings, type Meal, type Settings } from './db';
+import { getHealthWarnings, hasAnyWarning } from '@/components/HealthWarning';
 
 const STREAK_KEY = 'melius-streak';
 const CHALLENGES_KEY = 'melius-challenges';
@@ -427,86 +429,99 @@ export function getWeeklyReflectionQuestion(): string {
   return REFLECTION_QUESTIONS[weekNumber % REFLECTION_QUESTIONS.length];
 }
 
-function calculateWeeklyChallengeProgress(challengeId: string, meals: any[], weekStart: string): number {
-  const weekStartDate = new Date(weekStart);
-  const weekMeals = meals.filter(m => new Date(m.date) >= weekStartDate);
+function addDaysToDateString(dateString: string, days: number): string {
+  const date = new Date(`${dateString}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().split('T')[0];
+}
+
+function calculateWeeklyChallengeProgress(
+  challengeId: string,
+  meals: Meal[],
+  weekStart: string,
+  settings: Settings,
+  waterData: Record<string, number>
+): number {
+  const weekEnd = addDaysToDateString(weekStart, 7);
+  const weekMeals = meals.filter((meal) => meal.date >= weekStart && meal.date < weekEnd);
+  const proteinGoal = settings.goals.protein || 50;
+  const calorieGoal = settings.goals.calories || 2000;
+  const waterGoal = settings.waterGoal || 8;
+
+  const dailyProtein: Record<string, number> = {};
+  const dailyCalories: Record<string, number> = {};
+
+  weekMeals.forEach((meal) => {
+    dailyProtein[meal.date] = (dailyProtein[meal.date] || 0) + (meal.protein || 0);
+    dailyCalories[meal.date] = (dailyCalories[meal.date] || 0) + meal.calories;
+  });
+
   switch (challengeId) {
     case 'log_21': case 'log_15': return weekMeals.length;
     case 'dinner_week': return new Set(weekMeals.filter(m => m.mealType === 'dinner').map(m => m.date)).size;
     case 'breakfast_streak': return new Set(weekMeals.filter(m => m.mealType === 'breakfast').map(m => m.date)).size;
-    case 'healthy_meals': return weekMeals.length;
-    case 'protein_power': {
-      // Count unique days where protein goal was met
-      const settingsRaw = localStorage.getItem('melius-settings');
-      let proteinGoal = 50;
-      if (settingsRaw) {
-        try {
-          const parsed = JSON.parse(settingsRaw);
-          if (parsed?.goals?.protein) proteinGoal = parsed.goals.protein;
-        } catch {
-          // Try decrypted parse - settings might be encrypted
-        }
-      }
-      const dailyProtein: Record<string, number> = {};
-      weekMeals.forEach(m => {
-        dailyProtein[m.date] = (dailyProtein[m.date] || 0) + (m.protein || 0);
-      });
-      return Object.values(dailyProtein).filter(p => p >= proteinGoal).length;
-    }
-    case 'hydrate_week': {
-      // This is tracked separately via water data, return current stored progress
-      return 0;
-    }
-    case 'in_range_5': {
-      const settingsRaw = localStorage.getItem('melius-settings');
-      let calGoal = 2000;
-      if (settingsRaw) {
-        try {
-          const parsed = JSON.parse(settingsRaw);
-          if (parsed?.goals?.calories) calGoal = parsed.goals.calories;
-        } catch {}
-      }
-      const dailyCals: Record<string, number> = {};
-      weekMeals.forEach(m => {
-        dailyCals[m.date] = (dailyCals[m.date] || 0) + m.calories;
-      });
-      // Only count days that have meals logged
-      return Object.entries(dailyCals).filter(([, cal]) => cal > 0 && cal <= calGoal).length;
-    }
+    case 'healthy_meals':
+      return weekMeals.filter((meal) => !hasAnyWarning(
+        getHealthWarnings(meal.calories, meal.protein, meal.fiber, meal.sugar, meal.mealType, settings.goals, undefined, { isLogged: true })
+      )).length;
+    case 'protein_power':
+      return Object.values(dailyProtein).filter((protein) => protein >= proteinGoal).length;
+    case 'hydrate_week':
+      return Array.from({ length: 7 }, (_, index) => addDaysToDateString(weekStart, index))
+        .filter((date) => (waterData[date] || 0) >= waterGoal).length;
+    case 'in_range_5':
+      return Object.values(dailyCalories).filter((calories) => calories >= calorieGoal * 0.8 && calories <= calorieGoal * 1.1).length;
     default: return 0;
   }
 }
 
-export async function getCurrentChallenge(meals?: any[]): Promise<Challenge> {
-  const stored = await readEncLS<Challenge | null>(CHALLENGES_KEY, null);
+export async function getCurrentChallenge(
+  meals?: Meal[],
+  settings?: Settings,
+  waterData?: Record<string, number>
+): Promise<Challenge> {
   const weekStart = getWeekStart();
+  const [stored, resolvedMeals, resolvedSettings, resolvedWaterData] = await Promise.all([
+    readEncLS<Challenge | null>(CHALLENGES_KEY, null),
+    meals ? Promise.resolve(meals) : getAllMeals(),
+    settings ? Promise.resolve(settings) : getSettings(),
+    waterData ? Promise.resolve(waterData) : getAllWaterData(),
+  ]);
 
-  if (stored && stored.startDate === weekStart) {
-    if (meals) {
-      const updatedProgress = calculateWeeklyChallengeProgress(stored.id, meals, weekStart);
-      if (updatedProgress !== stored.progress) {
-        stored.progress = updatedProgress;
-        stored.completed = stored.progress >= stored.target;
-        await writeEncLS(CHALLENGES_KEY, stored);
-      }
-    }
-    return stored;
-  }
+  const baseChallenge = stored && stored.startDate === weekStart
+    ? stored
+    : (() => {
+        const weekNumber = getWeekNumber();
+        const challengeIndex = weekNumber % WEEKLY_CHALLENGES.length;
+        const template = WEEKLY_CHALLENGES[challengeIndex];
 
-  const weekNumber = getWeekNumber();
-  const challengeIndex = weekNumber % WEEKLY_CHALLENGES.length;
-  const template = WEEKLY_CHALLENGES[challengeIndex];
+        return {
+          id: template.id,
+          name: template.name,
+          title: template.name,
+          description: template.description,
+          target: template.target,
+          progress: 0,
+          type: 'weekly' as const,
+          completed: false,
+          startDate: weekStart,
+        };
+      })();
+
+  const progress = calculateWeeklyChallengeProgress(
+    baseChallenge.id,
+    resolvedMeals,
+    weekStart,
+    resolvedSettings,
+    resolvedWaterData,
+  );
 
   const challenge: Challenge = {
-    id: template.id, name: template.name, title: template.name,
-    description: template.description, target: template.target,
-    progress: 0, type: 'weekly', completed: false, startDate: weekStart,
+    ...baseChallenge,
+    startDate: weekStart,
+    progress,
+    completed: progress >= baseChallenge.target,
   };
-
-  if (meals) {
-    challenge.progress = calculateWeeklyChallengeProgress(challenge.id, meals, weekStart);
-    challenge.completed = challenge.progress >= challenge.target;
-  }
 
   await writeEncLS(CHALLENGES_KEY, challenge);
   return challenge;
