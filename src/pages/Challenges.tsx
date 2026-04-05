@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, Trophy, CheckCircle2, Circle, ChevronRight, Zap, Gift, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,14 @@ export default function Challenges() {
   const reflectionQuestion = REFLECTION_QUESTIONS[lastWeekNumber % REFLECTION_QUESTIONS.length];
 
   const hasReflectedLastWeek = lastReflection && lastReflection.weekNumber === lastWeekNumber;
+
+  useEffect(() => {
+    const run = async () => {
+      const { getLastReflection } = await import('@/lib/streaks');
+      setLastReflection(await getLastReflection());
+    };
+    void run();
+  }, []);
 
   const lastWeekStartDate = new Date(lastWeekStart);
   const thisWeekStartDate = new Date();
