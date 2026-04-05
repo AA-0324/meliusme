@@ -114,7 +114,15 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
       const style = document.createElement('style');
       style.id = STYLE_ID;
       style.textContent = `
-        /* Force CTA button green */
+        /* Override CSS custom properties used by RC */
+        * {
+          --rc-color-accent: ${BRAND_GREEN} !important;
+          --rc-color-cta: ${BRAND_GREEN} !important;
+          --rc-color-primary: ${BRAND_GREEN} !important;
+          --primary: 152 72% 42% !important;
+        }
+
+        /* Force CTA button background green, keep text white */
         button[class*="purchase"], 
         button[class*="cta"], 
         button[class*="action"],
@@ -126,34 +134,40 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
           background-color: ${BRAND_GREEN} !important;
           background: ${BRAND_GREEN} !important;
           border-color: ${BRAND_GREEN} !important;
+          color: #ffffff !important;
         }
 
-        /* Force links green */
-        a, 
-        a span,
-        [class*="link"],
+        /* Force footer links (Terms, Privacy) green */
+        [class*="footer"] a,
+        [class*="footer"] span,
         [class*="terms"],
         [class*="privacy"],
-        [class*="footer"] a,
-        [class*="footer"] span {
+        a[href*="terms"],
+        a[href*="privacy"] {
           color: ${BRAND_GREEN} !important;
         }
 
-        /* Force any accent/brand colored text green */
+        /* Force feature/benefit icons green */
+        svg,
+        [class*="icon"],
+        [class*="feature"] svg,
+        [class*="benefit"] svg {
+          color: ${BRAND_GREEN} !important;
+          fill: ${BRAND_GREEN} !important;
+        }
+
+        /* Force "MeliusMe" in title green, rest stays white */
+        [class*="title"] span[style],
         [class*="accent"],
         [class*="brand"],
         [class*="highlight"],
-        [class*="title"] span[style],
         [style*="color: rgb("] {
           color: ${BRAND_GREEN} !important;
         }
 
-        /* Override CSS custom properties used by RC */
-        * {
-          --rc-color-accent: ${BRAND_GREEN} !important;
-          --rc-color-cta: ${BRAND_GREEN} !important;
-          --rc-color-primary: ${BRAND_GREEN} !important;
-          --primary: 152 72% 42% !important;
+        /* Ensure body text stays white */
+        p, h1, h2, h3, h4, span, li, label {
+          color: #ffffff;
         }
       `;
       container.prepend(style);
