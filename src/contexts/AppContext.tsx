@@ -444,7 +444,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     const todayStr = new Date().toISOString().split('T')[0];
     const todayMeals = updatedMeals.filter(m => m.date === todayStr);
-    if (todayMeals.length >= 2 && !currentBadges.some(b => b.id === 'meals_3')) {
+    if (todayMeals.length >= 3 && !currentBadges.some(b => b.id === 'meals_3')) {
       await awardBadge('meals_3');
       setBadges(await getEarnedBadges());
     }
