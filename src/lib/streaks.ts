@@ -73,6 +73,16 @@ export interface XPData {
   currentLevelXP: number;
 }
 
+interface XPEvent {
+  id: string;
+  date: string;
+  amount: number;
+  source: 'meal' | 'daily_challenge';
+  mealId?: string;
+  challengeId?: string;
+  createdAt: number;
+}
+
 export interface LevelUpResult {
   xpData: XPData;
   leveledUp: boolean;
@@ -107,6 +117,15 @@ export interface TempProUnlock {
 
 const TEMP_UNLOCKS_KEY = 'melius-temp-pro-unlocks';
 const LAST_REWARD_KEY = 'melius-last-reward-feature';
+const XP_EVENTS_KEY = 'melius-xp-events';
+
+async function getXPEvents(): Promise<XPEvent[]> {
+  return readEncLS<XPEvent[]>(XP_EVENTS_KEY, []);
+}
+
+async function saveXPEvents(events: XPEvent[]): Promise<void> {
+  await writeEncLS(XP_EVENTS_KEY, events);
+}
 
 export async function getTempProUnlocks(): Promise<TempProUnlock[]> {
   const unlocks = await readEncLS<TempProUnlock[]>(TEMP_UNLOCKS_KEY, []);
@@ -170,11 +189,27 @@ export async function getXP(): Promise<number> {
   return parseInt(plaintext, 10) || 0;
 }
 
-export async function addXP(amount: number, isProUser: boolean = false): Promise<LevelUpResult> {
+export async function addXP(
+  amount: number,
+  isProUser: boolean = false,
+  event?: Omit<XPEvent, 'id' | 'amount' | 'createdAt'>
+): Promise<LevelUpResult> {
   const current = await getXP();
   const previousData = calculateLevel(current);
   const newTotal = current + amount;
   try { localStorage.setItem(XP_KEY, await encrypt(newTotal.toString())); } catch { localStorage.setItem(XP_KEY, newTotal.toString()); }
+
+  if (event) {
+    const events = await getXPEvents();
+    events.push({
+      ...event,
+      id: crypto.randomUUID(),
+      amount,
+      createdAt: Date.now(),
+    });
+    await saveXPEvents(events);
+  }
+
   const newData = calculateLevel(newTotal);
   
   const leveledUp = newData.level > previousData.level;
@@ -209,6 +244,29 @@ export async function deductXP(amount: number): Promise<XPData> {
   const newTotal = Math.max(0, current - amount);
   try { localStorage.setItem(XP_KEY, await encrypt(newTotal.toString())); } catch { localStorage.setItem(XP_KEY, newTotal.toString()); }
   return calculateLevel(newTotal);
+}
+
+export async function resetXPEarnedOnDate(date: string): Promise<XPData> {
+  const events = await getXPEvents();
+  const removedXP = events
+    .filter((event) => event.date === date)
+    .reduce((total, event) => total + event.amount, 0);
+
+  if (removedXP <= 0) {
+    return getXPData();
+  }
+
+  await saveXPEvents(events.filter((event) => event.date !== date));
+  return deductXP(removedXP);
+}
+
+export async function removeTempUnlocksUnlockedOnDate(date: string): Promise<TempProUnlock[]> {
+  const unlocks = await getTempProUnlocks();
+  const filteredUnlocks = unlocks.filter(
+    (unlock) => new Date(unlock.unlockedAt).toISOString().split('T')[0] !== date
+  );
+  await writeEncLS(TEMP_UNLOCKS_KEY, filteredUnlocks);
+  return filteredUnlocks;
 }
 
 // ─── Badges ────────────────────────────────────────────────────────
