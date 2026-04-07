@@ -310,9 +310,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     sessionStorage.removeItem(`melius-confetti-${todayStr}`);
     sessionStorage.removeItem(goalToastKey(todayStr));
     sessionStorage.removeItem(`melius-daily-xp-awarded-${todayStr}`);
+
+    // Count meals being deleted to calculate XP to deduct
+    const todayMeals = meals.filter((m) => m.date === todayStr);
+    const mealXPToDeduct = todayMeals.length * 10; // 10 XP per meal logged
+
     const nextMeals = meals.filter((m) => m.date !== todayStr);
     setMeals(nextMeals);
     void deleteMealsByDate(todayStr);
+
+    // Deduct meal XP earned today
+    if (mealXPToDeduct > 0) {
+      const { deductXP } = await import('@/lib/streaks');
+      const newXpData = await deductXP(mealXPToDeduct);
+      setXpData(newXpData);
+    }
+
     const waterData = await getAllWaterData();
     setCurrentChallenge(await getCurrentChallenge(nextMeals, settings, waterData));
   }, [meals, settings]);
