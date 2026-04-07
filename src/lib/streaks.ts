@@ -204,6 +204,13 @@ export async function getXPData(): Promise<XPData> {
   return calculateLevel(await getXP());
 }
 
+export async function deductXP(amount: number): Promise<XPData> {
+  const current = await getXP();
+  const newTotal = Math.max(0, current - amount);
+  try { localStorage.setItem(XP_KEY, await encrypt(newTotal.toString())); } catch { localStorage.setItem(XP_KEY, newTotal.toString()); }
+  return calculateLevel(newTotal);
+}
+
 // ─── Badges ────────────────────────────────────────────────────────
 
 export const AVAILABLE_BADGES: Badge[] = [
