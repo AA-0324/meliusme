@@ -77,14 +77,6 @@ export default function Challenges() {
         >
           Challenges
         </motion.h1>
-        <motion.p
-          initial={noMotion ? false : { opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1, type: 'spring', damping: 15 }}
-          className="text-muted-foreground mt-1"
-        >
-          Daily missions & achievements
-        </motion.p>
       </div>
 
       <motion.div 
@@ -255,7 +247,7 @@ export default function Challenges() {
               animate={noMotion ? {} : { scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
               transition={{ duration: 2, repeat: Infinity, repeatDelay: 2 }}
             >
-              <Trophy className="w-5 h-5 text-amber-500" />
+              <Trophy className="w-5 h-5 text-warning" />
             </motion.div>
             <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Last Week's Reflection</h2>
           </div>

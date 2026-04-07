@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Settings as SettingsIcon, 
   RotateCcw, 
-  Code2, 
-  CreditCard, 
   ChevronLeft,
   AlertTriangle,
   RefreshCw,
@@ -18,7 +15,6 @@ import {
   Beef,
   Apple,
   Candy,
-  Lock as LockIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -28,7 +24,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useApp } from '@/contexts/AppContext';
 import { ProUpgradeModal } from '@/components/ProUpgradeModal';
-import { ProBadge } from '@/components/ProBadge';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { staggerContainer, fadeUp } from '@/lib/motion';
@@ -36,11 +31,11 @@ import { getMealTemplates, deleteMealTemplate, MealTemplate } from '@/lib/proFea
 import { restorePurchases, checkProEntitlement } from '@/lib/revenuecat';
 import logo from '@/assets/meliusme-logo-new.png';
 
-const APP_VERSION = '0.9.1-alpha';
+const APP_VERSION = '0.9.2-alpha';
 
 export default function Settings() {
   const { 
-    settings, isPro, setPro, setDevMode, resetDailyData,
+    settings, isPro, setPro, resetDailyData,
     notificationsEnabled, toggleNotifications,
     setUse24Hour, animationsEnabled, setAnimationsEnabled,
   } = useApp();
@@ -62,13 +57,11 @@ export default function Settings() {
   };
 
   const handleResetDaily = () => {
-    resetDailyData();
-    setShowFinalConfirm(false);
-    toast.success("Today's nutrition reset");
-  };
-
-  const handleManageSubscription = () => {
-    toast.info('Subscription management is not available yet');
+    void (async () => {
+      await resetDailyData();
+      setShowFinalConfirm(false);
+      toast.success("Today's nutrition and XP reset");
+    })();
   };
 
   const handleRestorePurchase = async () => {
@@ -101,13 +94,6 @@ export default function Settings() {
     await toggleNotifications();
   };
 
-  const macroIcon = (type: string) => {
-    switch (type) {
-      case 'breakfast': case 'lunch': case 'dinner': case 'snack': return Flame;
-      default: return Flame;
-    }
-  };
-
   return (
     <div className="min-h-screen pb-24">
       {/* Header */}
@@ -124,7 +110,6 @@ export default function Settings() {
               className="text-2xl font-bold tracking-tight">
               Settings
             </motion.h1>
-            <p className="text-muted-foreground text-sm mt-0.5">App configuration</p>
           </div>
         </div>
       </div>
@@ -245,7 +230,7 @@ export default function Settings() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Reset today's nutrition?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will remove today's logged meals and reset today's water count.
+                  This will remove today's meals, clear today's water, and remove all XP earned today.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -263,7 +248,7 @@ export default function Settings() {
                   Are you absolutely sure?
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action cannot be undone. All of today's meals and water data will be permanently deleted.
+                  This action cannot be undone. Today's meals, water data, and XP earned today will be permanently removed.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -290,8 +275,8 @@ export default function Settings() {
         </motion.div>
 
         {/* Account */}
-        <motion.div variants={fadeUp}
-          className="bg-card rounded-2xl p-5 border border-border/50 space-y-3">
+          <motion.div variants={fadeUp}
+            className="bg-card rounded-2xl p-5 border border-border/50 space-y-3">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Account</h2>
           
           {!isPro && (
@@ -303,13 +288,6 @@ export default function Settings() {
               </Button>
             </motion.div>
           )}
-          
-          <motion.div whileTap={{ scale: 0.97 }}>
-            <Button onClick={handleManageSubscription} variant="outline" className="w-full h-12 rounded-xl justify-start gap-3 font-semibold">
-              <CreditCard className="w-5 h-5 text-muted-foreground" />
-              <span>Manage Subscription</span>
-            </Button>
-          </motion.div>
           
           <motion.div whileTap={{ scale: 0.97 }}>
             <Button onClick={handleRestorePurchase} variant="outline" className="w-full h-12 rounded-xl justify-start gap-3 font-semibold">
@@ -335,27 +313,9 @@ export default function Settings() {
           </motion.div>
         )}
 
-        {/* Developer */}
-        <motion.div variants={fadeUp}
-          className="bg-card rounded-2xl p-5 border border-dashed border-border/50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Code2 className="w-5 h-5 text-muted-foreground" />
-              <div>
-                <span className="font-semibold">Developer Mode</span>
-                <p className="text-xs text-muted-foreground">DEV ONLY - Unlocks Pro</p>
-              </div>
-            </div>
-            <Switch checked={settings.devMode} onCheckedChange={setDevMode} />
-          </div>
-        </motion.div>
-
         {/* App Info */}
         <motion.div variants={fadeUp} className="text-center py-4">
-          <div className="flex items-center justify-center gap-2 text-muted-foreground">
-            <SettingsIcon className="w-4 h-4" />
-            <span className="text-sm font-medium">Version {APP_VERSION}</span>
-          </div>
+          <span className="text-sm font-medium text-muted-foreground">Version {APP_VERSION}</span>
         </motion.div>
 
         {/* Warning */}

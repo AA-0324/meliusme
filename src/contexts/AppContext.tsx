@@ -3,7 +3,7 @@ import { Meal, Settings, getSettings, saveSettings, getAllMeals, addMeal, delete
 import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/userProfile';
 import { getBodyProfile, saveBodyProfile, BodyProfile, getAutoGoals } from '@/lib/bodyGoals';
 import { requestNotificationPermission, areNotificationsSupported } from '@/lib/notifications';
-import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge, getEarnedBadges, Badge, awardBadge, addXP, LevelUpResult, TempProUnlock, getTempProUnlocks, getXPData, XPData, getDailyChallenges } from '@/lib/streaks';
+import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge, getEarnedBadges, Badge, awardBadge, addXP, LevelUpResult, TempProUnlock, getTempProUnlocks, getXPData, XPData, getDailyChallenges, resetXPEarnedOnDate, removeTempUnlocksUnlockedOnDate } from '@/lib/streaks';
 import { initEncryption } from '@/lib/crypto';
 import { migrateAllToEncrypted } from '@/lib/encryptedStorage';
 import { initRevenueCat, checkProEntitlement } from '@/lib/revenuecat';
@@ -305,30 +305,54 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const resetDailyData = useCallback(async () => {
     const todayStr = new Date().toISOString().split('T')[0];
+    const nextMeals = meals.filter((m) => m.date !== todayStr);
+    const todayMeals = meals.filter((m) => m.date === todayStr);
+    const todayMealTypes = todayMeals.map((m) => m.mealType);
+    const todayTotals = getDailyTotals(meals, todayStr);
+    const awardedRaw = sessionStorage.getItem(`melius-daily-xp-awarded-${todayStr}`);
+    const awardedIds = awardedRaw ? JSON.parse(awardedRaw) as string[] : [];
+    const awardedChallengeXP = getDailyChallenges(
+      todayMealTypes,
+      todayWater,
+      settings.waterGoal,
+      settings.goals,
+      todayTotals.calories,
+      todayTotals.protein,
+    )
+      .filter((challenge) => awardedIds.includes(challenge.id))
+      .reduce((total, challenge) => total + challenge.xp, 0);
+    const fallbackDailyXP = todayMeals.length * 10 + awardedChallengeXP;
+
     setTodayWater(0);
-    await setWaterIntake(todayStr, 0);
+    setMeals(nextMeals);
+    setLevelUpPending(null);
+
     sessionStorage.removeItem(`melius-confetti-${todayStr}`);
     sessionStorage.removeItem(goalToastKey(todayStr));
     sessionStorage.removeItem(`melius-daily-xp-awarded-${todayStr}`);
 
-    // Count meals being deleted to calculate XP to deduct
-    const todayMeals = meals.filter((m) => m.date === todayStr);
-    const mealXPToDeduct = todayMeals.length * 10; // 10 XP per meal logged
+    await Promise.all([
+      setWaterIntake(todayStr, 0),
+      deleteMealsByDate(todayStr),
+    ]);
 
-    const nextMeals = meals.filter((m) => m.date !== todayStr);
-    setMeals(nextMeals);
-    void deleteMealsByDate(todayStr);
+    const [resetXpData, tempUnlocks, waterData] = await Promise.all([
+      resetXPEarnedOnDate(todayStr),
+      removeTempUnlocksUnlockedOnDate(todayStr),
+      getAllWaterData(),
+    ]);
 
-    // Deduct meal XP earned today
-    if (mealXPToDeduct > 0) {
-      const { deductXP } = await import('@/lib/streaks');
-      const newXpData = await deductXP(mealXPToDeduct);
-      setXpData(newXpData);
-    }
+    const currentXPBeforeFallback = resetXpData.totalXP;
+    const expectedXPAfterFallback = Math.max(0, xpData.totalXP - fallbackDailyXP);
+    const missingDailyXP = Math.max(0, currentXPBeforeFallback - expectedXPAfterFallback);
+    const newXpData = missingDailyXP > 0
+      ? await import('@/lib/streaks').then(({ deductXP }) => deductXP(missingDailyXP))
+      : resetXpData;
 
-    const waterData = await getAllWaterData();
+    setXpData(newXpData);
+    setTempProUnlocks(tempUnlocks);
     setCurrentChallenge(await getCurrentChallenge(nextMeals, settings, waterData));
-  }, [meals, settings]);
+  }, [meals, settings, todayWater, xpData.totalXP]);
 
   const toggleNotifications = useCallback(async () => {
     if (!areNotificationsSupported()) return;
@@ -381,7 +405,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     for (const c of challenges) {
       if (c.completed && !awarded.has(c.id)) {
         markChallengeAwarded(c.id);
-        const result = await addXP(c.xp, isPro);
+        const result = await addXP(c.xp, isPro, { date: today, source: 'daily_challenge', challengeId: c.id });
         setXpData(result.xpData);
         if (result.leveledUp) {
           setLevelUpPending(result);
@@ -427,7 +451,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const updatedChallenge = await getCurrentChallenge(updatedMeals, settings, waterData);
     setCurrentChallenge(updatedChallenge);
 
-    const levelResult = await addXP(10, isPro);
+    const levelResult = await addXP(10, isPro, { date: meal.date, source: 'meal', mealId: newMeal.id });
     setXpData(levelResult.xpData);
     if (levelResult.leveledUp) {
       setLevelUpPending(levelResult);
