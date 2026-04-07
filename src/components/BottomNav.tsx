@@ -45,7 +45,7 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-lg border-t border-border pb-[env(safe-area-inset-bottom)]">
-      <div ref={containerRef} className="flex justify-center gap-2 h-[72px] max-w-[340px] mx-auto relative pt-4">
+      <div ref={containerRef} className="flex justify-center gap-2 h-[84px] max-w-[340px] mx-auto relative py-4">
         {/* Single persistent indicator — never unmounts */}
         {indicatorStyle && (
           <motion.div

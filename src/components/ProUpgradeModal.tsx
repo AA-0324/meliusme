@@ -75,6 +75,7 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
       const message = (e as Error)?.message || 'Something went wrong';
       if (!message.includes('cancel') && !message.includes('close')) {
         setError(message);
+        toast.error('Purchase failed. Please try again.');
       }
     } finally {
       paywallActiveRef.current = false;

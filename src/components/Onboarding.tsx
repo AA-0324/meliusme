@@ -62,7 +62,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { toast.error('Image must be under 2MB'); return; }
+    if (file.size > 10 * 1024 * 1024) { toast.error('Image must be under 10MB'); return; }
     const reader = new FileReader();
     reader.onloadend = () => setAvatar(reader.result as string);
     reader.readAsDataURL(file);
