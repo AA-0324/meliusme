@@ -119,10 +119,10 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
       }}
     >
       {error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white z-[201]">
+        <div className="absolute inset-0 flex items-center justify-center bg-background z-[201]">
           <div className="text-center px-6">
-            <p className="text-gray-500 text-sm mb-4">Unable to load paywall</p>
-            <p className="text-gray-400 text-xs mb-6">{error}</p>
+            <p className="text-muted-foreground text-sm mb-4">Unable to load paywall</p>
+            <p className="text-muted-foreground/80 text-xs mb-6">{error}</p>
             <button
               onClick={() => {
                 setError(null);

@@ -306,6 +306,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const resetDailyData = useCallback(async () => {
     const todayStr = new Date().toISOString().split('T')[0];
     const nextMeals = meals.filter((m) => m.date !== todayStr);
+    const todayMeals = meals.filter((m) => m.date === todayStr);
+    const todayMealTypes = todayMeals.map((m) => m.mealType);
+    const todayTotals = getDailyTotals(meals, todayStr);
+    const awardedRaw = sessionStorage.getItem(`melius-daily-xp-awarded-${todayStr}`);
+    const awardedIds = awardedRaw ? JSON.parse(awardedRaw) as string[] : [];
+    const awardedChallengeXP = getDailyChallenges(
+      todayMealTypes,
+      todayWater,
+      settings.waterGoal,
+      settings.goals,
+      todayTotals.calories,
+      todayTotals.protein,
+    )
+      .filter((challenge) => awardedIds.includes(challenge.id))
+      .reduce((total, challenge) => total + challenge.xp, 0);
+    const fallbackDailyXP = todayMeals.length * 10 + awardedChallengeXP;
 
     setTodayWater(0);
     setMeals(nextMeals);
@@ -320,16 +336,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       deleteMealsByDate(todayStr),
     ]);
 
-    const [newXpData, tempUnlocks, waterData] = await Promise.all([
+    const [resetXpData, tempUnlocks, waterData] = await Promise.all([
       resetXPEarnedOnDate(todayStr),
       removeTempUnlocksUnlockedOnDate(todayStr),
       getAllWaterData(),
     ]);
 
+    const currentXPBeforeFallback = resetXpData.totalXP;
+    const expectedXPAfterFallback = Math.max(0, xpData.totalXP - fallbackDailyXP);
+    const missingDailyXP = Math.max(0, currentXPBeforeFallback - expectedXPAfterFallback);
+    const newXpData = missingDailyXP > 0
+      ? await import('@/lib/streaks').then(({ deductXP }) => deductXP(missingDailyXP))
+      : resetXpData;
+
     setXpData(newXpData);
     setTempProUnlocks(tempUnlocks);
     setCurrentChallenge(await getCurrentChallenge(nextMeals, settings, waterData));
-  }, [meals, settings]);
+  }, [meals, settings, todayWater, xpData.totalXP]);
 
   const toggleNotifications = useCallback(async () => {
     if (!areNotificationsSupported()) return;

@@ -15,7 +15,6 @@ import {
   Beef,
   Apple,
   Candy,
-  Lock as LockIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -36,7 +35,7 @@ const APP_VERSION = '0.9.2-alpha';
 
 export default function Settings() {
   const { 
-    settings, isPro, setPro, setDevMode, resetDailyData,
+    settings, isPro, setPro, resetDailyData,
     notificationsEnabled, toggleNotifications,
     setUse24Hour, animationsEnabled, setAnimationsEnabled,
   } = useApp();
@@ -93,13 +92,6 @@ export default function Settings() {
       return;
     }
     await toggleNotifications();
-  };
-
-  const macroIcon = (type: string) => {
-    switch (type) {
-      case 'breakfast': case 'lunch': case 'dinner': case 'snack': return Flame;
-      default: return Flame;
-    }
   };
 
   return (
