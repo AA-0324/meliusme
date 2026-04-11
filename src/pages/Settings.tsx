@@ -4,7 +4,6 @@ import {
   Settings as SettingsIcon, 
   RotateCcw, 
   Code2, 
-  CreditCard, 
   ChevronLeft,
   AlertTriangle,
   RefreshCw,
@@ -36,7 +35,7 @@ import { getMealTemplates, deleteMealTemplate, MealTemplate } from '@/lib/proFea
 import { restorePurchases, checkProEntitlement } from '@/lib/revenuecat';
 import logo from '@/assets/meliusme-logo-new.png';
 
-const APP_VERSION = '0.9.0-alpha';
+const APP_VERSION = '0.10.0-alpha';
 
 export default function Settings() {
   const { 
@@ -67,9 +66,6 @@ export default function Settings() {
     toast.success("Today's nutrition reset");
   };
 
-  const handleManageSubscription = () => {
-    toast.info('Subscription management is not available yet');
-  };
 
   const handleRestorePurchase = async () => {
     toast.info('Checking for previous purchases...');
@@ -304,12 +300,6 @@ export default function Settings() {
             </motion.div>
           )}
           
-          <motion.div whileTap={{ scale: 0.97 }}>
-            <Button onClick={handleManageSubscription} variant="outline" className="w-full h-12 rounded-xl justify-start gap-3 font-semibold">
-              <CreditCard className="w-5 h-5 text-muted-foreground" />
-              <span>Manage Subscription</span>
-            </Button>
-          </motion.div>
           
           <motion.div whileTap={{ scale: 0.97 }}>
             <Button onClick={handleRestorePurchase} variant="outline" className="w-full h-12 rounded-xl justify-start gap-3 font-semibold">

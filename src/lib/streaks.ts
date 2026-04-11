@@ -156,6 +156,43 @@ async function grantLevelReward(level: number): Promise<TempProUnlock> {
   return unlock;
 }
 
+// ─── XP Event Ledger (tracks XP earned per day) ───────────────────
+
+const XP_LEDGER_KEY = 'melius-xp-ledger';
+
+interface XPLedgerEntry {
+  date: string;
+  amount: number;
+  source: string;
+}
+
+async function getXPLedger(): Promise<XPLedgerEntry[]> {
+  return readEncLS<XPLedgerEntry[]>(XP_LEDGER_KEY, []);
+}
+
+async function addXPLedgerEntry(date: string, amount: number, source: string): Promise<void> {
+  const ledger = await getXPLedger();
+  ledger.push({ date, amount, source });
+  await writeEncLS(XP_LEDGER_KEY, ledger);
+}
+
+export async function rollbackDailyXP(date: string, isProUser: boolean): Promise<XPData> {
+  const ledger = await getXPLedger();
+  const todayEntries = ledger.filter(e => e.date === date);
+  const xpToRemove = todayEntries.reduce((sum, e) => sum + e.amount, 0);
+  
+  // Remove today's entries from ledger
+  const newLedger = ledger.filter(e => e.date !== date);
+  await writeEncLS(XP_LEDGER_KEY, newLedger);
+  
+  // Subtract XP
+  const current = await getXP();
+  const newTotal = Math.max(0, current - xpToRemove);
+  try { localStorage.setItem(XP_KEY, await encrypt(newTotal.toString())); } catch { localStorage.setItem(XP_KEY, newTotal.toString()); }
+  
+  return calculateLevel(newTotal);
+}
+
 export async function getXP(): Promise<number> {
   const raw = localStorage.getItem(XP_KEY);
   if (!raw) return 0;
@@ -168,12 +205,16 @@ export async function getXP(): Promise<number> {
   return parseInt(plaintext, 10) || 0;
 }
 
-export async function addXP(amount: number, isProUser: boolean = false): Promise<LevelUpResult> {
+export async function addXP(amount: number, isProUser: boolean = false, source: string = 'unknown'): Promise<LevelUpResult> {
   const current = await getXP();
   const previousData = calculateLevel(current);
   const newTotal = current + amount;
   try { localStorage.setItem(XP_KEY, await encrypt(newTotal.toString())); } catch { localStorage.setItem(XP_KEY, newTotal.toString()); }
   const newData = calculateLevel(newTotal);
+  
+  // Record in ledger
+  const today = new Date().toISOString().split('T')[0];
+  await addXPLedgerEntry(today, amount, source);
   
   const leveledUp = newData.level > previousData.level;
   let reward: TempProUnlock | null = null;
@@ -434,7 +475,25 @@ function calculateWeeklyChallengeProgress(challengeId: string, meals: any[], wee
     case 'log_21': case 'log_15': return weekMeals.length;
     case 'dinner_week': return new Set(weekMeals.filter(m => m.mealType === 'dinner').map(m => m.date)).size;
     case 'breakfast_streak': return new Set(weekMeals.filter(m => m.mealType === 'breakfast').map(m => m.date)).size;
-    case 'healthy_meals': return weekMeals.length;
+    case 'healthy_meals': {
+      // Count meals without health warnings (calories within reason, not excessively sugary)
+      const settingsRaw2 = localStorage.getItem('melius-settings');
+      let sugarLimit = 50;
+      let calLimit = 2000;
+      if (settingsRaw2) {
+        try {
+          const parsed = JSON.parse(settingsRaw2);
+          if (parsed?.goals?.sugar) sugarLimit = parsed.goals.sugar;
+          if (parsed?.goals?.calories) calLimit = parsed.goals.calories;
+        } catch {}
+      }
+      // A "healthy" meal: not excessively high calorie (< 40% of daily goal per meal) and sugar < 50% of daily limit
+      return weekMeals.filter(m => {
+        const calOk = m.calories <= calLimit * 0.4;
+        const sugarOk = !m.sugar || m.sugar <= sugarLimit * 0.5;
+        return calOk && sugarOk;
+      }).length;
+    }
     case 'protein_power': {
       // Count unique days where protein goal was met
       const settingsRaw = localStorage.getItem('melius-settings');
@@ -454,7 +513,25 @@ function calculateWeeklyChallengeProgress(challengeId: string, meals: any[], wee
       return Object.values(dailyProtein).filter(p => p >= proteinGoal).length;
     }
     case 'hydrate_week': {
-      // This is tracked separately via water data, return current stored progress
+      // Count days this week where user hit their water goal
+      try {
+        const waterRaw = localStorage.getItem('melius-water');
+        const settingsRaw3 = localStorage.getItem('melius-settings');
+        let waterGoal = 8;
+        if (settingsRaw3) {
+          try { const p = JSON.parse(settingsRaw3); if (p?.waterGoal) waterGoal = p.waterGoal; } catch {}
+        }
+        if (waterRaw) {
+          let waterData: Record<string, number> = {};
+          try { waterData = JSON.parse(waterRaw); } catch {}
+          const weekStartDate = new Date(weekStart);
+          let count = 0;
+          for (const [date, glasses] of Object.entries(waterData)) {
+            if (new Date(date) >= weekStartDate && glasses >= waterGoal) count++;
+          }
+          return count;
+        }
+      } catch {}
       return 0;
     }
     case 'in_range_5': {
@@ -470,8 +547,8 @@ function calculateWeeklyChallengeProgress(challengeId: string, meals: any[], wee
       weekMeals.forEach(m => {
         dailyCals[m.date] = (dailyCals[m.date] || 0) + m.calories;
       });
-      // Only count days that have meals logged
-      return Object.entries(dailyCals).filter(([, cal]) => cal > 0 && cal <= calGoal).length;
+      // 80-110% calorie adherence window
+      return Object.entries(dailyCals).filter(([, cal]) => cal > 0 && cal >= calGoal * 0.8 && cal <= calGoal * 1.1).length;
     }
     default: return 0;
   }

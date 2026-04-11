@@ -71,7 +71,7 @@ export function DashboardLayoutEditor({ open, onClose, onSave }: DashboardLayout
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-card rounded-3xl p-6 max-w-sm w-full max-h-[80vh] flex flex-col border border-border"
+            className="bg-card rounded-3xl p-6 max-w-sm w-full max-h-[75vh] flex flex-col border border-border"
           >
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold">Customize Layout</h2>
@@ -84,7 +84,7 @@ export function DashboardLayoutEditor({ open, onClose, onSave }: DashboardLayout
               Use arrows to reorder, toggle to show/hide widgets
             </p>
 
-            <div className="flex-1 overflow-y-auto mb-4 space-y-2">
+            <div className="flex-1 overflow-y-auto mb-4 space-y-2 -mr-2 pr-2">
               {widgets.map((widget, index) => (
                 <div
                   key={widget.id}

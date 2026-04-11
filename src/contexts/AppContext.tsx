@@ -301,9 +301,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setTodayWater(0);
     await setWaterIntake(todayStr, 0);
     sessionStorage.removeItem(`melius-confetti-${todayStr}`);
+    
+    // Rollback XP earned today
+    const { rollbackDailyXP } = await import('@/lib/streaks');
+    const rolledBackXP = await rollbackDailyXP(todayStr, isPro);
+    setXpData(rolledBackXP);
+    
+    // Clear daily challenge awards for today
+    sessionStorage.removeItem(`melius-daily-xp-awarded-${todayStr}`);
+    
     setMeals((prev) => prev.filter((m) => m.date !== todayStr));
     void deleteMealsByDate(todayStr);
-  }, []);
+  }, [isPro]);
 
   const toggleNotifications = useCallback(async () => {
     if (!areNotificationsSupported()) return;
@@ -326,11 +335,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const hideBottomToast = useCallback(() => {
-    setBottomToast((prev) => {
+    setBottomToast(prev => ({ ...prev, open: false }));
+    // Show next queued toast after a short delay for smooth stacking
+    setTimeout(() => {
       const next = toastQueueRef.current.shift();
-      if (next) return { open: true, message: next.message, variant: next.variant };
-      return { ...prev, open: false };
-    });
+      if (next) {
+        setBottomToast({ open: true, message: next.message, variant: next.variant });
+      }
+    }, 400);
   }, []);
 
   // ─── Daily challenge XP tracking ──────────────────────
@@ -356,7 +368,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     for (const c of challenges) {
       if (c.completed && !awarded.has(c.id)) {
         markChallengeAwarded(c.id);
-        const result = await addXP(c.xp, isPro);
+        const result = await addXP(c.xp, isPro, `challenge:${c.id}`);
         setXpData(result.xpData);
         if (result.leveledUp) {
           setLevelUpPending(result);
@@ -399,7 +411,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const updatedChallenge = await getCurrentChallenge(updatedMeals);
     setCurrentChallenge(updatedChallenge);
 
-    const levelResult = await addXP(10, isPro);
+    const levelResult = await addXP(10, isPro, 'meal_log');
     setXpData(levelResult.xpData);
     if (levelResult.leveledUp) {
       setLevelUpPending(levelResult);

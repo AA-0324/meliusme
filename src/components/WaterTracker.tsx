@@ -90,7 +90,7 @@ export function WaterTracker({ glasses, goal, onIncrement }: WaterTrackerProps) 
           transition={{ type: 'spring', damping: 10, stiffness: 150 }}
           className="text-sm text-center mt-3 font-semibold"
         >
-          🎉 Goal reached! Great job staying hydrated!
+          Goal reached! Great job staying hydrated!
         </motion.p>
       )}
     </motion.div>

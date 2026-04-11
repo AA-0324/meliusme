@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useApp } from '@/contexts/AppContext';
 import { ProUpgradeModal } from '@/components/ProUpgradeModal';
 import { BodyProfileEditor } from '@/components/BodyProfileEditor';
+import { ImageCropper } from '@/components/ImageCropper';
 import { exportMealsToCSV } from '@/lib/db';
 import { getGreeting, formatMemberSince } from '@/lib/userProfile';
 import { validateName } from '@/lib/validation';
@@ -48,6 +49,7 @@ export default function Profile() {
   const [personalizedGoalsEnabled, setPersonalizedGoalsEnabled] = useState(settings.personalizedGoals ?? false);
   const [showDisablePersonalized, setShowDisablePersonalized] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
 
   const prevSugarRef = useRef(settings.goals.sugar?.toString() || '');
 
@@ -143,10 +145,20 @@ export default function Profile() {
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { toast.error('Image must be under 2MB'); return; }
+    if (file.size > 10 * 1024 * 1024) { toast.error('Image must be under 10MB'); return; }
     const reader = new FileReader();
-    reader.onloadend = () => { setUserAvatar(reader.result as string); toast.success('Profile picture updated!'); };
+    reader.onloadend = () => {
+      setCropSrc(reader.result as string);
+    };
     reader.readAsDataURL(file);
+    // Reset input so same file can be re-selected
+    e.target.value = '';
+  };
+
+  const handleCropComplete = (croppedDataUrl: string) => {
+    setUserAvatar(croppedDataUrl);
+    setCropSrc(null);
+    toast.success('Profile picture updated!');
   };
 
   const handleExport = async () => {
@@ -500,6 +512,12 @@ export default function Profile() {
 
       <ProUpgradeModal open={showProModal} onClose={() => setShowProModal(false)} />
       <BodyProfileEditor open={showBodyProfile} onClose={() => setShowBodyProfile(false)} />
+      <ImageCropper 
+        open={!!cropSrc} 
+        imageSrc={cropSrc || ''} 
+        onClose={() => setCropSrc(null)} 
+        onCrop={handleCropComplete} 
+      />
     </div>
   );
 }
