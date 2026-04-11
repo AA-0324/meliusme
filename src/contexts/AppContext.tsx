@@ -335,11 +335,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const hideBottomToast = useCallback(() => {
-    setBottomToast((prev) => {
+    setBottomToast(prev => ({ ...prev, open: false }));
+    // Show next queued toast after a short delay for smooth stacking
+    setTimeout(() => {
       const next = toastQueueRef.current.shift();
-      if (next) return { open: true, message: next.message, variant: next.variant };
-      return { ...prev, open: false };
-    });
+      if (next) {
+        setBottomToast({ open: true, message: next.message, variant: next.variant });
+      }
+    }, 400);
   }, []);
 
   // ─── Daily challenge XP tracking ──────────────────────
