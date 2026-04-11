@@ -4,7 +4,6 @@ import {
   Settings as SettingsIcon, 
   RotateCcw, 
   Code2, 
-  CreditCard, 
   ChevronLeft,
   AlertTriangle,
   RefreshCw,
