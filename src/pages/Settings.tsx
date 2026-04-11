@@ -66,9 +66,6 @@ export default function Settings() {
     toast.success("Today's nutrition reset");
   };
 
-  const handleManageSubscription = () => {
-    toast.info('Subscription management is not available yet');
-  };
 
   const handleRestorePurchase = async () => {
     toast.info('Checking for previous purchases...');
