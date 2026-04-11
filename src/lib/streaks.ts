@@ -475,7 +475,25 @@ function calculateWeeklyChallengeProgress(challengeId: string, meals: any[], wee
     case 'log_21': case 'log_15': return weekMeals.length;
     case 'dinner_week': return new Set(weekMeals.filter(m => m.mealType === 'dinner').map(m => m.date)).size;
     case 'breakfast_streak': return new Set(weekMeals.filter(m => m.mealType === 'breakfast').map(m => m.date)).size;
-    case 'healthy_meals': return weekMeals.length;
+    case 'healthy_meals': {
+      // Count meals without health warnings (calories within reason, not excessively sugary)
+      const settingsRaw2 = localStorage.getItem('melius-settings');
+      let sugarLimit = 50;
+      let calLimit = 2000;
+      if (settingsRaw2) {
+        try {
+          const parsed = JSON.parse(settingsRaw2);
+          if (parsed?.goals?.sugar) sugarLimit = parsed.goals.sugar;
+          if (parsed?.goals?.calories) calLimit = parsed.goals.calories;
+        } catch {}
+      }
+      // A "healthy" meal: not excessively high calorie (< 40% of daily goal per meal) and sugar < 50% of daily limit
+      return weekMeals.filter(m => {
+        const calOk = m.calories <= calLimit * 0.4;
+        const sugarOk = !m.sugar || m.sugar <= sugarLimit * 0.5;
+        return calOk && sugarOk;
+      }).length;
+    }
     case 'protein_power': {
       // Count unique days where protein goal was met
       const settingsRaw = localStorage.getItem('melius-settings');
@@ -511,8 +529,8 @@ function calculateWeeklyChallengeProgress(challengeId: string, meals: any[], wee
       weekMeals.forEach(m => {
         dailyCals[m.date] = (dailyCals[m.date] || 0) + m.calories;
       });
-      // Only count days that have meals logged
-      return Object.entries(dailyCals).filter(([, cal]) => cal > 0 && cal <= calGoal).length;
+      // 80-110% calorie adherence window
+      return Object.entries(dailyCals).filter(([, cal]) => cal > 0 && cal >= calGoal * 0.8 && cal <= calGoal * 1.1).length;
     }
     default: return 0;
   }
