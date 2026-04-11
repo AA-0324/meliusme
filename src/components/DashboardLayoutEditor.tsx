@@ -63,7 +63,7 @@ export function DashboardLayoutEditor({ open, onClose, onSave }: DashboardLayout
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[70] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 pb-[calc(env(safe-area-inset-bottom)+5rem)]"
+          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
           onClick={onClose}
         >
           <motion.div
@@ -71,16 +71,20 @@ export function DashboardLayoutEditor({ open, onClose, onSave }: DashboardLayout
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-card rounded-3xl p-5 max-w-sm w-full max-h-[min(72svh,34rem)] flex flex-col border border-border shadow-2xl"
+            className="bg-card rounded-3xl p-6 max-w-sm w-full max-h-[80vh] flex flex-col border border-border"
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold">Customize Layout</h2>
+              <h2 className="text-xl font-bold">Customize Layout</h2>
               <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-secondary flex items-center justify-center">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto overscroll-contain pr-1 space-y-2 min-h-0">
+            <p className="text-sm text-muted-foreground mb-4">
+              Use arrows to reorder, toggle to show/hide widgets
+            </p>
+
+            <div className="flex-1 overflow-y-auto mb-4 space-y-2">
               {widgets.map((widget, index) => (
                 <div
                   key={widget.id}
@@ -124,13 +128,13 @@ export function DashboardLayoutEditor({ open, onClose, onSave }: DashboardLayout
               ))}
             </div>
 
-            <div className="flex gap-2 pt-3 mt-4 border-t border-border/50">
+            <div className="flex gap-2">
               <Button variant="outline" onClick={handleReset} className="flex-1 rounded-xl gap-2">
                 <RotateCcw className="w-4 h-4" />
                 Reset
               </Button>
               <Button onClick={handleSave} className="flex-1 rounded-xl">
-                Save
+                Save Layout
               </Button>
             </div>
           </motion.div>

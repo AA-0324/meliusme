@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { Meal, Settings, getSettings, saveSettings, getAllMeals, addMeal, deleteMeal, deleteMealsByDate, updateGoals, Goals, getWaterIntake, setWaterIntake, getAllWaterData } from '@/lib/db';
+import { Meal, Settings, getSettings, saveSettings, getAllMeals, addMeal, deleteMeal, deleteMealsByDate, updateGoals, Goals, getWaterIntake, setWaterIntake } from '@/lib/db';
 import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/userProfile';
 import { getBodyProfile, saveBodyProfile, BodyProfile, getAutoGoals } from '@/lib/bodyGoals';
 import { requestNotificationPermission, areNotificationsSupported } from '@/lib/notifications';
-import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge, getEarnedBadges, Badge, awardBadge, addXP, LevelUpResult, TempProUnlock, getTempProUnlocks, getXPData, XPData, getDailyChallenges, resetXPEarnedOnDate, removeTempUnlocksUnlockedOnDate } from '@/lib/streaks';
+import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge, getEarnedBadges, Badge, awardBadge, addXP, LevelUpResult, TempProUnlock, getTempProUnlocks, getXPData, XPData, getDailyChallenges } from '@/lib/streaks';
 import { initEncryption } from '@/lib/crypto';
 import { migrateAllToEncrypted } from '@/lib/encryptedStorage';
 import { initRevenueCat, checkProEntitlement } from '@/lib/revenuecat';
@@ -134,17 +134,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           console.warn('[RevenueCat] Init failed (non-blocking):', rcError);
         }
 
-        const [s, profile, body, streakD, bdgs, allMeals, water, xp, unlocks, waterData] = await Promise.all([
+        const [s, profile, body, streakD, challenge, bdgs, allMeals, water, xp, unlocks] = await Promise.all([
           getSettings(),
           getUserProfile(),
           getBodyProfile(),
           getStreakData(),
+          getCurrentChallenge(),
           getEarnedBadges(),
           getAllMeals(),
           getWaterIntake(today),
           getXPData(),
           getTempProUnlocks(),
-          getAllWaterData(),
         ]);
 
         setSettingsState(s);
@@ -157,7 +157,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setMeals(allMeals);
         setTodayWater(water);
 
-        const updatedChallenge = await getCurrentChallenge(allMeals, s, waterData);
+        const updatedChallenge = await getCurrentChallenge(allMeals);
         setCurrentChallenge(updatedChallenge);
 
         const migrated = localStorage.getItem('meliusme-pro-reset-v1.1');
@@ -220,19 +220,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshMeals = useCallback(async () => {
-    const [allMeals, waterData] = await Promise.all([getAllMeals(), getAllWaterData()]);
+    const allMeals = await getAllMeals();
     setMeals(allMeals);
-    setCurrentChallenge(await getCurrentChallenge(allMeals, settings, waterData));
-  }, [settings]);
+  }, []);
 
   const refreshStreak = useCallback(async () => {
-    const [s, allMeals, waterData, b] = await Promise.all([getStreakData(), getAllMeals(), getAllWaterData(), getEarnedBadges()]);
-    const c = await getCurrentChallenge(allMeals, settings, waterData);
-    setMeals(allMeals);
+    const [s, c, b] = await Promise.all([getStreakData(), getCurrentChallenge(), getEarnedBadges()]);
     setStreak(s);
     setCurrentChallenge(c);
     setBadges(b);
-  }, [settings]);
+  }, []);
 
   const setUserName = useCallback(async (name: string) => {
     const updated = await saveUserProfile({ name });
@@ -292,67 +289,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const updateUserGoals = useCallback(async (goals: Partial<Goals>) => {
     const updated = await updateGoals(goals);
     setSettingsState(updated);
-    const waterData = await getAllWaterData();
-    setCurrentChallenge(await getCurrentChallenge(meals, updated, waterData));
-  }, [meals]);
+  }, []);
 
   const setWaterGoalCb = useCallback(async (glasses: number) => {
     const updated = await saveSettings({ waterGoal: glasses });
     setSettingsState(updated);
-    const waterData = await getAllWaterData();
-    setCurrentChallenge(await getCurrentChallenge(meals, updated, waterData));
-  }, [meals]);
+  }, []);
 
   const resetDailyData = useCallback(async () => {
     const todayStr = new Date().toISOString().split('T')[0];
-    const nextMeals = meals.filter((m) => m.date !== todayStr);
-    const todayMeals = meals.filter((m) => m.date === todayStr);
-    const todayMealTypes = todayMeals.map((m) => m.mealType);
-    const todayTotals = getDailyTotals(meals, todayStr);
-    const awardedRaw = sessionStorage.getItem(`melius-daily-xp-awarded-${todayStr}`);
-    const awardedIds = awardedRaw ? JSON.parse(awardedRaw) as string[] : [];
-    const awardedChallengeXP = getDailyChallenges(
-      todayMealTypes,
-      todayWater,
-      settings.waterGoal,
-      settings.goals,
-      todayTotals.calories,
-      todayTotals.protein,
-    )
-      .filter((challenge) => awardedIds.includes(challenge.id))
-      .reduce((total, challenge) => total + challenge.xp, 0);
-    const fallbackDailyXP = todayMeals.length * 10 + awardedChallengeXP;
-
     setTodayWater(0);
-    setMeals(nextMeals);
-    setLevelUpPending(null);
-
+    await setWaterIntake(todayStr, 0);
     sessionStorage.removeItem(`melius-confetti-${todayStr}`);
-    sessionStorage.removeItem(goalToastKey(todayStr));
-    sessionStorage.removeItem(`melius-daily-xp-awarded-${todayStr}`);
-
-    await Promise.all([
-      setWaterIntake(todayStr, 0),
-      deleteMealsByDate(todayStr),
-    ]);
-
-    const [resetXpData, tempUnlocks, waterData] = await Promise.all([
-      resetXPEarnedOnDate(todayStr),
-      removeTempUnlocksUnlockedOnDate(todayStr),
-      getAllWaterData(),
-    ]);
-
-    const currentXPBeforeFallback = resetXpData.totalXP;
-    const expectedXPAfterFallback = Math.max(0, xpData.totalXP - fallbackDailyXP);
-    const missingDailyXP = Math.max(0, currentXPBeforeFallback - expectedXPAfterFallback);
-    const newXpData = missingDailyXP > 0
-      ? await import('@/lib/streaks').then(({ deductXP }) => deductXP(missingDailyXP))
-      : resetXpData;
-
-    setXpData(newXpData);
-    setTempProUnlocks(tempUnlocks);
-    setCurrentChallenge(await getCurrentChallenge(nextMeals, settings, waterData));
-  }, [meals, settings, todayWater, xpData.totalXP]);
+    setMeals((prev) => prev.filter((m) => m.date !== todayStr));
+    void deleteMealsByDate(todayStr);
+  }, []);
 
   const toggleNotifications = useCallback(async () => {
     if (!areNotificationsSupported()) return;
@@ -405,7 +356,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     for (const c of challenges) {
       if (c.completed && !awarded.has(c.id)) {
         markChallengeAwarded(c.id);
-        const result = await addXP(c.xp, isPro, { date: today, source: 'daily_challenge', challengeId: c.id });
+        const result = await addXP(c.xp, isPro);
         setXpData(result.xpData);
         if (result.leveledUp) {
           setLevelUpPending(result);
@@ -422,8 +373,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const newValue = todayWater + 1;
     setTodayWater(newValue);
     await setWaterIntake(today, newValue);
-    const waterData = await getAllWaterData();
-    setCurrentChallenge(await getCurrentChallenge(meals, settings, waterData));
     if (newValue >= settings.waterGoal) {
       const key = `water_complete_${today}`;
       const flags = getGoalToastFlags(today);
@@ -436,7 +385,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const todayMealTypes = meals.filter(m => m.date === today).map(m => m.mealType);
     const todayTotals = getDailyTotals(meals, today);
     await checkAndAwardDailyChallengeXP(todayMealTypes, newValue, todayTotals.calories, todayTotals.protein);
-  }, [todayWater, today, settings, showBottomToast, meals, checkAndAwardDailyChallengeXP]);
+  }, [todayWater, today, settings.waterGoal, showBottomToast, meals, checkAndAwardDailyChallengeXP]);
 
   const logMeal = useCallback(async (meal: Omit<Meal, 'id' | 'createdAt'>) => {
     const prevTotals = getDailyTotals(meals, meal.date);
@@ -447,11 +396,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const updatedStreak = await updateStreak(meal.date);
     setStreak(updatedStreak);
 
-    const waterData = await getAllWaterData();
-    const updatedChallenge = await getCurrentChallenge(updatedMeals, settings, waterData);
+    const updatedChallenge = await getCurrentChallenge(updatedMeals);
     setCurrentChallenge(updatedChallenge);
 
-    const levelResult = await addXP(10, isPro, { date: meal.date, source: 'meal', mealId: newMeal.id });
+    const levelResult = await addXP(10, isPro);
     setXpData(levelResult.xpData);
     if (levelResult.leveledUp) {
       setLevelUpPending(levelResult);
@@ -467,8 +415,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
 
     const todayStr = new Date().toISOString().split('T')[0];
-    const todayMeals = updatedMeals.filter(m => m.date === todayStr);
-    if (todayMeals.length >= 3 && !currentBadges.some(b => b.id === 'meals_3')) {
+    const todayMeals = meals.filter(m => m.date === todayStr);
+    if (todayMeals.length >= 2 && !currentBadges.some(b => b.id === 'meals_3')) {
       await awardBadge('meals_3');
       setBadges(await getEarnedBadges());
     }
@@ -518,23 +466,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Check daily challenges after meal log
-    if (meal.date === today) {
-      const todayMealsAfterLog = updatedMeals.filter((m) => m.date === today);
-      const todayTotals = getDailyTotals(updatedMeals, today);
-      const allMealTypes = todayMealsAfterLog.map((m) => m.mealType);
-      await checkAndAwardDailyChallengeXP(allMealTypes, todayWater, todayTotals.calories, todayTotals.protein);
-    }
+    const allMealTypes = updatedMeals.filter(m => m.date === today).map(m => m.mealType);
+    await checkAndAwardDailyChallengeXP(allMealTypes, todayWater, nextTotals.calories, nextTotals.protein);
 
     return newMeal;
-  }, [meals, settings, showBottomToast, isPro, today, todayWater, checkAndAwardDailyChallengeXP]);
+  }, [meals, settings.goals, showBottomToast, isPro, today, todayWater, checkAndAwardDailyChallengeXP]);
 
   const removeMeal = useCallback(async (id: string) => {
     await deleteMeal(id);
-    const nextMeals = meals.filter((m) => m.id !== id);
-    setMeals(nextMeals);
-    const waterData = await getAllWaterData();
-    setCurrentChallenge(await getCurrentChallenge(nextMeals, settings, waterData));
-  }, [meals, settings]);
+    setMeals((prev) => prev.filter((m) => m.id !== id));
+  }, []);
 
   return (
     <AppContext.Provider

@@ -1,8 +1,8 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, Trophy, CheckCircle2, Circle, ChevronRight, Zap, Gift, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { REFLECTION_QUESTIONS, saveLastReflection, getDailyChallenges, getLastReflection, getLastWeekNumber, getLastWeekStart, ReflectionData } from '@/lib/streaks';
+import { REFLECTION_QUESTIONS, saveLastReflection, getDailyChallenges, getLastWeekNumber, getLastWeekStart, ReflectionData } from '@/lib/streaks';
 import { useApp } from '@/contexts/AppContext';
 import { staggerContainer, fadeUpBounce } from '@/lib/motion';
 
@@ -17,13 +17,6 @@ export default function Challenges() {
   const reflectionQuestion = REFLECTION_QUESTIONS[lastWeekNumber % REFLECTION_QUESTIONS.length];
 
   const hasReflectedLastWeek = lastReflection && lastReflection.weekNumber === lastWeekNumber;
-
-  useEffect(() => {
-    const run = async () => {
-      setLastReflection(await getLastReflection());
-    };
-    void run();
-  }, []);
 
   const lastWeekStartDate = new Date(lastWeekStart);
   const thisWeekStartDate = new Date();
@@ -77,6 +70,14 @@ export default function Challenges() {
         >
           Challenges
         </motion.h1>
+        <motion.p
+          initial={noMotion ? false : { opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1, type: 'spring', damping: 15 }}
+          className="text-muted-foreground mt-1"
+        >
+          Daily missions & achievements
+        </motion.p>
       </div>
 
       <motion.div 
@@ -247,7 +248,7 @@ export default function Challenges() {
               animate={noMotion ? {} : { scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
               transition={{ duration: 2, repeat: Infinity, repeatDelay: 2 }}
             >
-              <Trophy className="w-5 h-5 text-warning" />
+              <Trophy className="w-5 h-5 text-amber-500" />
             </motion.div>
             <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Last Week's Reflection</h2>
           </div>

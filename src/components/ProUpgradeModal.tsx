@@ -19,7 +19,6 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
   const paywallContainerRef = useRef<HTMLDivElement>(null);
   const paywallActiveRef = useRef(false);
   const savedClassesRef = useRef<string[]>([]);
-  const dismissedByUserRef = useRef(false);
 
   // Strip app theme classes from <html> while paywall is open so they don't cascade
   useEffect(() => {
@@ -58,7 +57,6 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
       const result = await rc.presentPaywall({
         htmlTarget: paywallContainerRef.current!,
         onBack: (closePaywall) => {
-          dismissedByUserRef.current = true;
           closePaywall();
           onClose();
         },
@@ -66,24 +64,18 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
 
       console.log('[ProUpgrade] Paywall result:', result);
 
-      if (dismissedByUserRef.current) return;
-
       const hasPro = ENTITLEMENT_ID in result.customerInfo.entitlements.active;
       if (hasPro) {
         setPro(true);
         toast.success('Welcome to MeliusMe Pro!');
-        onClose();
-      } else {
-        toast.error('Purchase failed. Please try again.');
         onClose();
       }
     } catch (e: unknown) {
       console.error('[ProUpgrade] Paywall error:', e);
       const message = (e as Error)?.message || 'Something went wrong';
       if (!message.includes('cancel') && !message.includes('close')) {
-        toast.error('Purchase failed. Please try again.');
+        setError(message);
       }
-      onClose();
     } finally {
       paywallActiveRef.current = false;
     }
@@ -91,7 +83,6 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
 
   useEffect(() => {
     if (open) {
-      dismissedByUserRef.current = false;
       const timer = setTimeout(() => {
         presentPaywall();
       }, 100);
@@ -119,16 +110,16 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
       }}
     >
       {error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background z-[201]">
+        <div className="absolute inset-0 flex items-center justify-center bg-white z-[201]">
           <div className="text-center px-6">
-            <p className="text-muted-foreground text-sm mb-4">Unable to load paywall</p>
-            <p className="text-muted-foreground/80 text-xs mb-6">{error}</p>
+            <p className="text-gray-500 text-sm mb-4">Unable to load paywall</p>
+            <p className="text-gray-400 text-xs mb-6">{error}</p>
             <button
               onClick={() => {
                 setError(null);
                 presentPaywall();
               }}
-              className="px-6 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
+              className="px-6 py-2 rounded-xl bg-[#1ebc73] text-white text-sm font-semibold hover:bg-[#19a564] transition-colors"
             >
               Retry
             </button>
