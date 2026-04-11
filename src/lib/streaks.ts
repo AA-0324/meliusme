@@ -513,7 +513,25 @@ function calculateWeeklyChallengeProgress(challengeId: string, meals: any[], wee
       return Object.values(dailyProtein).filter(p => p >= proteinGoal).length;
     }
     case 'hydrate_week': {
-      // This is tracked separately via water data, return current stored progress
+      // Count days this week where user hit their water goal
+      try {
+        const waterRaw = localStorage.getItem('melius-water');
+        const settingsRaw3 = localStorage.getItem('melius-settings');
+        let waterGoal = 8;
+        if (settingsRaw3) {
+          try { const p = JSON.parse(settingsRaw3); if (p?.waterGoal) waterGoal = p.waterGoal; } catch {}
+        }
+        if (waterRaw) {
+          let waterData: Record<string, number> = {};
+          try { waterData = JSON.parse(waterRaw); } catch {}
+          const weekStartDate = new Date(weekStart);
+          let count = 0;
+          for (const [date, glasses] of Object.entries(waterData)) {
+            if (new Date(date) >= weekStartDate && glasses >= waterGoal) count++;
+          }
+          return count;
+        }
+      } catch {}
       return 0;
     }
     case 'in_range_5': {
