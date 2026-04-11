@@ -512,6 +512,12 @@ export default function Profile() {
 
       <ProUpgradeModal open={showProModal} onClose={() => setShowProModal(false)} />
       <BodyProfileEditor open={showBodyProfile} onClose={() => setShowBodyProfile(false)} />
+      <ImageCropper 
+        open={!!cropSrc} 
+        imageSrc={cropSrc || ''} 
+        onClose={() => setCropSrc(null)} 
+        onCrop={handleCropComplete} 
+      />
     </div>
   );
 }
