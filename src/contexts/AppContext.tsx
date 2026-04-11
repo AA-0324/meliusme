@@ -301,9 +301,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setTodayWater(0);
     await setWaterIntake(todayStr, 0);
     sessionStorage.removeItem(`melius-confetti-${todayStr}`);
+    
+    // Rollback XP earned today
+    const { rollbackDailyXP } = await import('@/lib/streaks');
+    const rolledBackXP = await rollbackDailyXP(todayStr, isPro);
+    setXpData(rolledBackXP);
+    
+    // Clear daily challenge awards for today
+    sessionStorage.removeItem(`melius-daily-xp-awarded-${todayStr}`);
+    
     setMeals((prev) => prev.filter((m) => m.date !== todayStr));
     void deleteMealsByDate(todayStr);
-  }, []);
+  }, [isPro]);
 
   const toggleNotifications = useCallback(async () => {
     if (!areNotificationsSupported()) return;
