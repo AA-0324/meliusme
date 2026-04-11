@@ -156,6 +156,43 @@ async function grantLevelReward(level: number): Promise<TempProUnlock> {
   return unlock;
 }
 
+// ─── XP Event Ledger (tracks XP earned per day) ───────────────────
+
+const XP_LEDGER_KEY = 'melius-xp-ledger';
+
+interface XPLedgerEntry {
+  date: string;
+  amount: number;
+  source: string;
+}
+
+async function getXPLedger(): Promise<XPLedgerEntry[]> {
+  return readEncLS<XPLedgerEntry[]>(XP_LEDGER_KEY, []);
+}
+
+async function addXPLedgerEntry(date: string, amount: number, source: string): Promise<void> {
+  const ledger = await getXPLedger();
+  ledger.push({ date, amount, source });
+  await writeEncLS(XP_LEDGER_KEY, ledger);
+}
+
+export async function rollbackDailyXP(date: string, isProUser: boolean): Promise<XPData> {
+  const ledger = await getXPLedger();
+  const todayEntries = ledger.filter(e => e.date === date);
+  const xpToRemove = todayEntries.reduce((sum, e) => sum + e.amount, 0);
+  
+  // Remove today's entries from ledger
+  const newLedger = ledger.filter(e => e.date !== date);
+  await writeEncLS(XP_LEDGER_KEY, newLedger);
+  
+  // Subtract XP
+  const current = await getXP();
+  const newTotal = Math.max(0, current - xpToRemove);
+  try { localStorage.setItem(XP_KEY, await encrypt(newTotal.toString())); } catch { localStorage.setItem(XP_KEY, newTotal.toString()); }
+  
+  return calculateLevel(newTotal);
+}
+
 export async function getXP(): Promise<number> {
   const raw = localStorage.getItem(XP_KEY);
   if (!raw) return 0;
@@ -168,12 +205,16 @@ export async function getXP(): Promise<number> {
   return parseInt(plaintext, 10) || 0;
 }
 
-export async function addXP(amount: number, isProUser: boolean = false): Promise<LevelUpResult> {
+export async function addXP(amount: number, isProUser: boolean = false, source: string = 'unknown'): Promise<LevelUpResult> {
   const current = await getXP();
   const previousData = calculateLevel(current);
   const newTotal = current + amount;
   try { localStorage.setItem(XP_KEY, await encrypt(newTotal.toString())); } catch { localStorage.setItem(XP_KEY, newTotal.toString()); }
   const newData = calculateLevel(newTotal);
+  
+  // Record in ledger
+  const today = new Date().toISOString().split('T')[0];
+  await addXPLedgerEntry(today, amount, source);
   
   const leveledUp = newData.level > previousData.level;
   let reward: TempProUnlock | null = null;
