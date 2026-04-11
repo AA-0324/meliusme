@@ -65,7 +65,7 @@ export function DayCompleteModal({ open, onClose, totalCalories, totalMeals }: D
             </motion.h2>
             
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="text-muted-foreground mb-8">
-              Today logged. Great job! 🎉
+              All meals logged for today. Great job!
             </motion.p>
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="grid grid-cols-2 gap-4 mb-8">
