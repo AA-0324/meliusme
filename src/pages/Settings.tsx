@@ -304,12 +304,6 @@ export default function Settings() {
             </motion.div>
           )}
           
-          <motion.div whileTap={{ scale: 0.97 }}>
-            <Button onClick={handleManageSubscription} variant="outline" className="w-full h-12 rounded-xl justify-start gap-3 font-semibold">
-              <CreditCard className="w-5 h-5 text-muted-foreground" />
-              <span>Manage Subscription</span>
-            </Button>
-          </motion.div>
           
           <motion.div whileTap={{ scale: 0.97 }}>
             <Button onClick={handleRestorePurchase} variant="outline" className="w-full h-12 rounded-xl justify-start gap-3 font-semibold">
