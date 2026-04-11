@@ -365,7 +365,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     for (const c of challenges) {
       if (c.completed && !awarded.has(c.id)) {
         markChallengeAwarded(c.id);
-        const result = await addXP(c.xp, isPro);
+        const result = await addXP(c.xp, isPro, `challenge:${c.id}`);
         setXpData(result.xpData);
         if (result.leveledUp) {
           setLevelUpPending(result);
@@ -408,7 +408,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const updatedChallenge = await getCurrentChallenge(updatedMeals);
     setCurrentChallenge(updatedChallenge);
 
-    const levelResult = await addXP(10, isPro);
+    const levelResult = await addXP(10, isPro, 'meal_log');
     setXpData(levelResult.xpData);
     if (levelResult.leveledUp) {
       setLevelUpPending(levelResult);
