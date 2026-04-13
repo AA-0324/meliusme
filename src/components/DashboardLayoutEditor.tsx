@@ -63,34 +63,34 @@ export function DashboardLayoutEditor({ open, onClose, onSave }: DashboardLayout
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center"
           onClick={onClose}
         >
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-card rounded-3xl p-6 max-w-sm w-full max-h-[75vh] flex flex-col border border-border"
+            className="bg-card rounded-t-3xl sm:rounded-3xl p-5 w-full max-w-sm max-h-[70vh] flex flex-col border border-border safe-bottom"
           >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">Customize Layout</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-bold">Customize Layout</h2>
               <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-secondary flex items-center justify-center">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-sm text-muted-foreground mb-4">
-              Use arrows to reorder, toggle to show/hide widgets
+            <p className="text-xs text-muted-foreground mb-3">
+              Reorder and toggle widgets
             </p>
 
-            <div className="flex-1 overflow-y-auto mb-4 space-y-2 -mr-2 pr-2">
+            <div className="flex-1 overflow-y-auto mb-3 space-y-2 -mr-1 pr-1">
               {widgets.map((widget, index) => (
                 <div
                   key={widget.id}
                   className="flex items-center gap-2 bg-secondary/30 rounded-xl p-3 border border-border/50"
                 >
-                  {/* Move buttons */}
                   <div className="flex flex-col gap-0.5 flex-shrink-0">
                     <button
                       onClick={() => moveUp(index)}
@@ -108,12 +108,10 @@ export function DashboardLayoutEditor({ open, onClose, onSave }: DashboardLayout
                     </button>
                   </div>
 
-                  {/* Widget name */}
                   <span className={`flex-1 font-medium text-sm ${!widget.visible ? 'text-muted-foreground line-through' : ''}`}>
                     {widget.name}
                   </span>
 
-                  {/* Visibility toggle */}
                   <button
                     onClick={() => toggleVisibility(widget.id)}
                     className="p-1.5 rounded-lg hover:bg-secondary transition-colors"
@@ -128,7 +126,7 @@ export function DashboardLayoutEditor({ open, onClose, onSave }: DashboardLayout
               ))}
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-shrink-0">
               <Button variant="outline" onClick={handleReset} className="flex-1 rounded-xl gap-2">
                 <RotateCcw className="w-4 h-4" />
                 Reset

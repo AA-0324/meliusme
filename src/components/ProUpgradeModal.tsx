@@ -68,22 +68,19 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
       if (hasPro) {
         setPro(true);
         toast.success('Welcome to MeliusMe Pro!');
-        onClose();
       } else {
-        // Transaction didn't complete or was cancelled
         toast.error('Purchase was not completed.');
-        onClose();
       }
+      // Always close the paywall regardless of outcome
+      onClose();
     } catch (e: unknown) {
       console.error('[ProUpgrade] Paywall error:', e);
       const message = (e as Error)?.message || 'Something went wrong';
-      if (message.includes('cancel') || message.includes('close')) {
-        // User cancelled — just close
-        onClose();
-      } else {
+      if (!message.includes('cancel') && !message.includes('close')) {
         toast.error('Purchase failed. Please try again.');
-        onClose();
       }
+      // Always close on error/cancel
+      onClose();
     } finally {
       paywallActiveRef.current = false;
     }
