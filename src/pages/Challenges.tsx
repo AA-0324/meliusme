@@ -19,10 +19,12 @@ export default function Challenges() {
   const hasReflectedLastWeek = lastReflection && lastReflection.weekNumber === lastWeekNumber;
 
   const lastWeekStartDate = new Date(lastWeekStart);
+  // Calculate this week's Monday to exclude today's meals from last week's reflection
   const thisWeekStartDate = new Date();
   const day = thisWeekStartDate.getDay();
   const diff = thisWeekStartDate.getDate() - day + (day === 0 ? -6 : 1);
   const thisWeekMonday = new Date(thisWeekStartDate.getFullYear(), thisWeekStartDate.getMonth(), diff);
+  thisWeekMonday.setHours(0, 0, 0, 0);
 
   const lastWeekMeals = meals.filter((m) => {
     const mealDate = new Date(m.date);

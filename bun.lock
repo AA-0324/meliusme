@@ -309,7 +309,7 @@
 
     "@remix-run/router": ["@remix-run/router@1.23.0", "", {}, "sha512-O3rHJzAQKamUz1fvE0Qaw0xSFqsA/yafi2iqeE0pvdFtCO1viYx8QL6f3Ln/aCCTLxs68SLf0KPM9eSeM8yBnA=="],
 
-    "@revenuecat/purchases-js": ["@revenuecat/purchases-js@1.30.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@revenuecat/purchases-js/-/purchases-js-1.30.0.tgz", {}, "sha512-aNlk6lPWrJ1DncPnw0WZh8nZKbd5S++EcsQxlLnv3HX/jOnMO54zr0SKsz3GJyFa6zh04N6b3qHAgWWm51EWpg=="],
+    "@revenuecat/purchases-js": ["@revenuecat/purchases-js@1.32.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@revenuecat/purchases-js/-/purchases-js-1.32.0.tgz", {}, "sha512-NyXXlD7Ejl/aacnfY6KO3D3OX35rsUpRF6QZE+vglL+9Of1KYKHNatmhHE5R9V0ZaPcAsc36/naBoQe7soWeTw=="],
 
     "@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.0-beta.27", "", {}, "sha512-+d0F4MKMCbeVUJwG96uQ4SgAznZNSq93I3V+9NHA4OpvqG8mRCpGdKmK8l/dl02h2CCDHwW2FqilnTyDcAnqjA=="],
 

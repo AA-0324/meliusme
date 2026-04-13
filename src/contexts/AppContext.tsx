@@ -310,9 +310,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     // Clear daily challenge awards for today
     sessionStorage.removeItem(`melius-daily-xp-awarded-${todayStr}`);
     
+    // Clear goal toast flags so they can re-trigger
+    sessionStorage.removeItem(goalToastKey(todayStr));
+    
+    // Delete today's meals and update state
     setMeals((prev) => prev.filter((m) => m.date !== todayStr));
     void deleteMealsByDate(todayStr);
-  }, [isPro]);
+    
+    // Recalculate weekly challenge progress without today's meals
+    const remainingMeals = meals.filter(m => m.date !== todayStr);
+    const { getCurrentChallenge: getChallenge } = await import('@/lib/streaks');
+    const updatedChallenge = await getChallenge(remainingMeals);
+    setCurrentChallenge(updatedChallenge);
+  }, [isPro, meals]);
 
   const toggleNotifications = useCallback(async () => {
     if (!areNotificationsSupported()) return;
