@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, ZoomIn, ZoomOut } from 'lucide-react';
 
@@ -15,8 +15,59 @@ export function ImageCropper({ open, imageSrc, onClose, onCrop }: ImageCropperPr
   const [dragging, setDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [imgNaturalSize, setImgNaturalSize] = useState({ w: 0, h: 0 });
+  const [cropSize, setCropSize] = useState(280);
   const imgRef = useRef<HTMLImageElement | null>(null);
-  const CROP_SIZE = 240;
+
+  const clampOffset = useCallback((next: { x: number; y: number }, nextScale = scale) => {
+    const { w, h } = imgNaturalSize;
+    if (!w || !h) return { x: 0, y: 0 };
+    const baseScale = Math.max(cropSize / w, cropSize / h);
+    const scaledW = w * baseScale * nextScale;
+    const scaledH = h * baseScale * nextScale;
+    const maxX = Math.max(0, (scaledW - cropSize) / 2);
+    const maxY = Math.max(0, (scaledH - cropSize) / 2);
+    return {
+      x: Math.min(maxX, Math.max(-maxX, next.x)),
+      y: Math.min(maxY, Math.max(-maxY, next.y)),
+    };
+  }, [cropSize, imgNaturalSize, scale]);
+
+  const setSafeScale = useCallback((value: number | ((current: number) => number)) => {
+    setScale(current => {
+      const next = Math.min(4, Math.max(1, typeof value === 'function' ? value(current) : value));
+      setOffset(currentOffset => clampOffset(currentOffset, next));
+      return next;
+    });
+  }, [clampOffset]);
+
+  useEffect(() => {
+    if (!open) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const previous = {
+      htmlOverflow: html.style.overflow,
+      bodyOverflow: body.style.overflow,
+      bodyTouchAction: body.style.touchAction,
+    };
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    body.style.touchAction = 'none';
+    return () => {
+      html.style.overflow = previous.htmlOverflow;
+      body.style.overflow = previous.bodyOverflow;
+      body.style.touchAction = previous.bodyTouchAction;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const updateSize = () => {
+      setCropSize(Math.min(320, Math.max(240, window.innerWidth - 96)));
+    };
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, [open]);
 
   useEffect(() => {
     if (!open || !imageSrc) return;
@@ -24,29 +75,18 @@ export function ImageCropper({ open, imageSrc, onClose, onCrop }: ImageCropperPr
     img.onload = () => {
       imgRef.current = img;
       setImgNaturalSize({ w: img.naturalWidth, h: img.naturalHeight });
-      setScale(1);
+      setSafeScale(1);
       setOffset({ x: 0, y: 0 });
     };
     img.src = imageSrc;
-  }, [open, imageSrc]);
+  }, [open, imageSrc, setSafeScale]);
 
-  // Calculate image dimensions to cover the crop circle
-  const getImgStyle = () => {
+  const imgStyle = useMemo(() => {
     const { w, h } = imgNaturalSize;
-    if (w === 0 || h === 0) return { width: CROP_SIZE, height: CROP_SIZE };
-    const aspect = w / h;
-    let displayW: number, displayH: number;
-    if (aspect >= 1) {
-      // Landscape: height = CROP_SIZE, width scales
-      displayH = CROP_SIZE;
-      displayW = CROP_SIZE * aspect;
-    } else {
-      // Portrait: width = CROP_SIZE, height scales
-      displayW = CROP_SIZE;
-      displayH = CROP_SIZE / aspect;
-    }
-    return { width: displayW, height: displayH };
-  };
+    if (!w || !h) return { width: cropSize, height: cropSize };
+    const baseScale = Math.max(cropSize / w, cropSize / h);
+    return { width: w * baseScale, height: h * baseScale };
+  }, [cropSize, imgNaturalSize]);
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     setDragging(true);
