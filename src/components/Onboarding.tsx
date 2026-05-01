@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { useApp } from '@/contexts/AppContext';
 import { ProUpgradeModal } from '@/components/ProUpgradeModal';
+import { ImageCropper } from '@/components/ImageCropper';
 import { validateName } from '@/lib/validation';
 import { toast } from 'sonner';
 import logo from '@/assets/meliusme-logo-new.png';
@@ -28,6 +29,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState<string | null>(null);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [showProModal, setShowProModal] = useState(false);
   const [nameError, setNameError] = useState('');
   const avatarRef = useRef<HTMLInputElement>(null);
@@ -62,10 +64,19 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { toast.error('Image must be under 2MB'); return; }
+    if (file.size > 10 * 1024 * 1024) { toast.error('Image must be under 10MB'); return; }
     const reader = new FileReader();
-    reader.onloadend = () => setAvatar(reader.result as string);
+    reader.onloadend = () => setCropSrc(reader.result as string);
     reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handleAvatarPress = () => {
+    if (avatar) {
+      setCropSrc(avatar);
+      return;
+    }
+    avatarRef.current?.click();
   };
 
   const handleSetupProfile = async () => {
@@ -183,7 +194,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
                 className="flex flex-col items-center mb-6">
                 <input ref={avatarRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
-                <motion.button whileTap={{ scale: 0.9 }} onClick={() => avatarRef.current?.click()} className="relative group mb-3">
+                <motion.button whileTap={{ scale: 0.9 }} onClick={handleAvatarPress} className="relative group mb-3">
                   {avatar ? (
                     <img src={avatar} alt="Avatar" className="w-24 h-24 rounded-full object-cover border-2 border-primary shadow-neon" />
                   ) : (
@@ -448,6 +459,15 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       </div>
 
       <ProUpgradeModal open={showProModal} onClose={handleProModalClose} />
+      <ImageCropper
+        open={!!cropSrc}
+        imageSrc={cropSrc || ''}
+        onClose={() => setCropSrc(null)}
+        onCrop={(croppedDataUrl) => {
+          setAvatar(croppedDataUrl);
+          setCropSrc(null);
+        }}
+      />
     </>
   );
 }
