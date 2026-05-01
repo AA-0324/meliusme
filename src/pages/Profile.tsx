@@ -50,6 +50,7 @@ export default function Profile() {
   const [showDisablePersonalized, setShowDisablePersonalized] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [showAvatarActions, setShowAvatarActions] = useState(false);
 
   const prevSugarRef = useRef(settings.goals.sugar?.toString() || '');
 
@@ -155,6 +156,14 @@ export default function Profile() {
     e.target.value = '';
   };
 
+  const handleAvatarPress = () => {
+    if (userProfile?.avatar) {
+      setShowAvatarActions(true);
+      return;
+    }
+    avatarInputRef.current?.click();
+  };
+
   const handleCropComplete = (croppedDataUrl: string) => {
     setUserAvatar(croppedDataUrl);
     setCropSrc(null);
@@ -235,7 +244,7 @@ export default function Profile() {
             <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
             <motion.button 
               whileTap={{ scale: 0.9 }} 
-              onClick={() => avatarInputRef.current?.click()} 
+              onClick={handleAvatarPress} 
               className="relative group flex-shrink-0 cursor-pointer" 
               title="Change profile picture"
               {...(animationsEnabled ? { whileHover: { scale: 1.08, transition: { type: 'spring', damping: 10 } } } : {})}
@@ -512,6 +521,36 @@ export default function Profile() {
 
       <ProUpgradeModal open={showProModal} onClose={() => setShowProModal(false)} />
       <BodyProfileEditor open={showBodyProfile} onClose={() => setShowBodyProfile(false)} />
+      <AlertDialog open={showAvatarActions} onOpenChange={setShowAvatarActions}>
+        <AlertDialogContent className="border-border bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Profile picture</AlertDialogTitle>
+            <AlertDialogDescription>
+              Edit the current photo crop or choose a new photo.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              onClick={() => {
+                setShowAvatarActions(false);
+                if (userProfile?.avatar) setCropSrc(userProfile.avatar);
+              }}
+            >
+              Edit
+            </AlertDialogAction>
+            <AlertDialogAction
+              onClick={() => {
+                setShowAvatarActions(false);
+                setTimeout(() => avatarInputRef.current?.click(), 0);
+              }}
+            >
+              Change
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <ImageCropper 
         open={!!cropSrc} 
         imageSrc={cropSrc || ''} 
