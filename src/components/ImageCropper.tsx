@@ -96,8 +96,8 @@ export function ImageCropper({ open, imageSrc, onClose, onCrop }: ImageCropperPr
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!dragging) return;
-    setOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
-  }, [dragging, dragStart]);
+    setOffset(clampOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y }));
+  }, [dragging, dragStart, clampOffset]);
 
   const handlePointerUp = useCallback(() => {
     setDragging(false);
@@ -113,21 +113,21 @@ export function ImageCropper({ open, imageSrc, onClose, onCrop }: ImageCropperPr
     canvas.height = outputSize;
     const ctx = canvas.getContext('2d')!;
 
-    const { width: displayW, height: displayH } = getImgStyle();
+    const { width: displayW, height: displayH } = imgStyle;
     const scaledW = displayW * scale;
     const scaledH = displayH * scale;
     // Center of crop circle is center of container
     // Image is drawn at center + offset
-    const drawX = (CROP_SIZE - scaledW) / 2 + offset.x;
-    const drawY = (CROP_SIZE - scaledH) / 2 + offset.y;
+    const drawX = (cropSize - scaledW) / 2 + offset.x;
+    const drawY = (cropSize - scaledH) / 2 + offset.y;
 
     // Map crop circle (0,0,CROP_SIZE,CROP_SIZE) back to source image coords
     const scaleX = img.naturalWidth / scaledW;
     const scaleY = img.naturalHeight / scaledH;
     const srcX = (0 - drawX) * scaleX;
     const srcY = (0 - drawY) * scaleY;
-    const srcW = CROP_SIZE * scaleX;
-    const srcH = CROP_SIZE * scaleY;
+    const srcW = cropSize * scaleX;
+    const srcH = cropSize * scaleY;
 
     // Draw circular clip
     ctx.beginPath();
@@ -137,9 +137,7 @@ export function ImageCropper({ open, imageSrc, onClose, onCrop }: ImageCropperPr
 
     ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, outputSize, outputSize);
     onCrop(canvas.toDataURL('image/jpeg', 0.9));
-  }, [scale, offset, onCrop, imgNaturalSize]);
-
-  const imgStyle = getImgStyle();
+  }, [cropSize, imgStyle, scale, offset, onCrop]);
 
   return (
     <AnimatePresence>
@@ -148,23 +146,23 @@ export function ImageCropper({ open, imageSrc, onClose, onCrop }: ImageCropperPr
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[150] bg-black/95 flex flex-col items-center justify-center p-6"
+            className="fixed inset-0 z-[210] bg-background/55 backdrop-blur-xl flex flex-col items-center justify-center p-6"
         >
           {/* Top bar */}
           <div className="flex items-center justify-between w-full max-w-xs mb-6">
-            <button onClick={onClose} className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center active:scale-90 transition-transform">
-              <X className="w-5 h-5 text-white" />
+            <button onClick={onClose} className="w-11 h-11 rounded-full bg-card/80 border border-border flex items-center justify-center active:scale-90 transition-transform shadow-lg">
+              <X className="w-5 h-5 text-foreground" />
             </button>
-            <p className="text-white font-semibold text-sm">Move & Scale</p>
-            <button onClick={handleCrop} className="w-10 h-10 rounded-full bg-primary flex items-center justify-center active:scale-90 transition-transform">
+            <p className="text-foreground font-semibold text-sm">Move & Scale</p>
+            <button onClick={handleCrop} className="w-11 h-11 rounded-full bg-primary flex items-center justify-center active:scale-90 transition-transform shadow-lg shadow-primary/30">
               <Check className="w-5 h-5 text-primary-foreground" />
             </button>
           </div>
 
           {/* Crop area */}
           <div
-            className="relative rounded-full overflow-hidden border-2 border-white/20 cursor-move touch-none"
-            style={{ width: CROP_SIZE, height: CROP_SIZE }}
+            className="relative rounded-full overflow-hidden border-2 border-border cursor-move touch-none bg-muted shadow-2xl"
+            style={{ width: cropSize, height: cropSize }}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
@@ -177,8 +175,8 @@ export function ImageCropper({ open, imageSrc, onClose, onCrop }: ImageCropperPr
                 style={{
                   width: imgStyle.width * scale,
                   height: imgStyle.height * scale,
-                  left: (CROP_SIZE - imgStyle.width * scale) / 2 + offset.x,
-                  top: (CROP_SIZE - imgStyle.height * scale) / 2 + offset.y,
+                  left: (cropSize - imgStyle.width * scale) / 2 + offset.x,
+                  top: (cropSize - imgStyle.height * scale) / 2 + offset.y,
                 }}
                 draggable={false}
               />
@@ -186,27 +184,27 @@ export function ImageCropper({ open, imageSrc, onClose, onCrop }: ImageCropperPr
           </div>
 
           {/* Zoom controls */}
-          <div className="flex items-center gap-4 mt-6">
+          <div className="flex items-center gap-4 mt-6 rounded-full bg-card/80 border border-border px-4 py-3 shadow-lg">
             <button
-              onClick={() => setScale(s => Math.max(0.5, s - 0.1))}
-              className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center active:scale-90 transition-transform"
+              onClick={() => setSafeScale(s => s - 0.15)}
+              className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center active:scale-90 transition-transform"
             >
-              <ZoomOut className="w-5 h-5 text-white" />
+              <ZoomOut className="w-5 h-5 text-foreground" />
             </button>
             <input
               type="range"
-              min="0.5"
-              max="3"
+              min="1"
+              max="4"
               step="0.05"
               value={scale}
-              onChange={(e) => setScale(parseFloat(e.target.value))}
+              onChange={(e) => setSafeScale(parseFloat(e.target.value))}
               className="w-32 accent-primary"
             />
             <button
-              onClick={() => setScale(s => Math.min(3, s + 0.1))}
-              className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center active:scale-90 transition-transform"
+              onClick={() => setSafeScale(s => s + 0.15)}
+              className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center active:scale-90 transition-transform"
             >
-              <ZoomIn className="w-5 h-5 text-white" />
+              <ZoomIn className="w-5 h-5 text-foreground" />
             </button>
           </div>
         </motion.div>
