@@ -18,7 +18,7 @@ export function ImageCropper({ open, imageSrc, onClose, onCrop }: ImageCropperPr
   const [cropSize, setCropSize] = useState(280);
   const imgRef = useRef<HTMLImageElement | null>(null);
 
-  const clampOffset = useCallback((next: { x: number; y: number }, nextScale = scale) => {
+  const clampOffset = useCallback((next: { x: number; y: number }, nextScale: number) => {
     const { w, h } = imgNaturalSize;
     if (!w || !h) return { x: 0, y: 0 };
     const baseScale = Math.max(cropSize / w, cropSize / h);
@@ -30,7 +30,7 @@ export function ImageCropper({ open, imageSrc, onClose, onCrop }: ImageCropperPr
       x: Math.min(maxX, Math.max(-maxX, next.x)),
       y: Math.min(maxY, Math.max(-maxY, next.y)),
     };
-  }, [cropSize, imgNaturalSize, scale]);
+  }, [cropSize, imgNaturalSize]);
 
   const setSafeScale = useCallback((value: number | ((current: number) => number)) => {
     setScale(current => {
@@ -75,11 +75,11 @@ export function ImageCropper({ open, imageSrc, onClose, onCrop }: ImageCropperPr
     img.onload = () => {
       imgRef.current = img;
       setImgNaturalSize({ w: img.naturalWidth, h: img.naturalHeight });
-      setSafeScale(1);
+      setScale(1);
       setOffset({ x: 0, y: 0 });
     };
     img.src = imageSrc;
-  }, [open, imageSrc, setSafeScale]);
+  }, [open, imageSrc]);
 
   const imgStyle = useMemo(() => {
     const { w, h } = imgNaturalSize;
@@ -90,8 +90,8 @@ export function ImageCropper({ open, imageSrc, onClose, onCrop }: ImageCropperPr
 
   useEffect(() => {
     if (!open) return;
-    setOffset(current => clampOffset(current));
-  }, [open, cropSize, imgNaturalSize.w, imgNaturalSize.h, clampOffset]);
+    setOffset(current => clampOffset(current, scale));
+  }, [open, cropSize, imgNaturalSize.w, imgNaturalSize.h, scale, clampOffset]);
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     setDragging(true);
@@ -101,8 +101,8 @@ export function ImageCropper({ open, imageSrc, onClose, onCrop }: ImageCropperPr
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!dragging) return;
-    setOffset(clampOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y }));
-  }, [dragging, dragStart, clampOffset]);
+    setOffset(clampOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y }, scale));
+  }, [dragging, dragStart, clampOffset, scale]);
 
   const handlePointerUp = useCallback(() => {
     setDragging(false);
