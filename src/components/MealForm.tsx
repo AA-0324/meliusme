@@ -41,12 +41,10 @@ function getSuggestedMealTypeForHour(hour: number): MealType {
 }
 
 function getAvailableMealTypesForHour(hour: number): MealType[] {
-  // Only restrict truly extreme combos:
-  // Breakfast blocked after 3pm, Dinner blocked before 11am, Lunch blocked before 6am or after 10pm
   const available: MealType[] = ['snack'];
-  if (hour >= 4 && hour < 15) available.push('breakfast');
-  if (hour >= 6 && hour < 22) available.push('lunch');
-  if (hour >= 11) available.push('dinner');
+  if (hour >= 4 && hour < 12) available.push('breakfast');
+  if (hour >= 10 && hour < 18) available.push('lunch');
+  if (hour >= 15 && hour < 23) available.push('dinner');
   return available;
 }
 
