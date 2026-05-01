@@ -19,6 +19,19 @@ export function DashboardLayoutEditor({ open, onClose, onSave }: DashboardLayout
     }
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const previous = { htmlOverflow: html.style.overflow, bodyOverflow: body.style.overflow };
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    return () => {
+      html.style.overflow = previous.htmlOverflow;
+      body.style.overflow = previous.bodyOverflow;
+    };
+  }, [open]);
+
   const toggleVisibility = (id: string) => {
     setWidgets(prev =>
       prev.map(w => w.id === id ? { ...w, visible: !w.visible } : w)
@@ -63,7 +76,7 @@ export function DashboardLayoutEditor({ open, onClose, onSave }: DashboardLayout
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center"
+          className="fixed inset-0 z-[120] bg-background/70 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4"
           onClick={onClose}
         >
           <motion.div
@@ -72,7 +85,7 @@ export function DashboardLayoutEditor({ open, onClose, onSave }: DashboardLayout
             exit={{ y: 100, opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-card rounded-t-3xl sm:rounded-3xl p-5 w-full max-w-sm max-h-[70vh] flex flex-col border border-border safe-bottom"
+            className="bg-card rounded-t-2xl sm:rounded-2xl p-5 w-full max-w-md h-[82dvh] sm:h-auto sm:max-h-[min(82dvh,640px)] flex flex-col border border-border safe-bottom overflow-hidden shadow-2xl"
           >
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-lg font-bold">Customize Layout</h2>
@@ -85,7 +98,7 @@ export function DashboardLayoutEditor({ open, onClose, onSave }: DashboardLayout
               Reorder and toggle widgets
             </p>
 
-            <div className="flex-1 overflow-y-auto mb-3 space-y-2 -mr-1 pr-1">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain mb-3 space-y-2 -mr-1 pr-1 pb-2 touch-pan-y">
               {widgets.map((widget, index) => (
                 <div
                   key={widget.id}

@@ -35,7 +35,7 @@ import { getMealTemplates, deleteMealTemplate, MealTemplate } from '@/lib/proFea
 import { restorePurchases, checkProEntitlement } from '@/lib/revenuecat';
 import logo from '@/assets/meliusme-logo-new.png';
 
-const APP_VERSION = '0.10.0-alpha';
+const APP_VERSION = '0.10.1-alpha';
 
 export default function Settings() {
   const { 
