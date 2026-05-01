@@ -88,6 +88,11 @@ export function ImageCropper({ open, imageSrc, onClose, onCrop }: ImageCropperPr
     return { width: w * baseScale, height: h * baseScale };
   }, [cropSize, imgNaturalSize]);
 
+  useEffect(() => {
+    if (!open) return;
+    setOffset(current => clampOffset(current));
+  }, [open, cropSize, imgNaturalSize.w, imgNaturalSize.h, clampOffset]);
+
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     setDragging(true);
     setDragStart({ x: e.clientX - offset.x, y: e.clientY - offset.y });
