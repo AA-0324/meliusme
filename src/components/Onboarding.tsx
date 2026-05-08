@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { useApp } from '@/contexts/AppContext';
 import { ProUpgradeModal } from '@/components/ProUpgradeModal';
-import { ImageCropper } from '@/components/ImageCropper';
+
 import { validateName } from '@/lib/validation';
 import { toast } from 'sonner';
 import logo from '@/assets/meliusme-logo-new.png';
@@ -29,7 +29,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState<string | null>(null);
-  const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [showProModal, setShowProModal] = useState(false);
   const [nameError, setNameError] = useState('');
   const avatarRef = useRef<HTMLInputElement>(null);
@@ -66,16 +65,12 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) { toast.error('Image must be under 10MB'); return; }
     const reader = new FileReader();
-    reader.onloadend = () => setCropSrc(reader.result as string);
+    reader.onloadend = () => setAvatar(reader.result as string);
     reader.readAsDataURL(file);
     e.target.value = '';
   };
 
   const handleAvatarPress = () => {
-    if (avatar) {
-      setCropSrc(avatar);
-      return;
-    }
     avatarRef.current?.click();
   };
 
@@ -459,15 +454,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       </div>
 
       <ProUpgradeModal open={showProModal} onClose={handleProModalClose} />
-      <ImageCropper
-        open={!!cropSrc}
-        imageSrc={cropSrc || ''}
-        onClose={() => setCropSrc(null)}
-        onCrop={(croppedDataUrl) => {
-          setAvatar(croppedDataUrl);
-          setCropSrc(null);
-        }}
-      />
     </>
   );
 }
