@@ -66,29 +66,6 @@ export default function Settings() {
     toast.success("Today's nutrition reset");
   };
 
-
-  const handleRestorePurchase = async () => {
-    toast.info('Checking for previous purchases...');
-    try {
-      const result = await restorePurchases();
-      if (result.success) {
-        setPro(true);
-        toast.success('Pro restored successfully!');
-      } else {
-        // Double-check entitlement
-        const hasPro = await checkProEntitlement();
-        if (hasPro) {
-          setPro(true);
-          toast.success('Pro restored successfully!');
-        } else {
-          toast.error('No previous purchase detected');
-        }
-      }
-    } catch {
-      toast.error('Failed to restore. Please try again.');
-    }
-  };
-
   const handleToggleNotifications = async () => {
     if (!notificationsEnabled) {
       toast.info('Push notifications are not available yet');
