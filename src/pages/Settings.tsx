@@ -32,7 +32,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { staggerContainer, fadeUp } from '@/lib/motion';
 import { getMealTemplates, deleteMealTemplate, MealTemplate } from '@/lib/proFeatures';
-import { restorePurchases, checkProEntitlement } from '@/lib/revenuecat';
+
 import logo from '@/assets/meliusme-logo-new.png';
 
 const APP_VERSION = '0.10.1-alpha';
