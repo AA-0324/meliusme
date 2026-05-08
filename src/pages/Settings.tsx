@@ -299,14 +299,6 @@ export default function Settings() {
               </Button>
             </motion.div>
           )}
-          
-          
-          <motion.div whileTap={{ scale: 0.97 }}>
-            <Button onClick={handleRestorePurchase} variant="outline" className="w-full h-12 rounded-xl justify-start gap-3 font-semibold">
-              <RefreshCw className="w-5 h-5 text-primary" />
-              <span>Restore Pro</span>
-            </Button>
-          </motion.div>
         </motion.div>
 
         {/* Pro status when Pro */}
