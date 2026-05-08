@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useApp } from '@/contexts/AppContext';
 import { ProUpgradeModal } from '@/components/ProUpgradeModal';
 import { BodyProfileEditor } from '@/components/BodyProfileEditor';
-import { ImageCropper } from '@/components/ImageCropper';
+
 import { exportMealsToCSV } from '@/lib/db';
 import { getGreeting, formatMemberSince } from '@/lib/userProfile';
 import { validateName } from '@/lib/validation';
@@ -49,8 +49,6 @@ export default function Profile() {
   const [personalizedGoalsEnabled, setPersonalizedGoalsEnabled] = useState(settings.personalizedGoals ?? false);
   const [showDisablePersonalized, setShowDisablePersonalized] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
-  const [cropSrc, setCropSrc] = useState<string | null>(null);
-  const [showAvatarActions, setShowAvatarActions] = useState(false);
 
   const prevSugarRef = useRef(settings.goals.sugar?.toString() || '');
 
@@ -149,25 +147,15 @@ export default function Profile() {
     if (file.size > 10 * 1024 * 1024) { toast.error('Image must be under 10MB'); return; }
     const reader = new FileReader();
     reader.onloadend = () => {
-      setCropSrc(reader.result as string);
+      setUserAvatar(reader.result as string);
+      toast.success('Profile picture updated!');
     };
     reader.readAsDataURL(file);
-    // Reset input so same file can be re-selected
     e.target.value = '';
   };
 
   const handleAvatarPress = () => {
-    if (userProfile?.avatar) {
-      setShowAvatarActions(true);
-      return;
-    }
     avatarInputRef.current?.click();
-  };
-
-  const handleCropComplete = (croppedDataUrl: string) => {
-    setUserAvatar(croppedDataUrl);
-    setCropSrc(null);
-    toast.success('Profile picture updated!');
   };
 
   const handleExport = async () => {
@@ -521,42 +509,6 @@ export default function Profile() {
 
       <ProUpgradeModal open={showProModal} onClose={() => setShowProModal(false)} />
       <BodyProfileEditor open={showBodyProfile} onClose={() => setShowBodyProfile(false)} />
-      <AlertDialog open={showAvatarActions} onOpenChange={setShowAvatarActions}>
-        <AlertDialogContent className="border-border bg-card">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Profile picture</AlertDialogTitle>
-            <AlertDialogDescription>
-              Edit the current photo crop or choose a new photo.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
-              onClick={() => {
-                setShowAvatarActions(false);
-                if (userProfile?.avatar) setCropSrc(userProfile.avatar);
-              }}
-            >
-              Edit
-            </AlertDialogAction>
-            <AlertDialogAction
-              onClick={() => {
-                setShowAvatarActions(false);
-                setTimeout(() => avatarInputRef.current?.click(), 0);
-              }}
-            >
-              Change
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      <ImageCropper 
-        open={!!cropSrc} 
-        imageSrc={cropSrc || ''} 
-        onClose={() => setCropSrc(null)} 
-        onCrop={handleCropComplete} 
-      />
     </div>
   );
 }
