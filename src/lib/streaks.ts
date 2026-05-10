@@ -548,7 +548,7 @@ export async function getCurrentChallenge(meals?: any[]): Promise<Challenge> {
   };
 
   if (meals) {
-    challenge.progress = calculateWeeklyChallengeProgress(challenge.id, meals, weekStart);
+    challenge.progress = await calculateWeeklyChallengeProgress(challenge.id, meals, weekStart);
     challenge.completed = challenge.progress >= challenge.target;
   }
 
