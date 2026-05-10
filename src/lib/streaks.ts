@@ -468,44 +468,31 @@ export function getWeeklyReflectionQuestion(): string {
   return REFLECTION_QUESTIONS[weekNumber % REFLECTION_QUESTIONS.length];
 }
 
-function calculateWeeklyChallengeProgress(challengeId: string, meals: any[], weekStart: string): number {
+async function calculateWeeklyChallengeProgress(challengeId: string, meals: any[], weekStart: string): Promise<number> {
   const weekStartDate = new Date(weekStart);
   const weekMeals = meals.filter(m => new Date(m.date) >= weekStartDate);
+  const today = new Date().toISOString().split('T')[0];
+
+  // Lazy-import db helpers to avoid circular deps and to read encrypted storage correctly
+  const { getSettings, getAllWaterData } = await import('./db');
+  const settings = await getSettings();
+  const calGoal = settings.goals?.calories ?? 2000;
+  const proteinGoal = settings.goals?.protein ?? 50;
+  const sugarLimit = settings.goals?.sugar ?? 50;
+  const waterGoal = settings.waterGoal ?? 8;
+
   switch (challengeId) {
     case 'log_21': case 'log_15': return weekMeals.length;
     case 'dinner_week': return new Set(weekMeals.filter(m => m.mealType === 'dinner').map(m => m.date)).size;
     case 'breakfast_streak': return new Set(weekMeals.filter(m => m.mealType === 'breakfast').map(m => m.date)).size;
     case 'healthy_meals': {
-      // Count meals without health warnings (calories within reason, not excessively sugary)
-      const settingsRaw2 = localStorage.getItem('melius-settings');
-      let sugarLimit = 50;
-      let calLimit = 2000;
-      if (settingsRaw2) {
-        try {
-          const parsed = JSON.parse(settingsRaw2);
-          if (parsed?.goals?.sugar) sugarLimit = parsed.goals.sugar;
-          if (parsed?.goals?.calories) calLimit = parsed.goals.calories;
-        } catch {}
-      }
-      // A "healthy" meal: not excessively high calorie (< 40% of daily goal per meal) and sugar < 50% of daily limit
       return weekMeals.filter(m => {
-        const calOk = m.calories <= calLimit * 0.4;
+        const calOk = m.calories <= calGoal * 0.4;
         const sugarOk = !m.sugar || m.sugar <= sugarLimit * 0.5;
         return calOk && sugarOk;
       }).length;
     }
     case 'protein_power': {
-      // Count unique days where protein goal was met
-      const settingsRaw = localStorage.getItem('melius-settings');
-      let proteinGoal = 50;
-      if (settingsRaw) {
-        try {
-          const parsed = JSON.parse(settingsRaw);
-          if (parsed?.goals?.protein) proteinGoal = parsed.goals.protein;
-        } catch {
-          // Try decrypted parse - settings might be encrypted
-        }
-      }
       const dailyProtein: Record<string, number> = {};
       weekMeals.forEach(m => {
         dailyProtein[m.date] = (dailyProtein[m.date] || 0) + (m.protein || 0);
@@ -513,42 +500,22 @@ function calculateWeeklyChallengeProgress(challengeId: string, meals: any[], wee
       return Object.values(dailyProtein).filter(p => p >= proteinGoal).length;
     }
     case 'hydrate_week': {
-      // Count days this week where user hit their water goal
-      try {
-        const waterRaw = localStorage.getItem('melius-water');
-        const settingsRaw3 = localStorage.getItem('melius-settings');
-        let waterGoal = 8;
-        if (settingsRaw3) {
-          try { const p = JSON.parse(settingsRaw3); if (p?.waterGoal) waterGoal = p.waterGoal; } catch {}
-        }
-        if (waterRaw) {
-          let waterData: Record<string, number> = {};
-          try { waterData = JSON.parse(waterRaw); } catch {}
-          const weekStartDate = new Date(weekStart);
-          let count = 0;
-          for (const [date, glasses] of Object.entries(waterData)) {
-            if (new Date(date) >= weekStartDate && glasses >= waterGoal) count++;
-          }
-          return count;
-        }
-      } catch {}
-      return 0;
+      const waterData = await getAllWaterData();
+      let count = 0;
+      for (const [date, glasses] of Object.entries(waterData)) {
+        if (new Date(date) >= weekStartDate && (glasses as number) >= waterGoal) count++;
+      }
+      return count;
     }
     case 'in_range_5': {
-      const settingsRaw = localStorage.getItem('melius-settings');
-      let calGoal = 2000;
-      if (settingsRaw) {
-        try {
-          const parsed = JSON.parse(settingsRaw);
-          if (parsed?.goals?.calories) calGoal = parsed.goals.calories;
-        } catch {}
-      }
+      // Only evaluate days that have ENDED — exclude today, since calorie totals
+      // can change before midnight. (Stay-under-calories is an end-of-day check.)
       const dailyCals: Record<string, number> = {};
       weekMeals.forEach(m => {
+        if (m.date === today) return;
         dailyCals[m.date] = (dailyCals[m.date] || 0) + m.calories;
       });
-      // 80-110% calorie adherence window
-      return Object.entries(dailyCals).filter(([, cal]) => cal > 0 && cal >= calGoal * 0.8 && cal <= calGoal * 1.1).length;
+      return Object.entries(dailyCals).filter(([, cal]) => cal > 0 && cal <= calGoal).length;
     }
     default: return 0;
   }
