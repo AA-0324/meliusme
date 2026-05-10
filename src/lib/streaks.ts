@@ -451,7 +451,7 @@ export function getDailyChallenges(
       case 'lunch': progress = hasLunch ? 1 : 0; break;
       case 'dinner': progress = hasDinner ? 1 : 0; break;
       case 'snack': progress = hasSnack ? 1 : 0; break;
-      case 'under_cal': progress = (hasLoggedMeals && todayCalories !== undefined && goals.calories && todayCalories <= goals.calories) ? 1 : 0; break;
+      // 'under_cal' removed from pool — see DAILY_CHALLENGE_POOL comment.
       case 'protein_goal': progress = (hasLoggedMeals && todayProtein !== undefined && goals.protein && todayProtein >= goals.protein) ? 1 : 0; break;
       case 'main_meals': progress = mainMealCount; break;
       default: progress = 0;
