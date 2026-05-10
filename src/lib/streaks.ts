@@ -527,7 +527,7 @@ export async function getCurrentChallenge(meals?: any[]): Promise<Challenge> {
 
   if (stored && stored.startDate === weekStart) {
     if (meals) {
-      const updatedProgress = calculateWeeklyChallengeProgress(stored.id, meals, weekStart);
+      const updatedProgress = await calculateWeeklyChallengeProgress(stored.id, meals, weekStart);
       if (updatedProgress !== stored.progress) {
         stored.progress = updatedProgress;
         stored.completed = stored.progress >= stored.target;
