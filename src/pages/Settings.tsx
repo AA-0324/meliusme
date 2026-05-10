@@ -6,7 +6,7 @@ import {
   Code2, 
   ChevronLeft,
   AlertTriangle,
-  
+  RefreshCw,
   Bell,
   BellOff,
   Eye,
@@ -32,7 +32,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { staggerContainer, fadeUp } from '@/lib/motion';
 import { getMealTemplates, deleteMealTemplate, MealTemplate } from '@/lib/proFeatures';
-
+import { restorePurchases, checkProEntitlement } from '@/lib/revenuecat';
 import logo from '@/assets/meliusme-logo-new.png';
 
 const APP_VERSION = '0.10.1-alpha';
@@ -64,6 +64,29 @@ export default function Settings() {
     resetDailyData();
     setShowFinalConfirm(false);
     toast.success("Today's nutrition reset");
+  };
+
+
+  const handleRestorePurchase = async () => {
+    toast.info('Checking for previous purchases...');
+    try {
+      const result = await restorePurchases();
+      if (result.success) {
+        setPro(true);
+        toast.success('Pro restored successfully!');
+      } else {
+        // Double-check entitlement
+        const hasPro = await checkProEntitlement();
+        if (hasPro) {
+          setPro(true);
+          toast.success('Pro restored successfully!');
+        } else {
+          toast.error('No previous purchase detected');
+        }
+      }
+    } catch {
+      toast.error('Failed to restore. Please try again.');
+    }
   };
 
   const handleToggleNotifications = async () => {
@@ -276,6 +299,14 @@ export default function Settings() {
               </Button>
             </motion.div>
           )}
+          
+          
+          <motion.div whileTap={{ scale: 0.97 }}>
+            <Button onClick={handleRestorePurchase} variant="outline" className="w-full h-12 rounded-xl justify-start gap-3 font-semibold">
+              <RefreshCw className="w-5 h-5 text-primary" />
+              <span>Restore Pro</span>
+            </Button>
+          </motion.div>
         </motion.div>
 
         {/* Pro status when Pro */}
