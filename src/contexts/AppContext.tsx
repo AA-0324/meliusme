@@ -109,7 +109,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const today = new Date().toISOString().split('T')[0];
   const [todayWater, setTodayWater] = useState(0);
 
-  const isPro = settings.proStatus || settings.devMode;
+  const isPro = settings.proStatus || settings.devMode || tempProUnlocks.length > 0;
   const animationsEnabled = settings.animationsEnabled !== false;
 
   const dismissLevelUp = useCallback(() => setLevelUpPending(null), []);
