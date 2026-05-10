@@ -388,7 +388,8 @@ const DAILY_CHALLENGE_POOL = [
   { id: 'water_half', title: 'Drink half your water goal', target: 1, type: 'water_half' as const, xp: 15 },
   { id: 'breakfast', title: 'Log breakfast', target: 1, type: 'breakfast' as const, xp: 15 },
   { id: 'dinner', title: 'Log dinner', target: 1, type: 'dinner' as const, xp: 15 },
-  { id: 'under_cal', title: 'Stay under calorie goal', target: 1, type: 'under_cal' as const, xp: 25 },
+  // 'under_cal' (Stay under calorie goal) is intentionally excluded from the daily pool —
+  // it can only be evaluated meaningfully at the end of the day, not while logging is in progress.
   { id: 'protein_hit', title: 'Hit protein goal', target: 1, type: 'protein_goal' as const, xp: 20 },
   { id: 'log_snack', title: 'Log a snack', target: 1, type: 'snack' as const, xp: 10 },
   { id: 'all_meals', title: 'Log breakfast, lunch & dinner', target: 3, type: 'main_meals' as const, xp: 40 },
