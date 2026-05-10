@@ -109,7 +109,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const today = new Date().toISOString().split('T')[0];
   const [todayWater, setTodayWater] = useState(0);
 
-  const isPro = settings.proStatus || settings.devMode;
+  const isPro = settings.proStatus || settings.devMode || tempProUnlocks.length > 0;
   const animationsEnabled = settings.animationsEnabled !== false;
 
   const dismissLevelUp = useCallback(() => setLevelUpPending(null), []);
@@ -407,6 +407,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const todayMealTypes = meals.filter(m => m.date === today).map(m => m.mealType);
     const todayTotals = getDailyTotals(meals, today);
     await checkAndAwardDailyChallengeXP(todayMealTypes, newValue, todayTotals.calories, todayTotals.protein);
+    // Refresh the weekly challenge — water-based challenges (e.g. Hydration Hero)
+    // depend on today's water count.
+    const updatedChallenge = await getCurrentChallenge(meals);
+    setCurrentChallenge(updatedChallenge);
   }, [todayWater, today, settings.waterGoal, showBottomToast, meals, checkAndAwardDailyChallengeXP]);
 
   const logMeal = useCallback(async (meal: Omit<Meal, 'id' | 'createdAt'>) => {

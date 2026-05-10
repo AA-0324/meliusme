@@ -388,7 +388,8 @@ const DAILY_CHALLENGE_POOL = [
   { id: 'water_half', title: 'Drink half your water goal', target: 1, type: 'water_half' as const, xp: 15 },
   { id: 'breakfast', title: 'Log breakfast', target: 1, type: 'breakfast' as const, xp: 15 },
   { id: 'dinner', title: 'Log dinner', target: 1, type: 'dinner' as const, xp: 15 },
-  { id: 'under_cal', title: 'Stay under calorie goal', target: 1, type: 'under_cal' as const, xp: 25 },
+  // 'under_cal' (Stay under calorie goal) is intentionally excluded from the daily pool —
+  // it can only be evaluated meaningfully at the end of the day, not while logging is in progress.
   { id: 'protein_hit', title: 'Hit protein goal', target: 1, type: 'protein_goal' as const, xp: 20 },
   { id: 'log_snack', title: 'Log a snack', target: 1, type: 'snack' as const, xp: 10 },
   { id: 'all_meals', title: 'Log breakfast, lunch & dinner', target: 3, type: 'main_meals' as const, xp: 40 },
@@ -450,7 +451,7 @@ export function getDailyChallenges(
       case 'lunch': progress = hasLunch ? 1 : 0; break;
       case 'dinner': progress = hasDinner ? 1 : 0; break;
       case 'snack': progress = hasSnack ? 1 : 0; break;
-      case 'under_cal': progress = (hasLoggedMeals && todayCalories !== undefined && goals.calories && todayCalories <= goals.calories) ? 1 : 0; break;
+      // 'under_cal' removed from pool — see DAILY_CHALLENGE_POOL comment.
       case 'protein_goal': progress = (hasLoggedMeals && todayProtein !== undefined && goals.protein && todayProtein >= goals.protein) ? 1 : 0; break;
       case 'main_meals': progress = mainMealCount; break;
       default: progress = 0;
@@ -468,44 +469,31 @@ export function getWeeklyReflectionQuestion(): string {
   return REFLECTION_QUESTIONS[weekNumber % REFLECTION_QUESTIONS.length];
 }
 
-function calculateWeeklyChallengeProgress(challengeId: string, meals: any[], weekStart: string): number {
+async function calculateWeeklyChallengeProgress(challengeId: string, meals: any[], weekStart: string): Promise<number> {
   const weekStartDate = new Date(weekStart);
   const weekMeals = meals.filter(m => new Date(m.date) >= weekStartDate);
+  const today = new Date().toISOString().split('T')[0];
+
+  // Lazy-import db helpers to avoid circular deps and to read encrypted storage correctly
+  const { getSettings, getAllWaterData } = await import('./db');
+  const settings = await getSettings();
+  const calGoal = settings.goals?.calories ?? 2000;
+  const proteinGoal = settings.goals?.protein ?? 50;
+  const sugarLimit = settings.goals?.sugar ?? 50;
+  const waterGoal = settings.waterGoal ?? 8;
+
   switch (challengeId) {
     case 'log_21': case 'log_15': return weekMeals.length;
     case 'dinner_week': return new Set(weekMeals.filter(m => m.mealType === 'dinner').map(m => m.date)).size;
     case 'breakfast_streak': return new Set(weekMeals.filter(m => m.mealType === 'breakfast').map(m => m.date)).size;
     case 'healthy_meals': {
-      // Count meals without health warnings (calories within reason, not excessively sugary)
-      const settingsRaw2 = localStorage.getItem('melius-settings');
-      let sugarLimit = 50;
-      let calLimit = 2000;
-      if (settingsRaw2) {
-        try {
-          const parsed = JSON.parse(settingsRaw2);
-          if (parsed?.goals?.sugar) sugarLimit = parsed.goals.sugar;
-          if (parsed?.goals?.calories) calLimit = parsed.goals.calories;
-        } catch {}
-      }
-      // A "healthy" meal: not excessively high calorie (< 40% of daily goal per meal) and sugar < 50% of daily limit
       return weekMeals.filter(m => {
-        const calOk = m.calories <= calLimit * 0.4;
+        const calOk = m.calories <= calGoal * 0.4;
         const sugarOk = !m.sugar || m.sugar <= sugarLimit * 0.5;
         return calOk && sugarOk;
       }).length;
     }
     case 'protein_power': {
-      // Count unique days where protein goal was met
-      const settingsRaw = localStorage.getItem('melius-settings');
-      let proteinGoal = 50;
-      if (settingsRaw) {
-        try {
-          const parsed = JSON.parse(settingsRaw);
-          if (parsed?.goals?.protein) proteinGoal = parsed.goals.protein;
-        } catch {
-          // Try decrypted parse - settings might be encrypted
-        }
-      }
       const dailyProtein: Record<string, number> = {};
       weekMeals.forEach(m => {
         dailyProtein[m.date] = (dailyProtein[m.date] || 0) + (m.protein || 0);
@@ -513,42 +501,22 @@ function calculateWeeklyChallengeProgress(challengeId: string, meals: any[], wee
       return Object.values(dailyProtein).filter(p => p >= proteinGoal).length;
     }
     case 'hydrate_week': {
-      // Count days this week where user hit their water goal
-      try {
-        const waterRaw = localStorage.getItem('melius-water');
-        const settingsRaw3 = localStorage.getItem('melius-settings');
-        let waterGoal = 8;
-        if (settingsRaw3) {
-          try { const p = JSON.parse(settingsRaw3); if (p?.waterGoal) waterGoal = p.waterGoal; } catch {}
-        }
-        if (waterRaw) {
-          let waterData: Record<string, number> = {};
-          try { waterData = JSON.parse(waterRaw); } catch {}
-          const weekStartDate = new Date(weekStart);
-          let count = 0;
-          for (const [date, glasses] of Object.entries(waterData)) {
-            if (new Date(date) >= weekStartDate && glasses >= waterGoal) count++;
-          }
-          return count;
-        }
-      } catch {}
-      return 0;
+      const waterData = await getAllWaterData();
+      let count = 0;
+      for (const [date, glasses] of Object.entries(waterData)) {
+        if (new Date(date) >= weekStartDate && (glasses as number) >= waterGoal) count++;
+      }
+      return count;
     }
     case 'in_range_5': {
-      const settingsRaw = localStorage.getItem('melius-settings');
-      let calGoal = 2000;
-      if (settingsRaw) {
-        try {
-          const parsed = JSON.parse(settingsRaw);
-          if (parsed?.goals?.calories) calGoal = parsed.goals.calories;
-        } catch {}
-      }
+      // Only evaluate days that have ENDED — exclude today, since calorie totals
+      // can change before midnight. (Stay-under-calories is an end-of-day check.)
       const dailyCals: Record<string, number> = {};
       weekMeals.forEach(m => {
+        if (m.date === today) return;
         dailyCals[m.date] = (dailyCals[m.date] || 0) + m.calories;
       });
-      // 80-110% calorie adherence window
-      return Object.entries(dailyCals).filter(([, cal]) => cal > 0 && cal >= calGoal * 0.8 && cal <= calGoal * 1.1).length;
+      return Object.entries(dailyCals).filter(([, cal]) => cal > 0 && cal <= calGoal).length;
     }
     default: return 0;
   }
@@ -560,7 +528,7 @@ export async function getCurrentChallenge(meals?: any[]): Promise<Challenge> {
 
   if (stored && stored.startDate === weekStart) {
     if (meals) {
-      const updatedProgress = calculateWeeklyChallengeProgress(stored.id, meals, weekStart);
+      const updatedProgress = await calculateWeeklyChallengeProgress(stored.id, meals, weekStart);
       if (updatedProgress !== stored.progress) {
         stored.progress = updatedProgress;
         stored.completed = stored.progress >= stored.target;
@@ -581,7 +549,7 @@ export async function getCurrentChallenge(meals?: any[]): Promise<Challenge> {
   };
 
   if (meals) {
-    challenge.progress = calculateWeeklyChallengeProgress(challenge.id, meals, weekStart);
+    challenge.progress = await calculateWeeklyChallengeProgress(challenge.id, meals, weekStart);
     challenge.completed = challenge.progress >= challenge.target;
   }
 
