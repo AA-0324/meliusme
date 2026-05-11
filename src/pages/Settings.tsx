@@ -17,7 +17,6 @@ import {
   Beef,
   Apple,
   Candy,
-  Lock as LockIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -27,7 +26,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useApp } from '@/contexts/AppContext';
 import { ProUpgradeModal } from '@/components/ProUpgradeModal';
-import { ProBadge } from '@/components/ProBadge';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { staggerContainer, fadeUp } from '@/lib/motion';
@@ -35,7 +33,7 @@ import { getMealTemplates, deleteMealTemplate, MealTemplate } from '@/lib/proFea
 import { restorePurchases, checkProEntitlement } from '@/lib/revenuecat';
 import logo from '@/assets/meliusme-logo-new.png';
 
-const APP_VERSION = '0.10.2-alpha';
+const APP_VERSION = '0.10.3-alpha';
 
 export default function Settings() {
   const { 
@@ -114,14 +112,11 @@ export default function Settings() {
               <ChevronLeft className="w-5 h-5" />
             </Button>
           </motion.div>
-          <div>
-            <motion.h1 initial={{ opacity: 0, y: -15 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              className="text-2xl font-bold tracking-tight">
-              Settings
-            </motion.h1>
-            <p className="text-muted-foreground text-sm mt-0.5">App configuration</p>
-          </div>
+          <motion.h1 initial={{ opacity: 0, y: -15 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="text-3xl font-bold tracking-tight">
+            Settings
+          </motion.h1>
         </div>
       </div>
 
