@@ -202,12 +202,12 @@ export default function Profile() {
           <div>
             <motion.h1 initial={{ opacity: 0, y: -15 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              className="text-2xl font-bold tracking-tight">
+              className="text-3xl font-bold tracking-tight">
               {getGreeting(userProfile?.name)}
             </motion.h1>
             {userProfile?.createdAt && (
               <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}
-                className="text-muted-foreground text-sm mt-0.5">{formatMemberSince(userProfile.createdAt)}</motion.p>
+                className="text-muted-foreground text-sm mt-1">{formatMemberSince(userProfile.createdAt)}</motion.p>
             )}
           </div>
           <motion.div 

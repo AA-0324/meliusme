@@ -89,12 +89,12 @@ export default function Home() {
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="min-h-screen pb-24">
         {/* Header */}
-        <div className="px-6 pt-12 pb-2 safe-top">
+        <div className="px-6 pt-10 pb-4 safe-top">
           <motion.h1 
             initial={noMotion ? false : { opacity: 0, y: -30, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.6, type: 'spring', damping: 12, stiffness: 150 }}
-            className="text-xl font-bold text-foreground"
+            className="text-3xl font-bold tracking-tight"
           >
             {getGreeting(userProfile?.name)}
           </motion.h1>
