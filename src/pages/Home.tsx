@@ -161,7 +161,7 @@ export default function Home() {
           <motion.div variants={noMotion ? {} : fadeUpBounce}>
             <div className={`glass rounded-2xl p-5 ${animationsEnabled ? 'animate-shine' : ''}`}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Today's Progress</h2>
+                <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Today's Progress</h2>
                 <motion.button
                   whileTap={noMotion ? {} : { scale: 0.85 }}
                   onClick={() => navigate('/dashboard')}
@@ -239,7 +239,7 @@ export default function Home() {
             className="mt-4"
           >
             <div className="px-6 mb-3">
-              <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Today's Meals</h2>
+              <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Today's Meals</h2>
             </div>
             <div className="flex gap-3 overflow-x-auto px-6 pb-2 scrollbar-hide">
               {todaysMeals.map((meal, i) => (
