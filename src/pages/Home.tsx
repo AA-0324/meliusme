@@ -89,12 +89,12 @@ export default function Home() {
     <PullToRefresh onRefresh={handleRefresh}>
       <PageTransition className="min-h-screen pb-24">
         {/* Header */}
-        <div className="px-6 pt-12 pb-2 safe-top">
+        <div className="px-6 pt-10 pb-4 safe-top">
           <motion.h1 
             initial={noMotion ? false : { opacity: 0, y: -30, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.6, type: 'spring', damping: 12, stiffness: 150 }}
-            className="text-xl font-bold text-foreground"
+            className="text-3xl font-bold tracking-tight"
           >
             {getGreeting(userProfile?.name)}
           </motion.h1>
@@ -161,7 +161,7 @@ export default function Home() {
           <motion.div variants={noMotion ? {} : fadeUpBounce}>
             <div className={`glass rounded-2xl p-5 ${animationsEnabled ? 'animate-shine' : ''}`}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Today's Progress</h2>
+                <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Today's Progress</h2>
                 <motion.button
                   whileTap={noMotion ? {} : { scale: 0.85 }}
                   onClick={() => navigate('/dashboard')}
@@ -239,7 +239,7 @@ export default function Home() {
             className="mt-4"
           >
             <div className="px-6 mb-3">
-              <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Today's Meals</h2>
+              <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Today's Meals</h2>
             </div>
             <div className="flex gap-3 overflow-x-auto px-6 pb-2 scrollbar-hide">
               {todaysMeals.map((meal, i) => (

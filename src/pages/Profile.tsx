@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { MotionConfig } from 'framer-motion';
-import { Moon, Sun, Sparkles, Download, Settings, Target, Check, Lock, Palette, User, Scale, AlertTriangle, Camera, Crown, BookmarkPlus } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Moon, Sun, Download, Settings, Target, Check, Palette, User, Scale, AlertTriangle, Camera, BookmarkPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
@@ -15,7 +14,7 @@ import { getGreeting, formatMemberSince } from '@/lib/userProfile';
 import { validateName } from '@/lib/validation';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { staggerContainer, fadeUp, idleBreathe, idleFloat, prefersReducedMotion } from '@/lib/motion';
+import { staggerContainer, fadeUp } from '@/lib/motion';
 import logo from '@/assets/meliusme-logo-new.png';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -203,12 +202,12 @@ export default function Profile() {
           <div>
             <motion.h1 initial={{ opacity: 0, y: -15 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              className="text-2xl font-bold tracking-tight">
+              className="text-3xl font-bold tracking-tight">
               {getGreeting(userProfile?.name)}
             </motion.h1>
             {userProfile?.createdAt && (
               <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}
-                className="text-muted-foreground text-sm mt-0.5">{formatMemberSince(userProfile.createdAt)}</motion.p>
+                className="text-muted-foreground text-sm mt-1">{formatMemberSince(userProfile.createdAt)}</motion.p>
             )}
           </div>
           <motion.div 
@@ -262,7 +261,6 @@ export default function Profile() {
               ) : (
                 <motion.button whileTap={{ scale: 0.97 }} onClick={() => setIsEditingName(true)} className="text-left w-full group">
                   <p className="font-bold text-lg group-hover:text-primary transition-colors">{userProfile?.name || 'Set your name'}</p>
-                  <p className="text-sm text-muted-foreground">Tap to edit</p>
                 </motion.button>
               )}
             </div>
