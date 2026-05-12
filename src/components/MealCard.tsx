@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { Meal } from '@/lib/db';
 import { cn } from '@/lib/utils';
