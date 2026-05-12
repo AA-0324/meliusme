@@ -34,7 +34,7 @@ const mealTypeDotColors = {
   snack: 'bg-chart-2',
 };
 
-export function MealCard({ meal, onClick, compact }: MealCardProps) {
+function MealCardImpl({ meal, onClick, compact }: MealCardProps) {
   const { settings, animationsEnabled } = useApp();
   const noMotion = !animationsEnabled;
   const warnings = getHealthWarnings(meal.calories, meal.protein, meal.fiber, meal.sugar, meal.mealType, undefined, undefined, { isLogged: true });
