@@ -26,13 +26,15 @@ const setGoalToastFlag = (date: string, key: string) => {
 };
 
 const getDailyTotals = (allMeals: Meal[], date: string) => {
-  const dayMeals = allMeals.filter((m) => m.date === date);
-  return {
-    calories: dayMeals.reduce((sum, m) => sum + m.calories, 0),
-    protein: dayMeals.reduce((sum, m) => sum + (m.protein || 0), 0),
-    fiber: dayMeals.reduce((sum, m) => sum + (m.fiber || 0), 0),
-    sugar: dayMeals.reduce((sum, m) => sum + (m.sugar || 0), 0),
-  };
+  let calories = 0, protein = 0, fiber = 0, sugar = 0;
+  for (const m of allMeals) {
+    if (m.date !== date) continue;
+    calories += m.calories;
+    protein += m.protein || 0;
+    fiber += m.fiber || 0;
+    sugar += m.sugar || 0;
+  }
+  return { calories, protein, fiber, sugar };
 };
 
 const DEFAULT_SETTINGS: Settings = {
