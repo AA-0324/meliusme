@@ -39,17 +39,22 @@ export default function Dashboard() {
     getStreaksData().then(setStreaksData);
   }, []);
 
-  // Update streaks based on today's data
+  // Update streaks based on today's data — single pass, runs only when today's data changes
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
-    const todayMeals = meals.filter(m => m.date === today);
-    if (todayMeals.length > 0) {
-      const totalCal = todayMeals.reduce((s, m) => s + m.calories, 0);
-      const totalProt = todayMeals.reduce((s, m) => s + (m.protein || 0), 0);
-      const metCalorie = settings.goals.calories ? (totalCal <= settings.goals.calories * 1.1 && totalCal >= settings.goals.calories * 0.8) : false;
-      const metProtein = settings.goals.protein ? totalProt >= settings.goals.protein : false;
-      updateStreaksData(today, true, metCalorie, metProtein).then(setStreaksData);
+    let totalCal = 0, totalProt = 0, hasMeal = false;
+    for (const m of meals) {
+      if (m.date !== today) continue;
+      hasMeal = true;
+      totalCal += m.calories;
+      totalProt += m.protein || 0;
     }
+    if (!hasMeal) return;
+    const calGoal = settings.goals.calories;
+    const protGoal = settings.goals.protein;
+    const metCalorie = calGoal ? (totalCal <= calGoal * 1.1 && totalCal >= calGoal * 0.8) : false;
+    const metProtein = protGoal ? totalProt >= protGoal : false;
+    updateStreaksData(today, true, metCalorie, metProtein).then(setStreaksData);
   }, [meals, settings.goals]);
 
   const isWidgetVisible = (id: string) => {
