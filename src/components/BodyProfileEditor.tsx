@@ -375,14 +375,12 @@ export function BodyProfileEditor({ open, onClose }: BodyProfileEditorProps) {
                   onClick={(e) => e.stopPropagation()}
                   className="w-full max-w-md bg-background rounded-3xl p-6 shadow-2xl"
                 >
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
-                      <Sparkles className="w-6 h-6 text-primary" />
+                  <div className="flex flex-col items-center text-center mb-6">
+                    <div className="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center mb-3 bg-primary/10">
+                      <img src={logo} alt="MeliusMe" className="w-full h-full object-contain" />
                     </div>
-                    <div>
-                      <h3 className="text-lg font-bold">Your Personalized Goals</h3>
-                      <p className="text-sm text-muted-foreground">Based on your profile</p>
-                    </div>
+                    <h3 className="text-lg font-bold">Your Personalized Goals</h3>
+                    <p className="text-sm text-muted-foreground">Based on your profile</p>
                   </div>
 
                   <div className="space-y-3 mb-6">
