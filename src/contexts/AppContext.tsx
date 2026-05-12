@@ -500,25 +500,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setMeals((prev) => prev.filter((m) => m.id !== id));
   }, []);
 
-  return (
-    <AppContext.Provider
-      value={{
-        settings, meals, isLoading, isPro, animationsEnabled,
-        userProfile, setUserName, setUserAvatar,
-        bodyProfile, updateBodyProfile: updateBodyProfileCb,
-        streak, currentChallenge, badges, refreshStreak,
-        todayWater, incrementWater,
-        notificationsEnabled, toggleNotifications,
-        setDevMode, setDarkMode, setPro, setTheme, setUse24Hour, setAnimationsEnabled,
-        updateUserGoals, setWaterGoal: setWaterGoalCb, resetDailyData,
-        refreshMeals, logMeal, removeMeal,
-        bottomToast, showBottomToast, hideBottomToast,
-        xpData, tempProUnlocks, levelUpPending, dismissLevelUp,
-      }}
-    >
-      {children}
-    </AppContext.Provider>
-  );
+  const value = useMemo<AppContextType>(() => ({
+    settings, meals, isLoading, isPro, animationsEnabled,
+    userProfile, setUserName, setUserAvatar,
+    bodyProfile, updateBodyProfile: updateBodyProfileCb,
+    streak, currentChallenge, badges, refreshStreak,
+    todayWater, incrementWater,
+    notificationsEnabled, toggleNotifications,
+    setDevMode, setDarkMode, setPro, setTheme, setUse24Hour, setAnimationsEnabled,
+    updateUserGoals, setWaterGoal: setWaterGoalCb, resetDailyData,
+    refreshMeals, logMeal, removeMeal,
+    bottomToast, showBottomToast, hideBottomToast,
+    xpData, tempProUnlocks, levelUpPending, dismissLevelUp,
+  }), [
+    settings, meals, isLoading, isPro, animationsEnabled,
+    userProfile, bodyProfile, streak, currentChallenge, badges,
+    todayWater, notificationsEnabled, bottomToast,
+    xpData, tempProUnlocks, levelUpPending,
+    setUserName, setUserAvatar, updateBodyProfileCb, refreshStreak,
+    incrementWater, toggleNotifications,
+    setDevMode, setDarkMode, setPro, setTheme, setUse24Hour, setAnimationsEnabled,
+    updateUserGoals, setWaterGoalCb, resetDailyData,
+    refreshMeals, logMeal, removeMeal,
+    showBottomToast, hideBottomToast, dismissLevelUp,
+  ]);
+
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
 export function useApp() {
