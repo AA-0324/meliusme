@@ -429,17 +429,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
 
     const currentBadges = await getEarnedBadges();
-    if (!currentBadges.some(b => b.id === 'first_meal')) {
+    const earnedIds = new Set(currentBadges.map(b => b.id));
+    let badgesChanged = false;
+    if (!earnedIds.has('first_meal')) {
       await awardBadge('first_meal');
-      setBadges(await getEarnedBadges());
+      badgesChanged = true;
     }
 
     const todayStr = new Date().toISOString().split('T')[0];
-    const todayMeals = meals.filter(m => m.date === todayStr);
-    if (todayMeals.length >= 2 && !currentBadges.some(b => b.id === 'meals_3')) {
+    const todayMealCountBefore = meals.reduce((c, m) => c + (m.date === todayStr ? 1 : 0), 0);
+    if (todayMealCountBefore >= 2 && !earnedIds.has('meals_3')) {
       await awardBadge('meals_3');
-      setBadges(await getEarnedBadges());
+      badgesChanged = true;
     }
+    if (badgesChanged) setBadges(await getEarnedBadges());
 
     showBottomToast('Meal logged!', 'primary');
 
