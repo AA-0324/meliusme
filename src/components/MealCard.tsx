@@ -123,3 +123,7 @@ function MealCardImpl({ meal, onClick, compact }: MealCardProps) {
     </motion.button>
   );
 }
+
+export const MealCard = memo(MealCardImpl, (prev, next) =>
+  prev.meal === next.meal && prev.compact === next.compact && prev.onClick === next.onClick
+);
