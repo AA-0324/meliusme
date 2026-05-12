@@ -303,26 +303,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setTodayWater(0);
     await setWaterIntake(todayStr, 0);
     sessionStorage.removeItem(`melius-confetti-${todayStr}`);
-    
-    // Rollback XP earned today
-    const { rollbackDailyXP } = await import('@/lib/streaks');
+
     const rolledBackXP = await rollbackDailyXP(todayStr, isPro);
     setXpData(rolledBackXP);
-    
-    // Clear daily challenge awards for today
+
     sessionStorage.removeItem(`melius-daily-xp-awarded-${todayStr}`);
-    
-    // Clear goal toast flags so they can re-trigger
     sessionStorage.removeItem(goalToastKey(todayStr));
-    
-    // Delete today's meals and update state
+
     setMeals((prev) => prev.filter((m) => m.date !== todayStr));
     void deleteMealsByDate(todayStr);
-    
-    // Recalculate weekly challenge progress without today's meals
+
     const remainingMeals = meals.filter(m => m.date !== todayStr);
-    const { getCurrentChallenge: getChallenge } = await import('@/lib/streaks');
-    const updatedChallenge = await getChallenge(remainingMeals);
+    const updatedChallenge = await getCurrentChallenge(remainingMeals);
     setCurrentChallenge(updatedChallenge);
   }, [isPro, meals]);
 
