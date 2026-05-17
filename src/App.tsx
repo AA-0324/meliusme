@@ -13,6 +13,7 @@ import { SplashScreen } from "@/components/SplashScreen";
 import { Onboarding } from "@/components/Onboarding";
 import { MealLoggedToast } from "@/components/MealLoggedToast";
 import { LevelUpModal } from "@/components/LevelUpModal";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Home from "./pages/Home";
 import Log from "./pages/Log";
 import Dashboard from "./pages/Dashboard";
