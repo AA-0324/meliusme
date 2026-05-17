@@ -7,6 +7,7 @@ import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge
 import { initEncryption } from '@/lib/crypto';
 import { migrateAllToEncrypted } from '@/lib/encryptedStorage';
 import { initRevenueCat, checkProEntitlement } from '@/lib/revenuecat';
+import { runCleanup } from '@/lib/cleanup';
 
 type ToastVariant = 'primary' | 'success' | 'warning' | 'destructive' | 'challenge';
 
