@@ -54,7 +54,8 @@ export function ProgressRing({
   };
 
   // Extra padding needed for the glow effect
-  const glowPadding = progress >= 60 && !noMotion ? 8 : 0;
+  const hasGlow = !noMotion && (inverse ? progress > 0 : progress >= 60);
+  const glowPadding = hasGlow ? 8 : 0;
   const totalSize = size + glowPadding * 2;
 
   return (
