@@ -487,10 +487,13 @@ async function calculateWeeklyChallengeProgress(challengeId: string, meals: any[
     case 'dinner_week': return new Set(weekMeals.filter(m => m.mealType === 'dinner').map(m => m.date)).size;
     case 'breakfast_streak': return new Set(weekMeals.filter(m => m.mealType === 'breakfast').map(m => m.date)).size;
     case 'healthy_meals': {
+      // Mirror the EXACT warning logic the UI uses, so the badge on a meal
+      // card matches whether the challenge counts it as healthy.
+      const { getHealthWarnings, hasAnyWarning } = await import('@/components/HealthWarning');
+      const userGoals = settings.goals;
       return weekMeals.filter(m => {
-        const calOk = m.calories <= calGoal * 0.4;
-        const sugarOk = !m.sugar || m.sugar <= sugarLimit * 0.5;
-        return calOk && sugarOk;
+        const w = getHealthWarnings(m.calories, m.protein, m.fiber, m.sugar, m.mealType, userGoals, undefined, { isLogged: true });
+        return !hasAnyWarning(w);
       }).length;
     }
     case 'protein_power': {
