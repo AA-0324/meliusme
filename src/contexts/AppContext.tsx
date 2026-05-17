@@ -129,7 +129,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try {
         await initEncryption();
         await migrateAllToEncrypted();
-        
+        // Trim stale records in the background — non-blocking.
+        runCleanup().catch(() => {});
         // Initialize RevenueCat
         try {
           initRevenueCat();
