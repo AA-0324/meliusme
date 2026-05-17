@@ -117,7 +117,7 @@ export function ProgressRing({
         )}
 
         {/* Glow filter for progress arc */}
-        {progress >= 60 && !noMotion && (
+        {hasGlow && (
           <circle
             cx={totalSize / 2}
             cy={totalSize / 2}
