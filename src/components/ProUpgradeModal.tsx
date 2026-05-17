@@ -68,6 +68,13 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
       if (hasPro) {
         setPro(true);
         toast.success('Welcome to MeliusMe Pro!');
+        // Fully refresh the app and land on the home screen so every surface
+        // re-evaluates Pro-gated features with the new entitlement.
+        onClose();
+        setTimeout(() => {
+          try { window.location.assign('/'); } catch { window.location.reload(); }
+        }, 600);
+        return;
       } else {
         toast.error('Purchase was not completed.');
       }

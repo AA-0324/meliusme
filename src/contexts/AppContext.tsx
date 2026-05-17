@@ -7,6 +7,7 @@ import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge
 import { initEncryption } from '@/lib/crypto';
 import { migrateAllToEncrypted } from '@/lib/encryptedStorage';
 import { initRevenueCat, checkProEntitlement } from '@/lib/revenuecat';
+import { runCleanup } from '@/lib/cleanup';
 
 type ToastVariant = 'primary' | 'success' | 'warning' | 'destructive' | 'challenge';
 
@@ -128,7 +129,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try {
         await initEncryption();
         await migrateAllToEncrypted();
-        
+        // Trim stale records in the background — non-blocking.
+        runCleanup().catch(() => {});
         // Initialize RevenueCat
         try {
           initRevenueCat();
@@ -220,6 +222,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (areNotificationsSupported() && Notification.permission === 'granted') setNotificationsEnabled(true);
   }, []);
+
+  // Periodically prune expired temp Pro unlocks so rewards disappear in real-time.
+  useEffect(() => {
+    if (tempProUnlocks.length === 0) return;
+    const tick = async () => {
+      const fresh = await getTempProUnlocks();
+      setTempProUnlocks(prev => (
+        prev.length === fresh.length && prev.every((u, i) => u.expiresAt === fresh[i].expiresAt)
+          ? prev
+          : fresh
+      ));
+    };
+    const interval = setInterval(tick, 60_000);
+    // Also re-check when the tab becomes visible again
+    const onVis = () => { if (document.visibilityState === 'visible') tick(); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, [tempProUnlocks.length]);
 
   const refreshMeals = useCallback(async () => {
     const allMeals = await getAllMeals();
