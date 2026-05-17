@@ -223,6 +223,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (areNotificationsSupported() && Notification.permission === 'granted') setNotificationsEnabled(true);
   }, []);
 
+  // Periodically prune expired temp Pro unlocks so rewards disappear in real-time.
+  useEffect(() => {
+    if (tempProUnlocks.length === 0) return;
+    const tick = async () => {
+      const fresh = await getTempProUnlocks();
+      setTempProUnlocks(prev => (
+        prev.length === fresh.length && prev.every((u, i) => u.expiresAt === fresh[i].expiresAt)
+          ? prev
+          : fresh
+      ));
+    };
+    const interval = setInterval(tick, 60_000);
+    // Also re-check when the tab becomes visible again
+    const onVis = () => { if (document.visibilityState === 'visible') tick(); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, [tempProUnlocks.length]);
+
   const refreshMeals = useCallback(async () => {
     const allMeals = await getAllMeals();
     setMeals(allMeals);
