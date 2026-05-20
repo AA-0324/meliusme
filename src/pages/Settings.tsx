@@ -17,6 +17,7 @@ import {
   Beef,
   Apple,
   Candy,
+  ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -33,7 +34,9 @@ import { getMealTemplates, deleteMealTemplate, MealTemplate } from '@/lib/proFea
 import { restorePurchases, checkProEntitlement } from '@/lib/revenuecat';
 import logo from '@/assets/meliusme-logo-new.png';
 
-const APP_VERSION = '0.10.3-alpha';
+const APP_VERSION = '0.10.6-alpha';
+const PRIVACY_POLICY_URL = 'https://aa-0324.github.io/meliusme/public/privacy.html';
+const TERMS_URL = 'https://aa-0324.github.io/meliusme/public/tos.html';
 
 export default function Settings() {
   const { 
@@ -302,6 +305,30 @@ export default function Settings() {
               <span>Restore Pro</span>
             </Button>
           </motion.div>
+        </motion.div>
+
+        {/* Legal */}
+        <motion.div variants={fadeUp}
+          className="bg-card rounded-2xl p-5 border border-border/50 space-y-3">
+          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Legal</h2>
+          <a
+            href={PRIVACY_POLICY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex h-12 items-center justify-between rounded-xl border border-border bg-background px-4 text-sm font-semibold transition-colors hover:bg-accent hover:text-accent-foreground"
+          >
+            <span>Privacy Policy</span>
+            <ExternalLink className="w-4 h-4 text-muted-foreground" />
+          </a>
+          <a
+            href={TERMS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex h-12 items-center justify-between rounded-xl border border-border bg-background px-4 text-sm font-semibold transition-colors hover:bg-accent hover:text-accent-foreground"
+          >
+            <span>Terms of Service</span>
+            <ExternalLink className="w-4 h-4 text-muted-foreground" />
+          </a>
         </motion.div>
 
         {/* Pro status when Pro */}
