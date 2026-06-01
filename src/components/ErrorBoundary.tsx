@@ -22,10 +22,6 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
     this.setState({ hasError: false, error: undefined });
   };
 
-  handleReload = () => {
-    try { window.location.assign('/'); } catch { window.location.reload(); }
-  };
-
   render() {
     if (!this.state.hasError) return this.props.children;
     return (
@@ -43,10 +39,10 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
               Try again
             </button>
             <button
-              onClick={this.handleReload}
+              onClick={this.handleReset}
               className="w-full h-11 rounded-2xl bg-secondary text-foreground font-medium"
             >
-              Go to home
+              Stay in app
             </button>
           </div>
         </div>
