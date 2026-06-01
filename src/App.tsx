@@ -53,7 +53,9 @@ const AnimationWrapper = ({ children }: { children: React.ReactNode }) => {
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(() => sessionStorage.getItem('meliusme-splash-seen') !== 'true');
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(() => (
+    sessionStorage.getItem('meliusme-splash-seen') === 'true' && !localStorage.getItem('meliusme-onboarded')
+  ));
 
   const handleSplashComplete = () => {
     sessionStorage.setItem('meliusme-splash-seen', 'true');
