@@ -59,7 +59,7 @@ export const pageTransition: Transition = {
 };
 
 // ─── Stagger Container (more dramatic delays) ───
-export const staggerContainer = (staggerDelay = 0.1): Variants => {
+export const staggerContainer = (_staggerDelay = 0.1): Variants => {
   if (prefersReducedMotion()) return { hidden: {}, show: {} };
   return {
     hidden: {},
