@@ -105,6 +105,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [xpData, setXpData] = useState<XPData>({ totalXP: 0, level: 1, xpToNextLevel: 100, currentLevelXP: 0 });
   const [tempProUnlocks, setTempProUnlocks] = useState<TempProUnlock[]>([]);
   const [levelUpPending, setLevelUpPending] = useState<LevelUpResult | null>(null);
+  const [allowRuntimeMotion, setAllowRuntimeMotion] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(min-width: 1181px) and (prefers-reduced-motion: no-preference)').matches;
+  });
 
   const [bottomToast, setBottomToast] = useState<AppContextType['bottomToast']>({ open: false, message: '', variant: 'primary' });
   const toastQueueRef = useRef<Array<{ message: string; variant: ToastVariant }>>([]);
@@ -113,9 +117,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [todayWater, setTodayWater] = useState(0);
 
   const isPro = settings.proStatus || settings.devMode || tempProUnlocks.length > 0;
-  const animationsEnabled = settings.animationsEnabled !== false;
+  const animationsEnabled = settings.animationsEnabled !== false && allowRuntimeMotion;
 
   const dismissLevelUp = useCallback(() => setLevelUpPending(null), []);
+
+  useEffect(() => {
+    const motionQuery = window.matchMedia('(min-width: 1181px) and (prefers-reduced-motion: no-preference)');
+    const updateMotionMode = () => setAllowRuntimeMotion(motionQuery.matches);
+    updateMotionMode();
+    motionQuery.addEventListener('change', updateMotionMode);
+    return () => motionQuery.removeEventListener('change', updateMotionMode);
+  }, []);
 
   // Sync animations preference to window for motion.ts + CSS
   useEffect(() => {
