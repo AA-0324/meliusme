@@ -34,7 +34,7 @@ import { getMealTemplates, deleteMealTemplate, MealTemplate } from '@/lib/proFea
 import { restorePurchases, checkProEntitlement } from '@/lib/revenuecat';
 import logo from '@/assets/meliusme-logo-new.png';
 
-const APP_VERSION = '0.10.7-alpha';
+const APP_VERSION = '0.10.8-alpha';
 const PRIVACY_POLICY_URL = 'https://aa-0324.github.io/meliusme/public/privacy.html';
 const TERMS_URL = 'https://aa-0324.github.io/meliusme/public/tos.html';
 
