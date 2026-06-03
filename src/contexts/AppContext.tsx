@@ -106,7 +106,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [tempProUnlocks, setTempProUnlocks] = useState<TempProUnlock[]>([]);
   const [levelUpPending, setLevelUpPending] = useState<LevelUpResult | null>(null);
   const [allowRuntimeMotion, setAllowRuntimeMotion] = useState(() => {
-    if (typeof window === 'undefined') return false;
+    if (typeof window === 'undefined' || !window.matchMedia) return false;
     return window.matchMedia('(min-width: 1181px) and (prefers-reduced-motion: no-preference)').matches;
   });
 
@@ -122,6 +122,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const dismissLevelUp = useCallback(() => setLevelUpPending(null), []);
 
   useEffect(() => {
+    if (!window.matchMedia) return;
     const motionQuery = window.matchMedia('(min-width: 1181px) and (prefers-reduced-motion: no-preference)');
     const updateMotionMode = () => setAllowRuntimeMotion(motionQuery.matches);
     updateMotionMode();
