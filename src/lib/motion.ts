@@ -46,11 +46,11 @@ export function motionProps(props: Record<string, any>): Record<string, any> {
   return props;
 }
 
-// ─── Page Transition Variants (BOLDER) ───
+// ─── Page Transition Variants ───
 export const pageVariants: Variants = {
-  initial: { opacity: 0, y: 30, scale: 0.96 },
+  initial: { opacity: 1, y: 0, scale: 1 },
   animate: { opacity: 1, y: 0, scale: 1 },
-  exit: { opacity: 0, y: -20, scale: 0.98 },
+  exit: { opacity: 1, y: 0, scale: 1 },
 };
 
 export const pageTransition: Transition = {
@@ -64,14 +64,14 @@ export const staggerContainer = (staggerDelay = 0.1): Variants => {
   return {
     hidden: {},
     show: {
-      transition: { staggerChildren: staggerDelay, delayChildren: 0.05 },
+      transition: { staggerChildren: 0, delayChildren: 0 },
     },
   };
 };
 
 // ─── Fade Up Item (BIGGER movement) ───
 export const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 40, scale: 0.95 },
+  hidden: { opacity: 1, y: 0, scale: 1 },
   show: {
     opacity: 1,
     y: 0,
@@ -85,7 +85,7 @@ export const fadeUp: Variants = {
 
 // ─── Fade Up with spring bounce ───
 export const fadeUpBounce: Variants = {
-  hidden: { opacity: 0, y: 50, scale: 0.9 },
+  hidden: { opacity: 1, y: 0, scale: 1 },
   show: {
     opacity: 1,
     y: 0,
