@@ -1,5 +1,5 @@
 import { Home, BookOpen, BarChart3, Trophy } from 'lucide-react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { motion, LayoutGroup } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useApp } from '@/contexts/AppContext';
@@ -14,7 +14,6 @@ const navItems = [
 
 export function BottomNav() {
   const location = useLocation();
-  const navigate = useNavigate();
   const { animationsEnabled } = useApp();
   const navRefs = useRef<(HTMLDivElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -68,9 +67,10 @@ export function BottomNav() {
         {navItems.map(({ to, icon: Icon, label }, index) => {
           const isActive = index === activeIndex;
           return (
-            <motion.button
+            <NavLink
               key={to}
-              onClick={() => navigate(to)}
+              to={to}
+              end={to === '/'}
               className="relative z-10 flex items-center justify-center flex-1"
             >
               <div
@@ -103,7 +103,7 @@ export function BottomNav() {
                   {label}
                 </span>
               </div>
-            </motion.button>
+            </NavLink>
           );
         })}
       </div>
