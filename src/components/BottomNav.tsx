@@ -1,7 +1,8 @@
 import { Home, BookOpen, BarChart3, Trophy } from 'lucide-react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { motion, LayoutGroup } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { NavLink } from '@/components/NavLink';
 import { useApp } from '@/contexts/AppContext';
 import { useRef, useEffect, useState, useCallback } from 'react';
 
