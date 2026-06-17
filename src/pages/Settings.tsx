@@ -338,6 +338,40 @@ export default function Settings() {
           </div>
         </motion.div>
 
+        {/* Legal */}
+        <motion.div variants={fadeUp} className="space-y-3">
+          <Button
+            asChild
+            variant="outline"
+            className="w-full h-12 rounded-xl justify-start gap-3 font-semibold"
+          >
+            <a
+              href="https://aa-0324.github.io/meliusme/public/privacy.html"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Shield className="w-5 h-5 text-primary" />
+              <span className="flex-1 text-left">Privacy Policy</span>
+              <ExternalLink className="w-4 h-4 text-muted-foreground" />
+            </a>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            className="w-full h-12 rounded-xl justify-start gap-3 font-semibold"
+          >
+            <a
+              href="https://aa-0324.github.io/meliusme/public/tos.html"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <FileText className="w-5 h-5 text-primary" />
+              <span className="flex-1 text-left">Terms of Service</span>
+              <ExternalLink className="w-4 h-4 text-muted-foreground" />
+            </a>
+          </Button>
+        </motion.div>
+
         {/* App Info */}
         <motion.div variants={fadeUp} className="text-center py-4">
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
