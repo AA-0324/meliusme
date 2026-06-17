@@ -281,7 +281,6 @@ export default function Dashboard() {
                   size={64}
                   strokeWidth={5}
                   showAnimation={false}
-                  inverse
                 >
                   <Candy className="w-3.5 h-3.5 text-muted-foreground" />
                 </ProgressRing>

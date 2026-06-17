@@ -68,8 +68,6 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
       if (hasPro) {
         setPro(true);
         toast.success('Welcome to MeliusMe Pro!');
-        onClose();
-        return;
       } else {
         toast.error('Purchase was not completed.');
       }

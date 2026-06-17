@@ -7,8 +7,6 @@ interface ProgressRingProps {
   strokeWidth?: number;
   children?: React.ReactNode;
   showAnimation?: boolean;
-  /** When true, treat progress as approaching a LIMIT — green when low, red when at/over. */
-  inverse?: boolean;
 }
 
 export function ProgressRing({ 
@@ -17,7 +15,6 @@ export function ProgressRing({
   strokeWidth = 12,
   children,
   showAnimation = false,
-  inverse = false,
 }: ProgressRingProps) {
   const { animationsEnabled } = useApp();
   const noMotion = !animationsEnabled;
@@ -26,13 +23,6 @@ export function ProgressRing({
   const strokeDashoffset = circumference - (progress / 100) * circumference;
   
   const getColor = () => {
-    if (inverse) {
-      if (progress >= 100) return 'hsl(var(--destructive))';
-      if (progress >= 85) return 'hsl(var(--destructive))';
-      if (progress >= 65) return 'hsl(var(--warning))';
-      if (progress >= 40) return 'hsl(var(--chart-3))';
-      return 'hsl(var(--success))';
-    }
     if (progress >= 100) return 'hsl(var(--success))';
     if (progress >= 80) return 'hsl(var(--primary))';
     if (progress >= 60) return 'hsl(var(--chart-3))';
@@ -41,12 +31,6 @@ export function ProgressRing({
   };
   
   const getGlowColor = () => {
-    if (inverse) {
-      if (progress >= 85) return 'hsl(var(--destructive) / 0.45)';
-      if (progress >= 65) return 'hsl(var(--warning) / 0.35)';
-      if (progress > 0 && progress < 65) return 'hsl(var(--success) / 0.35)';
-      return 'transparent';
-    }
     if (progress >= 100) return 'hsl(var(--success) / 0.5)';
     if (progress >= 80) return 'hsl(var(--primary) / 0.4)';
     if (progress >= 60) return 'hsl(var(--chart-3) / 0.3)';
@@ -54,8 +38,7 @@ export function ProgressRing({
   };
 
   // Extra padding needed for the glow effect
-  const hasGlow = !noMotion && (inverse ? progress > 0 : progress >= 60);
-  const glowPadding = hasGlow ? 8 : 0;
+  const glowPadding = progress >= 60 && !noMotion ? 8 : 0;
   const totalSize = size + glowPadding * 2;
 
   return (
@@ -117,7 +100,7 @@ export function ProgressRing({
         )}
 
         {/* Glow filter for progress arc */}
-        {hasGlow && (
+        {progress >= 60 && !noMotion && (
           <circle
             cx={totalSize / 2}
             cy={totalSize / 2}

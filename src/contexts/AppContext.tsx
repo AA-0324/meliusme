@@ -7,7 +7,6 @@ import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge
 import { initEncryption } from '@/lib/crypto';
 import { migrateAllToEncrypted } from '@/lib/encryptedStorage';
 import { initRevenueCat, checkProEntitlement } from '@/lib/revenuecat';
-import { runCleanup } from '@/lib/cleanup';
 
 type ToastVariant = 'primary' | 'success' | 'warning' | 'destructive' | 'challenge';
 
@@ -105,10 +104,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [xpData, setXpData] = useState<XPData>({ totalXP: 0, level: 1, xpToNextLevel: 100, currentLevelXP: 0 });
   const [tempProUnlocks, setTempProUnlocks] = useState<TempProUnlock[]>([]);
   const [levelUpPending, setLevelUpPending] = useState<LevelUpResult | null>(null);
-  const [allowRuntimeMotion, setAllowRuntimeMotion] = useState(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return false;
-    return window.matchMedia('(min-width: 1181px) and (prefers-reduced-motion: no-preference)').matches;
-  });
 
   const [bottomToast, setBottomToast] = useState<AppContextType['bottomToast']>({ open: false, message: '', variant: 'primary' });
   const toastQueueRef = useRef<Array<{ message: string; variant: ToastVariant }>>([]);
@@ -117,18 +112,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [todayWater, setTodayWater] = useState(0);
 
   const isPro = settings.proStatus || settings.devMode || tempProUnlocks.length > 0;
-  const animationsEnabled = settings.animationsEnabled !== false && allowRuntimeMotion;
+  const animationsEnabled = settings.animationsEnabled !== false;
 
   const dismissLevelUp = useCallback(() => setLevelUpPending(null), []);
-
-  useEffect(() => {
-    if (!window.matchMedia) return;
-    const motionQuery = window.matchMedia('(min-width: 1181px) and (prefers-reduced-motion: no-preference)');
-    const updateMotionMode = () => setAllowRuntimeMotion(motionQuery.matches);
-    updateMotionMode();
-    motionQuery.addEventListener('change', updateMotionMode);
-    return () => motionQuery.removeEventListener('change', updateMotionMode);
-  }, []);
 
   // Sync animations preference to window for motion.ts + CSS
   useEffect(() => {
@@ -142,8 +128,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try {
         await initEncryption();
         await migrateAllToEncrypted();
-        // Trim stale records in the background — non-blocking.
-        runCleanup().catch(() => {});
+        
         // Initialize RevenueCat
         try {
           initRevenueCat();
@@ -235,27 +220,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (areNotificationsSupported() && Notification.permission === 'granted') setNotificationsEnabled(true);
   }, []);
-
-  // Periodically prune expired temp Pro unlocks so rewards disappear in real-time.
-  useEffect(() => {
-    if (tempProUnlocks.length === 0) return;
-    const tick = async () => {
-      const fresh = await getTempProUnlocks();
-      setTempProUnlocks(prev => (
-        prev.length === fresh.length && prev.every((u, i) => u.expiresAt === fresh[i].expiresAt)
-          ? prev
-          : fresh
-      ));
-    };
-    const interval = setInterval(tick, 60_000);
-    // Also re-check when the tab becomes visible again
-    const onVis = () => { if (document.visibilityState === 'visible') tick(); };
-    document.addEventListener('visibilitychange', onVis);
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', onVis);
-    };
-  }, [tempProUnlocks.length]);
 
   const refreshMeals = useCallback(async () => {
     const allMeals = await getAllMeals();

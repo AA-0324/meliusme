@@ -46,11 +46,11 @@ export function motionProps(props: Record<string, any>): Record<string, any> {
   return props;
 }
 
-// ─── Page Transition Variants ───
+// ─── Page Transition Variants (BOLDER) ───
 export const pageVariants: Variants = {
-  initial: { opacity: 1, y: 0, scale: 1 },
+  initial: { opacity: 0, y: 30, scale: 0.96 },
   animate: { opacity: 1, y: 0, scale: 1 },
-  exit: { opacity: 1, y: 0, scale: 1 },
+  exit: { opacity: 0, y: -20, scale: 0.98 },
 };
 
 export const pageTransition: Transition = {
@@ -59,19 +59,19 @@ export const pageTransition: Transition = {
 };
 
 // ─── Stagger Container (more dramatic delays) ───
-export const staggerContainer = (_staggerDelay = 0.1): Variants => {
+export const staggerContainer = (staggerDelay = 0.1): Variants => {
   if (prefersReducedMotion()) return { hidden: {}, show: {} };
   return {
     hidden: {},
     show: {
-      transition: { staggerChildren: 0, delayChildren: 0 },
+      transition: { staggerChildren: staggerDelay, delayChildren: 0.05 },
     },
   };
 };
 
 // ─── Fade Up Item (BIGGER movement) ───
 export const fadeUp: Variants = {
-  hidden: { opacity: 1, y: 0, scale: 1 },
+  hidden: { opacity: 0, y: 40, scale: 0.95 },
   show: {
     opacity: 1,
     y: 0,
@@ -85,7 +85,7 @@ export const fadeUp: Variants = {
 
 // ─── Fade Up with spring bounce ───
 export const fadeUpBounce: Variants = {
-  hidden: { opacity: 1, y: 0, scale: 1 },
+  hidden: { opacity: 0, y: 50, scale: 0.9 },
   show: {
     opacity: 1,
     y: 0,

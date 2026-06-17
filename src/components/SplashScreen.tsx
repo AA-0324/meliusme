@@ -7,12 +7,10 @@ interface SplashScreenProps {
 }
 
 export function SplashScreen({ show, onComplete }: SplashScreenProps) {
-  if (!show) return null;
-
   return (
     <AnimatePresence>
+      {show && (
         <motion.div
-          key="splash"
           initial={{ opacity: 1 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -85,6 +83,7 @@ export function SplashScreen({ show, onComplete }: SplashScreenProps) {
             </motion.div>
           </motion.div>
         </motion.div>
+      )}
     </AnimatePresence>
   );
 }
