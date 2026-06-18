@@ -370,8 +370,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             </motion.div>
           )}
 
-          {/* Step 2: Nutrition Goals */}
-          {step === 2 && (
+          {/* Step 3: Nutrition Goals */}
+          {step === 3 && (
             <motion.div key="goals" variants={slideVariants} initial="enter" animate="center" exit="exit"
               transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="flex-1 flex flex-col overflow-hidden">
               <div className="flex-1 overflow-y-auto px-8 pt-16 pb-4" style={{ overscrollBehavior: 'contain' }}>
