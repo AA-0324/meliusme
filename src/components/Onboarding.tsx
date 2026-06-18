@@ -1,7 +1,8 @@
 import { useState, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, ChevronRight, ArrowRight, ShieldCheck, Flame, Beef, Apple, Candy, Target, Scale, Ruler, Calendar, User2, Sparkles } from 'lucide-react';
+import { Camera, ChevronRight, ArrowRight, ShieldCheck, Flame, Beef, Apple, Candy, Target, Scale, Ruler, Calendar, User2, Sparkles, Check, FileText, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { useApp } from '@/contexts/AppContext';
