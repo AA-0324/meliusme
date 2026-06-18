@@ -2,7 +2,7 @@
 
 **MeliusMe** is a minimalist nutrition and meal-tracking application designed to give users total ownership over their health data. By eliminating cloud dependencies, accounts, and ads, MeliusMe provides a high-performance, private-by-default experience for users serious about a better life.
 
-**Current Progress:** Vibe-Coded Prototype - Estimated 60% finished
+**Current Progress:** Vibe-Coded Prototype - Estimated 75% finished
 
 ## Features
 - **Zero Friction Logging:** Rapid, intuitive entry system to reduce tracking fatigue.
