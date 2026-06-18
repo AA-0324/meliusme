@@ -534,7 +534,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     {isPro ? 'Apply Goals' : 'Save Goals'} <ChevronRight className="w-5 h-5 ml-1" />
                   </Button>
                 </motion.div>
-                <button onClick={() => setStep(3)} className="w-full text-center text-sm text-muted-foreground/60 font-medium mt-3 py-1">
+                <button onClick={() => setStep(4)} className="w-full text-center text-sm text-muted-foreground/60 font-medium mt-3 py-1">
                   Skip for now
                 </button>
               </div>
