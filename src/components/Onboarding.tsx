@@ -89,7 +89,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     setNameError('');
     await setUserName(name.trim());
     if (avatar) await setUserAvatar(avatar);
-    setStep(2);
+    setStep(3);
   };
 
   const handleSaveGoals = async () => {
