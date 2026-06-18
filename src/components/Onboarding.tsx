@@ -182,11 +182,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             </motion.div>
           )}
 
-          {/* Step 1: Profile */}
-          {step === 1 && (
-            <motion.div key="profile" variants={slideVariants} initial="enter" animate="center" exit="exit"
-              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="flex-1 flex flex-col px-8 pt-20">
-              <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
           {/* Step 1: Consent (TOS + Privacy + Age) */}
           {step === 1 && (
             <motion.div key="consent" variants={slideVariants} initial="enter" animate="center" exit="exit"
