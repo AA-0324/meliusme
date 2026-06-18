@@ -1,9 +1,9 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { Meal, Settings, getSettings, saveSettings, getAllMeals, addMeal, deleteMeal, deleteMealsByDate, updateGoals, Goals, getWaterIntake, setWaterIntake } from '@/lib/db';
 import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/userProfile';
 import { getBodyProfile, saveBodyProfile, BodyProfile, getAutoGoals } from '@/lib/bodyGoals';
 import { requestNotificationPermission, areNotificationsSupported } from '@/lib/notifications';
-import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge, getEarnedBadges, Badge, awardBadge, addXP, LevelUpResult, TempProUnlock, getTempProUnlocks, getXPData, XPData, getDailyChallenges, rollbackDailyXP } from '@/lib/streaks';
+import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge, getEarnedBadges, Badge, awardBadge, addXP, LevelUpResult, TempProUnlock, getTempProUnlocks, getXPData, XPData, getDailyChallenges } from '@/lib/streaks';
 import { initEncryption } from '@/lib/crypto';
 import { migrateAllToEncrypted } from '@/lib/encryptedStorage';
 import { initRevenueCat, checkProEntitlement } from '@/lib/revenuecat';
@@ -26,15 +26,13 @@ const setGoalToastFlag = (date: string, key: string) => {
 };
 
 const getDailyTotals = (allMeals: Meal[], date: string) => {
-  let calories = 0, protein = 0, fiber = 0, sugar = 0;
-  for (const m of allMeals) {
-    if (m.date !== date) continue;
-    calories += m.calories;
-    protein += m.protein || 0;
-    fiber += m.fiber || 0;
-    sugar += m.sugar || 0;
-  }
-  return { calories, protein, fiber, sugar };
+  const dayMeals = allMeals.filter((m) => m.date === date);
+  return {
+    calories: dayMeals.reduce((sum, m) => sum + m.calories, 0),
+    protein: dayMeals.reduce((sum, m) => sum + (m.protein || 0), 0),
+    fiber: dayMeals.reduce((sum, m) => sum + (m.fiber || 0), 0),
+    sugar: dayMeals.reduce((sum, m) => sum + (m.sugar || 0), 0),
+  };
 };
 
 const DEFAULT_SETTINGS: Settings = {
@@ -303,18 +301,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setTodayWater(0);
     await setWaterIntake(todayStr, 0);
     sessionStorage.removeItem(`melius-confetti-${todayStr}`);
-
+    
+    // Rollback XP earned today
+    const { rollbackDailyXP } = await import('@/lib/streaks');
     const rolledBackXP = await rollbackDailyXP(todayStr, isPro);
     setXpData(rolledBackXP);
-
+    
+    // Clear daily challenge awards for today
     sessionStorage.removeItem(`melius-daily-xp-awarded-${todayStr}`);
+    
+    // Clear goal toast flags so they can re-trigger
     sessionStorage.removeItem(goalToastKey(todayStr));
-
+    
+    // Delete today's meals and update state
     setMeals((prev) => prev.filter((m) => m.date !== todayStr));
     void deleteMealsByDate(todayStr);
-
+    
+    // Recalculate weekly challenge progress without today's meals
     const remainingMeals = meals.filter(m => m.date !== todayStr);
-    const updatedChallenge = await getCurrentChallenge(remainingMeals);
+    const { getCurrentChallenge: getChallenge } = await import('@/lib/streaks');
+    const updatedChallenge = await getChallenge(remainingMeals);
     setCurrentChallenge(updatedChallenge);
   }, [isPro, meals]);
 
@@ -429,20 +435,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
 
     const currentBadges = await getEarnedBadges();
-    const earnedIds = new Set(currentBadges.map(b => b.id));
-    let badgesChanged = false;
-    if (!earnedIds.has('first_meal')) {
+    if (!currentBadges.some(b => b.id === 'first_meal')) {
       await awardBadge('first_meal');
-      badgesChanged = true;
+      setBadges(await getEarnedBadges());
     }
 
     const todayStr = new Date().toISOString().split('T')[0];
-    const todayMealCountBefore = meals.reduce((c, m) => c + (m.date === todayStr ? 1 : 0), 0);
-    if (todayMealCountBefore >= 2 && !earnedIds.has('meals_3')) {
+    const todayMeals = meals.filter(m => m.date === todayStr);
+    if (todayMeals.length >= 2 && !currentBadges.some(b => b.id === 'meals_3')) {
       await awardBadge('meals_3');
-      badgesChanged = true;
+      setBadges(await getEarnedBadges());
     }
-    if (badgesChanged) setBadges(await getEarnedBadges());
 
     showBottomToast('Meal logged!', 'primary');
 
@@ -500,32 +503,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setMeals((prev) => prev.filter((m) => m.id !== id));
   }, []);
 
-  const value = useMemo<AppContextType>(() => ({
-    settings, meals, isLoading, isPro, animationsEnabled,
-    userProfile, setUserName, setUserAvatar,
-    bodyProfile, updateBodyProfile: updateBodyProfileCb,
-    streak, currentChallenge, badges, refreshStreak,
-    todayWater, incrementWater,
-    notificationsEnabled, toggleNotifications,
-    setDevMode, setDarkMode, setPro, setTheme, setUse24Hour, setAnimationsEnabled,
-    updateUserGoals, setWaterGoal: setWaterGoalCb, resetDailyData,
-    refreshMeals, logMeal, removeMeal,
-    bottomToast, showBottomToast, hideBottomToast,
-    xpData, tempProUnlocks, levelUpPending, dismissLevelUp,
-  }), [
-    settings, meals, isLoading, isPro, animationsEnabled,
-    userProfile, bodyProfile, streak, currentChallenge, badges,
-    todayWater, notificationsEnabled, bottomToast,
-    xpData, tempProUnlocks, levelUpPending,
-    setUserName, setUserAvatar, updateBodyProfileCb, refreshStreak,
-    incrementWater, toggleNotifications,
-    setDevMode, setDarkMode, setPro, setTheme, setUse24Hour, setAnimationsEnabled,
-    updateUserGoals, setWaterGoalCb, resetDailyData,
-    refreshMeals, logMeal, removeMeal,
-    showBottomToast, hideBottomToast, dismissLevelUp,
-  ]);
-
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider
+      value={{
+        settings, meals, isLoading, isPro, animationsEnabled,
+        userProfile, setUserName, setUserAvatar,
+        bodyProfile, updateBodyProfile: updateBodyProfileCb,
+        streak, currentChallenge, badges, refreshStreak,
+        todayWater, incrementWater,
+        notificationsEnabled, toggleNotifications,
+        setDevMode, setDarkMode, setPro, setTheme, setUse24Hour, setAnimationsEnabled,
+        updateUserGoals, setWaterGoal: setWaterGoalCb, resetDailyData,
+        refreshMeals, logMeal, removeMeal,
+        bottomToast, showBottomToast, hideBottomToast,
+        xpData, tempProUnlocks, levelUpPending, dismissLevelUp,
+      }}
+    >
+      {children}
+    </AppContext.Provider>
+  );
 }
 
 export function useApp() {

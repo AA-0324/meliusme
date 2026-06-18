@@ -1,4 +1,3 @@
-import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { Meal } from '@/lib/db';
 import { cn } from '@/lib/utils';
@@ -34,7 +33,7 @@ const mealTypeDotColors = {
   snack: 'bg-chart-2',
 };
 
-function MealCardImpl({ meal, onClick, compact }: MealCardProps) {
+export function MealCard({ meal, onClick, compact }: MealCardProps) {
   const { settings, animationsEnabled } = useApp();
   const noMotion = !animationsEnabled;
   const warnings = getHealthWarnings(meal.calories, meal.protein, meal.fiber, meal.sugar, meal.mealType, undefined, undefined, { isLogged: true });
@@ -49,7 +48,7 @@ function MealCardImpl({ meal, onClick, compact }: MealCardProps) {
         onClick={onClick}
         className="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden relative border border-border/50"
       >
-        <img src={meal.photo} alt={mealTypeLabels[meal.mealType]} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+        <img src={meal.photo} alt={mealTypeLabels[meal.mealType]} className="w-full h-full object-cover" />
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-1.5">
           <span className="text-white text-xs font-bold">{meal.calories}</span>
         </div>
@@ -71,7 +70,7 @@ function MealCardImpl({ meal, onClick, compact }: MealCardProps) {
       className={`w-full glass rounded-xl overflow-hidden text-left card-interactive ${animationsEnabled ? 'animate-shine' : ''}`}
     >
       <div className="aspect-video relative">
-        <img src={meal.photo} alt={mealTypeLabels[meal.mealType]} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+        <img src={meal.photo} alt={mealTypeLabels[meal.mealType]} className="w-full h-full object-cover" />
         <div className="absolute top-3 left-3">
           <span className={cn(
             'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border border-border/60',
@@ -123,7 +122,3 @@ function MealCardImpl({ meal, onClick, compact }: MealCardProps) {
     </motion.button>
   );
 }
-
-export const MealCard = memo(MealCardImpl, (prev, next) =>
-  prev.meal === next.meal && prev.compact === next.compact && prev.onClick === next.onClick
-);

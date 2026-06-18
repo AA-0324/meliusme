@@ -90,40 +90,16 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
 
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const src = reader.result as string;
-      const img = new Image();
-      img.onload = () => {
-        const MAX = 1280;
-        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
-        const w = Math.round(img.width * scale);
-        const h = Math.round(img.height * scale);
-        const canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, w, h);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-          setCapturedPhoto(dataUrl);
-          setMode('preview');
-          stopCamera();
-        } else {
-          setCapturedPhoto(src);
-          setMode('preview');
-          stopCamera();
-        }
-      };
-      img.onerror = () => {
-        setCapturedPhoto(src);
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        setCapturedPhoto(dataUrl);
         setMode('preview');
         stopCamera();
       };
-      img.src = src;
-    };
-    reader.readAsDataURL(file);
+      reader.readAsDataURL(file);
+    }
   }, [stopCamera]);
 
   const switchCamera = useCallback(() => {
