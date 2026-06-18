@@ -299,7 +299,7 @@ export default function Challenges() {
                     whileTap={noMotion ? {} : { scale: 0.9 }}
                     className="aspect-square rounded-xl overflow-hidden border-2 border-transparent hover:border-primary transition-all"
                   >
-                    <img src={meal.photo} alt="Meal" className="w-full h-full object-cover" />
+                    <img src={meal.photo} alt="Meal" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                   </motion.button>
                 ))}
               </div>

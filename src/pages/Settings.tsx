@@ -17,6 +17,9 @@ import {
   Beef,
   Apple,
   Candy,
+  Shield,
+  FileText,
+  ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -33,7 +36,7 @@ import { getMealTemplates, deleteMealTemplate, MealTemplate } from '@/lib/proFea
 import { restorePurchases, checkProEntitlement } from '@/lib/revenuecat';
 import logo from '@/assets/meliusme-logo-new.png';
 
-const APP_VERSION = '0.10.3-alpha';
+const APP_VERSION = '0.10.5-alpha';
 
 export default function Settings() {
   const { 
@@ -333,6 +336,40 @@ export default function Settings() {
             </div>
             <Switch checked={settings.devMode} onCheckedChange={setDevMode} />
           </div>
+        </motion.div>
+
+        {/* Legal */}
+        <motion.div variants={fadeUp} className="space-y-3">
+          <Button
+            asChild
+            variant="outline"
+            className="w-full h-12 rounded-xl justify-start gap-3 font-semibold"
+          >
+            <a
+              href="https://aa-0324.github.io/meliusme/public/privacy.html"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Shield className="w-5 h-5 text-primary" />
+              <span className="flex-1 text-left">Privacy Policy</span>
+              <ExternalLink className="w-4 h-4 text-muted-foreground" />
+            </a>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            className="w-full h-12 rounded-xl justify-start gap-3 font-semibold"
+          >
+            <a
+              href="https://aa-0324.github.io/meliusme/public/tos.html"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <FileText className="w-5 h-5 text-primary" />
+              <span className="flex-1 text-left">Terms of Service</span>
+              <ExternalLink className="w-4 h-4 text-muted-foreground" />
+            </a>
+          </Button>
         </motion.div>
 
         {/* App Info */}
