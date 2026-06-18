@@ -187,6 +187,134 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             <motion.div key="profile" variants={slideVariants} initial="enter" animate="center" exit="exit"
               transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="flex-1 flex flex-col px-8 pt-20">
               <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          {/* Step 1: Consent (TOS + Privacy + Age) */}
+          {step === 1 && (
+            <motion.div key="consent" variants={slideVariants} initial="enter" animate="center" exit="exit"
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="flex-1 flex flex-col overflow-hidden">
+              <div className="flex-1 overflow-y-auto px-8 pt-16 pb-4" style={{ overscrollBehavior: 'contain' }}>
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 mb-2">
+                  <ShieldCheck className="w-5 h-5 text-primary" />
+                  <h1 className="text-2xl font-extrabold">Before you start</h1>
+                </motion.div>
+                <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+                  className="text-muted-foreground text-sm mb-6">
+                  Please confirm the following to continue.
+                </motion.p>
+
+                <div className="space-y-3">
+                  <motion.label
+                    initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
+                    htmlFor="consent-age"
+                    className="flex items-start gap-3 p-4 rounded-2xl bg-secondary/50 border border-border/50 cursor-pointer active:scale-[0.99] transition-transform"
+                  >
+                    <Checkbox
+                      id="consent-age"
+                      checked={consentAge}
+                      onCheckedChange={(v) => setConsentAge(v === true)}
+                      className="mt-0.5"
+                    />
+                    <span className="text-sm leading-relaxed">
+                      I am at least <strong>13 years old</strong> (16 in the EEA/UK).
+                    </span>
+                  </motion.label>
+
+                  <motion.label
+                    initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
+                    htmlFor="consent-tos"
+                    className="flex items-start gap-3 p-4 rounded-2xl bg-secondary/50 border border-border/50 cursor-pointer active:scale-[0.99] transition-transform"
+                  >
+                    <Checkbox
+                      id="consent-tos"
+                      checked={consentTos}
+                      onCheckedChange={(v) => setConsentTos(v === true)}
+                      className="mt-0.5"
+                    />
+                    <span className="text-sm leading-relaxed">
+                      I have read and agree to the{' '}
+                      <a
+                        href="https://aa-0324.github.io/meliusme/public/tos.html"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-primary font-semibold underline underline-offset-2"
+                      >
+                        Terms of Service
+                      </a>
+                      .
+                    </span>
+                  </motion.label>
+
+                  <motion.label
+                    initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}
+                    htmlFor="consent-privacy"
+                    className="flex items-start gap-3 p-4 rounded-2xl bg-secondary/50 border border-border/50 cursor-pointer active:scale-[0.99] transition-transform"
+                  >
+                    <Checkbox
+                      id="consent-privacy"
+                      checked={consentPrivacy}
+                      onCheckedChange={(v) => setConsentPrivacy(v === true)}
+                      className="mt-0.5"
+                    />
+                    <span className="text-sm leading-relaxed">
+                      I have read the{' '}
+                      <a
+                        href="https://aa-0324.github.io/meliusme/public/privacy.html"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-primary font-semibold underline underline-offset-2"
+                      >
+                        Privacy Policy
+                      </a>
+                      {' '}and consent to the processing and storage of my health-related data as described therein.
+                    </span>
+                  </motion.label>
+                </div>
+
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.22 }}
+                  className="flex items-start gap-2.5 p-3 rounded-xl bg-primary/5 border border-primary/10 mt-5">
+                  <ShieldCheck className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Your data stays on this device. A timestamp of your consent is stored locally for compliance.
+                  </p>
+                </motion.div>
+              </div>
+
+              <div className="px-8 pb-10 pt-3">
+                <motion.div whileTap={{ scale: allConsented ? 0.96 : 1 }} transition={{ type: 'spring', damping: 15 }}>
+                  <Button
+                    onClick={() => {
+                      if (!allConsented) return;
+                      try {
+                        localStorage.setItem('meliusme-consent', JSON.stringify({
+                          age13: true,
+                          tos: true,
+                          privacy: true,
+                          timestamp: new Date().toISOString(),
+                          tosUrl: 'https://aa-0324.github.io/meliusme/public/tos.html',
+                          privacyUrl: 'https://aa-0324.github.io/meliusme/public/privacy.html',
+                        }));
+                      } catch {}
+                      setStep(2);
+                    }}
+                    disabled={!allConsented}
+                    className="w-full h-14 rounded-2xl font-bold shadow-neon gradient-primary cta-glow text-base"
+                  >
+                    Continue <ChevronRight className="w-5 h-5 ml-1" />
+                  </Button>
+                </motion.div>
+                <p className="text-center text-xs text-muted-foreground/60 mt-3">
+                  All boxes must be checked to continue
+                </p>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 2: Profile */}
+          {step === 2 && (
+            <motion.div key="profile" variants={slideVariants} initial="enter" animate="center" exit="exit"
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="flex-1 flex flex-col px-8 pt-20">
+              <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                 className="text-2xl font-extrabold mb-2">Set up your profile</motion.h1>
               <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
                 className="text-muted-foreground mb-6">Let's personalize your experience</motion.p>
