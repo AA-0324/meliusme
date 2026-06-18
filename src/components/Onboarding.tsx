@@ -32,6 +32,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const [avatar, setAvatar] = useState<string | null>(null);
   const [showProModal, setShowProModal] = useState(false);
   const [nameError, setNameError] = useState('');
+  const [consentAge, setConsentAge] = useState(false);
+  const [consentTos, setConsentTos] = useState(false);
+  const [consentPrivacy, setConsentPrivacy] = useState(false);
+  const allConsented = consentAge && consentTos && consentPrivacy;
   const avatarRef = useRef<HTMLInputElement>(null);
 
   // Basic goals state
