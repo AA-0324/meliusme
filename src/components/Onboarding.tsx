@@ -541,8 +541,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             </motion.div>
           )}
 
-          {/* Step 3: Pro Upsell */}
-          {step === 3 && (
+          {/* Step 4: Pro Upsell */}
+          {step === 4 && (
             <motion.div key="pro" variants={slideVariants} initial="enter" animate="center" exit="exit"
               transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="flex-1 flex flex-col items-center justify-center px-8 relative">
               {/* Large background logo */}
