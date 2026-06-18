@@ -114,7 +114,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       await updateUserGoals({ calories: cal, protein: prot, fiber: fib, sugar: sug });
       toast.success('Goals saved');
     }
-    setStep(3);
+    setStep(4);
   };
 
   const handleFinish = () => {
