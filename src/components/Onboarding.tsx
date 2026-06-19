@@ -227,7 +227,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     <span className="text-sm leading-relaxed">
                       I have read and agree to the{' '}
                       <a
-                        href="https://aa-0324.github.io/meliusme/public/tos.html"
+                        href="https://aa-0324.github.io/meliusme/terms-of-service.html"
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
@@ -253,7 +253,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     <span className="text-sm leading-relaxed">
                       I have read the{' '}
                       <a
-                        href="https://aa-0324.github.io/meliusme/public/privacy.html"
+                        href="https://aa-0324.github.io/meliusme/privacy-policy.html"
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
@@ -286,8 +286,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                           tos: true,
                           privacy: true,
                           timestamp: new Date().toISOString(),
-                          tosUrl: 'https://aa-0324.github.io/meliusme/public/tos.html',
-                          privacyUrl: 'https://aa-0324.github.io/meliusme/public/privacy.html',
+                          tosUrl: 'https://aa-0324.github.io/meliusme/terms-of-service.html',
+                          privacyUrl: 'https://aa-0324.github.io/meliusme/privacy-policy.html',
                         }));
                       } catch {}
                       setStep(2);
