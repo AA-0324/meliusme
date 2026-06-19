@@ -346,7 +346,7 @@ export default function Settings() {
             className="w-full h-12 rounded-xl justify-start gap-3 font-semibold"
           >
             <a
-              href="https://aa-0324.github.io/meliusme/public/privacy.html"
+              href="https://aa-0324.github.io/meliusme/privacy-policy.html"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -361,7 +361,7 @@ export default function Settings() {
             className="w-full h-12 rounded-xl justify-start gap-3 font-semibold"
           >
             <a
-              href="https://aa-0324.github.io/meliusme/public/tos.html"
+              href="https://aa-0324.github.io/meliusme/terms-of-service.html"
               target="_blank"
               rel="noopener noreferrer"
             >
