@@ -140,7 +140,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           getSettings(),
           getUserProfile(),
           getBodyProfile(),
-          getStreakData(),
+          getStreakData().then(() => validateStreakFreshness()),
           getCurrentChallenge(),
           getEarnedBadges(),
           getAllMeals(),
