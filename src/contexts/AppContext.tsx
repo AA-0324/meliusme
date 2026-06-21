@@ -3,7 +3,7 @@ import { Meal, Settings, getSettings, saveSettings, getAllMeals, addMeal, delete
 import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/userProfile';
 import { getBodyProfile, saveBodyProfile, BodyProfile, getAutoGoals } from '@/lib/bodyGoals';
 import { requestNotificationPermission, areNotificationsSupported } from '@/lib/notifications';
-import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge, getEarnedBadges, Badge, awardBadge, addXP, LevelUpResult, TempProUnlock, getTempProUnlocks, getXPData, XPData, getDailyChallenges, rollbackDailyXP } from '@/lib/streaks';
+import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge, getEarnedBadges, Badge, awardBadge, addXP, LevelUpResult, TempProUnlock, getTempProUnlocks, getXPData, XPData, getDailyChallenges, rollbackDailyXP, validateStreakFreshness } from '@/lib/streaks';
 import { initEncryption } from '@/lib/crypto';
 import { migrateAllToEncrypted } from '@/lib/encryptedStorage';
 import { initRevenueCat, checkProEntitlement } from '@/lib/revenuecat';
