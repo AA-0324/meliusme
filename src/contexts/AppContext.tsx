@@ -227,7 +227,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshStreak = useCallback(async () => {
-    const [s, c, b] = await Promise.all([getStreakData(), getCurrentChallenge(), getEarnedBadges()]);
+    const [s, c, b] = await Promise.all([validateStreakFreshness(), getCurrentChallenge(), getEarnedBadges()]);
     setStreak(s);
     setCurrentChallenge(c);
     setBadges(b);
