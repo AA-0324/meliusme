@@ -316,6 +316,29 @@ export async function updateStreak(mealDate: string): Promise<StreakData> {
   return data;
 }
 
+/**
+ * Passive streak expiry check. Resets currentStreak to 0 if the user hasn't
+ * logged today or yesterday. Safe to call on every app load.
+ */
+export async function validateStreakFreshness(): Promise<StreakData> {
+  const data = await getStreakData();
+  if (data.currentStreak === 0 || !data.lastLogDate) return data;
+
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+  if (data.lastLogDate === todayStr || data.lastLogDate === yesterdayStr) {
+    return data;
+  }
+
+  const updated: StreakData = { ...data, currentStreak: 0 };
+  await saveStreakData(updated);
+  return updated;
+}
+
 // ─── Reflection ────────────────────────────────────────────────────
 
 export async function getLastReflection(): Promise<ReflectionData | null> {
