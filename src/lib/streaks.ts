@@ -122,11 +122,14 @@ export async function hasActiveTempUnlock(): Promise<boolean> {
   return unlocks.length > 0;
 }
 
-async function selectRandomProFeature(): Promise<typeof PRO_FEATURE_POOL[number]> {
+async function selectRandomProFeature(activeIds: Set<string>): Promise<typeof PRO_FEATURE_POOL[number]> {
   const lastId = await readEncLS<string>(LAST_REWARD_KEY, '');
-  // Filter out the last rewarded feature to avoid repeats
-  const candidates = PRO_FEATURE_POOL.filter(f => f.id !== lastId);
-  const pool = candidates.length > 0 ? candidates : [...PRO_FEATURE_POOL];
+  // Prefer features that aren't currently active AND aren't the last reward
+  let pool = PRO_FEATURE_POOL.filter(f => f.id !== lastId && !activeIds.has(f.id));
+  // Fall back to anything not currently active (avoid duplicates above all)
+  if (pool.length === 0) pool = PRO_FEATURE_POOL.filter(f => !activeIds.has(f.id));
+  // Last resort: everything (all features already active)
+  if (pool.length === 0) pool = [...PRO_FEATURE_POOL];
   const selected = pool[Math.floor(Math.random() * pool.length)];
   await writeEncLS(LAST_REWARD_KEY, selected.id);
   return selected;
@@ -139,7 +142,9 @@ function getRewardDuration(level: number): number {
 }
 
 async function grantLevelReward(level: number): Promise<TempProUnlock> {
-  const feature = await selectRandomProFeature();
+  const existing = await getTempProUnlocks();
+  const activeIds = new Set(existing.map(u => u.featureId));
+  const feature = await selectRandomProFeature(activeIds);
   const now = Date.now();
   const duration = getRewardDuration(level);
   const unlock: TempProUnlock = {
@@ -150,7 +155,6 @@ async function grantLevelReward(level: number): Promise<TempProUnlock> {
     expiresAt: now + duration,
     fromLevel: level,
   };
-  const existing = await getTempProUnlocks();
   existing.push(unlock);
   await writeEncLS(TEMP_UNLOCKS_KEY, existing);
   return unlock;
@@ -206,22 +210,32 @@ export async function getXP(): Promise<number> {
 }
 
 export async function addXP(amount: number, isProUser: boolean = false, source: string = 'unknown'): Promise<LevelUpResult> {
+  if (amount <= 0) {
+    const data = calculateLevel(await getXP());
+    return { xpData: data, leveledUp: false, previousLevel: data.level, reward: null };
+  }
   const current = await getXP();
   const previousData = calculateLevel(current);
   const newTotal = current + amount;
   try { localStorage.setItem(XP_KEY, await encrypt(newTotal.toString())); } catch { localStorage.setItem(XP_KEY, newTotal.toString()); }
   const newData = calculateLevel(newTotal);
-  
+
   // Record in ledger
   const today = new Date().toISOString().split('T')[0];
   await addXPLedgerEntry(today, amount, source);
-  
+
   const leveledUp = newData.level > previousData.level;
   let reward: TempProUnlock | null = null;
 
-  // Grant reward on even levels, only for non-Pro users
-  if (leveledUp && newData.level % 2 === 0 && !isProUser) {
-    reward = await grantLevelReward(newData.level);
+  // Grant reward on EVERY even level crossed (handles multi-level jumps),
+  // for non-Pro users only. The most recently granted reward is returned
+  // for the level-up modal display; all rewards are persisted to active unlocks.
+  if (leveledUp && !isProUser) {
+    for (let lvl = previousData.level + 1; lvl <= newData.level; lvl++) {
+      if (lvl % 2 === 0) {
+        reward = await grantLevelReward(lvl);
+      }
+    }
   }
 
   return { xpData: newData, leveledUp, previousLevel: previousData.level, reward };
@@ -453,7 +467,13 @@ export function getDailyChallenges(
   for (let i = 0; i < today.length; i++) {
     seed = ((seed << 5) - seed + today.charCodeAt(i)) | 0;
   }
-  const shuffled = seededShuffle(DAILY_CHALLENGE_POOL, seed);
+  // Exclude challenges that can't be achieved given the user's current goals
+  // (e.g. protein challenge with no protein goal set — would stay 0/1 forever).
+  const achievablePool = DAILY_CHALLENGE_POOL.filter(c => {
+    if (c.type === 'protein_goal') return !!goals.protein && goals.protein > 0;
+    return true;
+  });
+  const shuffled = seededShuffle(achievablePool, seed);
   const picked = shuffled.slice(0, 3);
 
   const mealCount = todaysMealTypes.length;
