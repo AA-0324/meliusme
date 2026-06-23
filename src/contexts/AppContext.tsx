@@ -103,7 +103,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [badges, setBadges] = useState<Badge[]>([]);
   const [xpData, setXpData] = useState<XPData>({ totalXP: 0, level: 1, xpToNextLevel: 100, currentLevelXP: 0 });
   const [tempProUnlocks, setTempProUnlocks] = useState<TempProUnlock[]>([]);
-  const [levelUpPending, setLevelUpPending] = useState<LevelUpResult | null>(null);
+  const [levelUpQueue, setLevelUpQueue] = useState<LevelUpResult[]>([]);
+  const levelUpPending = levelUpQueue[0] ?? null;
 
   const [bottomToast, setBottomToast] = useState<AppContextType['bottomToast']>({ open: false, message: '', variant: 'primary' });
   const toastQueueRef = useRef<Array<{ message: string; variant: ToastVariant }>>([]);
@@ -114,7 +115,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const isPro = settings.proStatus || settings.devMode || tempProUnlocks.length > 0;
   const animationsEnabled = settings.animationsEnabled !== false;
 
-  const dismissLevelUp = useCallback(() => setLevelUpPending(null), []);
+  const dismissLevelUp = useCallback(() => setLevelUpQueue(q => q.slice(1)), []);
+
+  // Periodically prune expired temp Pro unlocks so the UI stays accurate.
+  useEffect(() => {
+    const refresh = async () => setTempProUnlocks(await getTempProUnlocks());
+    const interval = window.setInterval(refresh, 60_000);
+    const onVisible = () => { if (!document.hidden) refresh(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { clearInterval(interval); document.removeEventListener('visibilitychange', onVisible); };
+  }, []);
+
+  // Clean up stale awarded-challenge keys for days other than today (one-time per session).
+  useEffect(() => {
+    const prefix = 'melius-daily-xp-awarded-';
+    const todayKey = `${prefix}${today}`;
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(prefix) && k !== todayKey) localStorage.removeItem(k);
+    }
+  }, [today]);
 
   // Sync animations preference to window for motion.ts + CSS
   useEffect(() => {
@@ -307,7 +327,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const rolledBackXP = await rollbackDailyXP(todayStr, isPro);
     setXpData(rolledBackXP);
 
-    sessionStorage.removeItem(`melius-daily-xp-awarded-${todayStr}`);
+    // Daily challenge claims live in localStorage now (persistent).
+    localStorage.removeItem(`melius-daily-xp-awarded-${todayStr}`);
+    sessionStorage.removeItem(`melius-daily-xp-awarded-${todayStr}`); // legacy cleanup
     sessionStorage.removeItem(goalToastKey(todayStr));
 
     setMeals((prev) => prev.filter((m) => m.date !== todayStr));
@@ -316,6 +338,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const remainingMeals = meals.filter(m => m.date !== todayStr);
     const updatedChallenge = await getCurrentChallenge(remainingMeals);
     setCurrentChallenge(updatedChallenge);
+    setTempProUnlocks(await getTempProUnlocks());
   }, [isPro, meals]);
 
   const toggleNotifications = useCallback(async () => {
@@ -350,9 +373,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // ─── Daily challenge XP tracking ──────────────────────
+  // Persistent across app reloads — sessionStorage would let users farm XP
+  // by closing/reopening the app and re-claiming the same challenge.
   const getAwardedChallenges = useCallback((): Set<string> => {
     const key = `melius-daily-xp-awarded-${today}`;
-    const raw = sessionStorage.getItem(key);
+    const raw = localStorage.getItem(key);
     if (!raw) return new Set();
     try { return new Set(JSON.parse(raw)); } catch { return new Set(); }
   }, [today]);
@@ -361,7 +386,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const key = `melius-daily-xp-awarded-${today}`;
     const awarded = getAwardedChallenges();
     awarded.add(id);
-    sessionStorage.setItem(key, JSON.stringify([...awarded]));
+    localStorage.setItem(key, JSON.stringify([...awarded]));
   }, [today, getAwardedChallenges]);
 
   const checkAndAwardDailyChallengeXP = useCallback(async (
@@ -371,11 +396,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const awarded = getAwardedChallenges();
     for (const c of challenges) {
       if (c.completed && !awarded.has(c.id)) {
+        // Mark BEFORE awarding to prevent double-grants from concurrent calls.
         markChallengeAwarded(c.id);
         const result = await addXP(c.xp, isPro, `challenge:${c.id}`);
         setXpData(result.xpData);
         if (result.leveledUp) {
-          setLevelUpPending(result);
+          setLevelUpQueue(q => [...q, result]);
           if (result.reward) {
             setTempProUnlocks(await getTempProUnlocks());
           }
@@ -422,7 +448,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const levelResult = await addXP(10, isPro, 'meal_log');
     setXpData(levelResult.xpData);
     if (levelResult.leveledUp) {
-      setLevelUpPending(levelResult);
+      setLevelUpQueue(q => [...q, levelResult]);
       if (levelResult.reward) {
         setTempProUnlocks(await getTempProUnlocks());
       }
