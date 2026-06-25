@@ -125,26 +125,43 @@ export default function Settings() {
       </div>
 
       <motion.div variants={staggerContainer(0.06)} initial="hidden" animate="show" className="px-6 space-y-4">
-        {/* Animations toggle */}
+        {/* Animations slider */}
         <motion.div variants={fadeUp}
           className="bg-card rounded-2xl p-5 border border-border/50">
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Accessibility</h2>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {animationsEnabled ? (
-                <Eye className="w-5 h-5 text-primary" />
-              ) : (
-                <EyeOff className="w-5 h-5 text-muted-foreground" />
-              )}
-              <div>
+          <div className="flex items-start gap-3 mb-4">
+            {animationLevel === 'off' ? (
+              <EyeOff className="w-5 h-5 text-muted-foreground mt-0.5" />
+            ) : (
+              <Eye className="w-5 h-5 text-primary mt-0.5" />
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
                 <span className="font-semibold">Animations</span>
-                <p className="text-xs text-muted-foreground">Disable for reduced motion</p>
+                <span className="text-xs font-semibold text-primary capitalize">{animationLevel}</span>
               </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {animationLevel === 'full' && 'All motion and effects enabled.'}
+                {animationLevel === 'reduced' && 'Essential transitions only. Decorative effects are disabled.'}
+                {animationLevel === 'off' && 'All motion disabled.'}
+              </p>
             </div>
-            <Switch
-              checked={animationsEnabled}
-              onCheckedChange={setAnimationsEnabled}
-            />
+          </div>
+          <Slider
+            min={0}
+            max={2}
+            step={1}
+            value={[animationLevel === 'off' ? 0 : animationLevel === 'reduced' ? 1 : 2]}
+            onValueChange={(v) => {
+              const level = v[0] === 0 ? 'off' : v[0] === 1 ? 'reduced' : 'full';
+              setAnimationLevel(level);
+            }}
+            aria-label="Animation level"
+          />
+          <div className="flex justify-between text-[10px] uppercase tracking-wide text-muted-foreground mt-2 px-0.5">
+            <span>Off</span>
+            <span>Reduced</span>
+            <span>Full</span>
           </div>
         </motion.div>
 
