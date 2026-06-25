@@ -75,39 +75,47 @@ const App = () => {
   };
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AppProvider>
-          <AnimationWrapper>
-            <Toaster />
-            <Sonner />
-            <SplashScreen show={showSplash} onComplete={handleSplashComplete} />
-            {showOnboarding && <Onboarding onComplete={() => setShowOnboarding(false)} />}
-            <GlobalBottomToast />
-            <GlobalLevelUpModal />
-            <BrowserRouter>
-              <ForceHomeOnLoad />
-              <ScrollToTop />
-              <div className="min-h-screen bg-background overflow-x-hidden">
-                <div className="fixed top-4 right-4 z-40 safe-top" data-nav-profile>
-                  <ProfileButton />
+    <ErrorBoundary name="App">
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <AppProvider>
+            <AnimationWrapper>
+              <Toaster />
+              <Sonner />
+              <SplashScreen show={showSplash} onComplete={handleSplashComplete} />
+              {showOnboarding && (
+                <ErrorBoundary name="Onboarding" inline>
+                  <Onboarding onComplete={() => setShowOnboarding(false)} />
+                </ErrorBoundary>
+              )}
+              <GlobalBottomToast />
+              <GlobalLevelUpModal />
+              <BrowserRouter>
+                <ForceHomeOnLoad />
+                <ScrollToTop />
+                <div className="min-h-screen bg-background overflow-x-hidden">
+                  <div className="fixed top-4 right-4 z-40 safe-top" data-nav-profile>
+                    <ProfileButton />
+                  </div>
+                  <ErrorBoundary name="Routes">
+                    <Routes>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/log" element={<Log />} />
+                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/profile" element={<Profile />} />
+                      <Route path="/settings" element={<Settings />} />
+                      <Route path="/challenges" element={<Challenges />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </ErrorBoundary>
+                  <BottomNav />
                 </div>
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/log" element={<Log />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/challenges" element={<Challenges />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-                <BottomNav />
-              </div>
-            </BrowserRouter>
-          </AnimationWrapper>
-        </AppProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+              </BrowserRouter>
+            </AnimationWrapper>
+          </AppProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 
