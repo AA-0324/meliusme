@@ -26,7 +26,7 @@ const MEAL_TYPE_COLORS = {
 type DashboardFilter = 'today' | '7days' | '30days' | '90days';
 
 export default function Dashboard() {
-  const { meals, settings, isPro, animationsEnabled } = useApp();
+  const { meals, settings, isPro, hasProFeature, animationsEnabled } = useApp();
   const [showProModal, setShowProModal] = useState(false);
   const [showLayoutEditor, setShowLayoutEditor] = useState(false);
   const [dashboardFilter, setDashboardFilter] = useState<DashboardFilter>('7days');
