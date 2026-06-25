@@ -54,9 +54,9 @@ const GlobalLevelUpModal = () => {
 };
 
 const AnimationWrapper = ({ children }: { children: React.ReactNode }) => {
-  const { animationsEnabled } = useApp();
+  const { motionEnabled } = useApp();
   return (
-    <MotionConfig reducedMotion={animationsEnabled ? 'never' : 'always'}>
+    <MotionConfig reducedMotion={motionEnabled ? 'never' : 'always'}>
       {children}
     </MotionConfig>
   );
