@@ -57,8 +57,9 @@ export default function Dashboard() {
     updateStreaksData(today, true, metCalorie, metProtein).then(setStreaksData);
   }, [meals, settings.goals]);
 
+  const canCustomizeLayout = hasProFeature('custom_layouts');
   const isWidgetVisible = (id: string) => {
-    if (!isPro) return true;
+    if (!canCustomizeLayout) return true;
     const widget = dashboardLayout.find(w => w.id === id);
     return widget ? widget.visible : true;
   };
