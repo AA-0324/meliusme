@@ -37,6 +37,8 @@ export interface Settings {
   use24Hour: boolean;
   personalizedGoals?: boolean;
   animationsEnabled?: boolean;
+  /** Three-tier animation preference. 'full' = all, 'reduced' = essential transitions only, 'off' = none. */
+  animationLevel?: 'full' | 'reduced' | 'off';
 }
 
 // ─── Encrypted localStorage helpers ────────────────────────────────
@@ -287,6 +289,7 @@ const DEFAULT_SETTINGS: Settings = {
   waterGoal: 8,
   use24Hour: false,
   animationsEnabled: true,
+  animationLevel: 'full',
 };
 
 export async function getSettings(): Promise<Settings> {

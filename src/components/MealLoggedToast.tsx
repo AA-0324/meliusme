@@ -29,7 +29,8 @@ export function MealLoggedToast({ show, onHide, message = 'Meal logged!', varian
     success: 'bg-success text-success-foreground shadow-success/30',
     warning: 'bg-warning text-warning-foreground shadow-warning/30',
     destructive: 'bg-destructive text-destructive-foreground shadow-destructive/30',
-    challenge: 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-primary/40 shadow-xl',
+    // Unified with regular toasts: identical layout, just the success-green background.
+    challenge: 'bg-success text-success-foreground shadow-success/30',
   };
 
   const Icon = variant === 'warning' || variant === 'destructive' ? AlertTriangle : variant === 'challenge' ? Trophy : Check;

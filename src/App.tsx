@@ -12,6 +12,7 @@ import { ScrollToTop } from "@/components/ScrollToTop";
 import { SplashScreen } from "@/components/SplashScreen";
 import { Onboarding } from "@/components/Onboarding";
 import { MealLoggedToast } from "@/components/MealLoggedToast";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LevelUpModal } from "@/components/LevelUpModal";
 import Home from "./pages/Home";
 import Log from "./pages/Log";
@@ -53,9 +54,9 @@ const GlobalLevelUpModal = () => {
 };
 
 const AnimationWrapper = ({ children }: { children: React.ReactNode }) => {
-  const { animationsEnabled } = useApp();
+  const { motionEnabled } = useApp();
   return (
-    <MotionConfig reducedMotion={animationsEnabled ? 'never' : 'always'}>
+    <MotionConfig reducedMotion={motionEnabled ? 'never' : 'always'}>
       {children}
     </MotionConfig>
   );
@@ -74,39 +75,47 @@ const App = () => {
   };
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AppProvider>
-          <AnimationWrapper>
-            <Toaster />
-            <Sonner />
-            <SplashScreen show={showSplash} onComplete={handleSplashComplete} />
-            {showOnboarding && <Onboarding onComplete={() => setShowOnboarding(false)} />}
-            <GlobalBottomToast />
-            <GlobalLevelUpModal />
-            <BrowserRouter>
-              <ForceHomeOnLoad />
-              <ScrollToTop />
-              <div className="min-h-screen bg-background overflow-x-hidden">
-                <div className="fixed top-4 right-4 z-40 safe-top" data-nav-profile>
-                  <ProfileButton />
+    <ErrorBoundary name="App">
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <AppProvider>
+            <AnimationWrapper>
+              <Toaster />
+              <Sonner />
+              <SplashScreen show={showSplash} onComplete={handleSplashComplete} />
+              {showOnboarding && (
+                <ErrorBoundary name="Onboarding" inline>
+                  <Onboarding onComplete={() => setShowOnboarding(false)} />
+                </ErrorBoundary>
+              )}
+              <GlobalBottomToast />
+              <GlobalLevelUpModal />
+              <BrowserRouter>
+                <ForceHomeOnLoad />
+                <ScrollToTop />
+                <div className="min-h-screen bg-background overflow-x-hidden">
+                  <div className="fixed top-4 right-4 z-40 safe-top" data-nav-profile>
+                    <ProfileButton />
+                  </div>
+                  <ErrorBoundary name="Routes">
+                    <Routes>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/log" element={<Log />} />
+                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/profile" element={<Profile />} />
+                      <Route path="/settings" element={<Settings />} />
+                      <Route path="/challenges" element={<Challenges />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </ErrorBoundary>
+                  <BottomNav />
                 </div>
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/log" element={<Log />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/challenges" element={<Challenges />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-                <BottomNav />
-              </div>
-            </BrowserRouter>
-          </AnimationWrapper>
-        </AppProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+              </BrowserRouter>
+            </AnimationWrapper>
+          </AppProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 

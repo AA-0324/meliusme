@@ -26,7 +26,7 @@ const MEAL_TYPE_COLORS = {
 type DashboardFilter = 'today' | '7days' | '30days' | '90days';
 
 export default function Dashboard() {
-  const { meals, settings, isPro, animationsEnabled } = useApp();
+  const { meals, settings, isPro, hasProFeature, animationsEnabled } = useApp();
   const [showProModal, setShowProModal] = useState(false);
   const [showLayoutEditor, setShowLayoutEditor] = useState(false);
   const [dashboardFilter, setDashboardFilter] = useState<DashboardFilter>('7days');
@@ -57,8 +57,9 @@ export default function Dashboard() {
     updateStreaksData(today, true, metCalorie, metProtein).then(setStreaksData);
   }, [meals, settings.goals]);
 
+  const canCustomizeLayout = hasProFeature('custom_layouts');
   const isWidgetVisible = (id: string) => {
-    if (!isPro) return true;
+    if (!canCustomizeLayout) return true;
     const widget = dashboardLayout.find(w => w.id === id);
     return widget ? widget.visible : true;
   };

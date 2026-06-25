@@ -39,7 +39,7 @@ const getDailyTotals = (allMeals: Meal[], date: string) => {
 
 const DEFAULT_SETTINGS: Settings = {
   proStatus: false, devMode: false, darkMode: false, theme: 'default',
-  goals: { calories: 2000, protein: 50, fiber: 25, sugar: 50 }, waterGoal: 8, use24Hour: false, animationsEnabled: true,
+  goals: { calories: 2000, protein: 50, fiber: 25, sugar: 50 }, waterGoal: 8, use24Hour: false, animationsEnabled: true, animationLevel: 'full',
 };
 
 const DEFAULT_STREAK: StreakData = { currentStreak: 0, longestStreak: 0, lastLogDate: null, streakHistory: [] };
@@ -53,7 +53,10 @@ interface AppContextType {
   meals: Meal[];
   isLoading: boolean;
   isPro: boolean;
+  hasProFeature: (featureId: string) => boolean;
   animationsEnabled: boolean;
+  motionEnabled: boolean;
+  animationLevel: 'full' | 'reduced' | 'off';
   userProfile: UserProfile | null;
   setUserName: (name: string) => Promise<void>;
   setUserAvatar: (avatar: string) => Promise<void>;
@@ -73,6 +76,7 @@ interface AppContextType {
   setTheme: (theme: string) => void;
   setUse24Hour: (use24Hour: boolean) => void;
   setAnimationsEnabled: (enabled: boolean) => void;
+  setAnimationLevel: (level: 'full' | 'reduced' | 'off') => void;
   updateUserGoals: (goals: Partial<Goals>) => void;
   setWaterGoal: (glasses: number) => void;
   resetDailyData: () => void;
@@ -112,8 +116,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const today = new Date().toISOString().split('T')[0];
   const [todayWater, setTodayWater] = useState(0);
 
-  const isPro = settings.proStatus || settings.devMode || tempProUnlocks.length > 0;
-  const animationsEnabled = settings.animationsEnabled !== false;
+  // Pro status only reflects an actual purchase or dev override. Temporary
+  // level rewards unlock specific features individually via hasProFeature().
+  const isPro = settings.proStatus || settings.devMode;
+  const hasProFeature = useCallback(
+    (featureId: string) => isPro || tempProUnlocks.some(u => u.featureId === featureId),
+    [isPro, tempProUnlocks],
+  );
+
+  // Migrate legacy boolean preference to tri-state level.
+  const animationLevel: 'full' | 'reduced' | 'off' =
+    settings.animationLevel ?? (settings.animationsEnabled === false ? 'off' : 'full');
+  const animationsEnabled = animationLevel === 'full';
+  const motionEnabled = animationLevel !== 'off';
 
   const dismissLevelUp = useCallback(() => setLevelUpQueue(q => q.slice(1)), []);
 
@@ -139,8 +154,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Sync animations preference to window for motion.ts + CSS
   useEffect(() => {
     (window as any).__melius_animations_enabled = animationsEnabled;
+    (window as any).__melius_motion_enabled = motionEnabled;
+    (window as any).__melius_animation_level = animationLevel;
     document.documentElement.setAttribute('data-animations-disabled', String(!animationsEnabled));
-  }, [animationsEnabled]);
+    document.documentElement.setAttribute('data-animation-level', animationLevel);
+  }, [animationsEnabled, motionEnabled, animationLevel]);
 
   // ─── Async init ──────────────────────
   useEffect(() => {
@@ -304,7 +322,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setAnimationsEnabled = useCallback(async (enabled: boolean) => {
-    const updated = await saveSettings({ animationsEnabled: enabled });
+    const updated = await saveSettings({
+      animationsEnabled: enabled,
+      animationLevel: enabled ? 'full' : 'off',
+    });
+    setSettingsState(updated);
+  }, []);
+
+  const setAnimationLevel = useCallback(async (level: 'full' | 'reduced' | 'off') => {
+    const updated = await saveSettings({
+      animationLevel: level,
+      animationsEnabled: level !== 'off',
+    });
     setSettingsState(updated);
   }, []);
 
@@ -527,25 +556,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo<AppContextType>(() => ({
-    settings, meals, isLoading, isPro, animationsEnabled,
+    settings, meals, isLoading, isPro, hasProFeature,
+    animationsEnabled, motionEnabled, animationLevel,
     userProfile, setUserName, setUserAvatar,
     bodyProfile, updateBodyProfile: updateBodyProfileCb,
     streak, currentChallenge, badges, refreshStreak,
     todayWater, incrementWater,
     notificationsEnabled, toggleNotifications,
-    setDevMode, setDarkMode, setPro, setTheme, setUse24Hour, setAnimationsEnabled,
+    setDevMode, setDarkMode, setPro, setTheme, setUse24Hour,
+    setAnimationsEnabled, setAnimationLevel,
     updateUserGoals, setWaterGoal: setWaterGoalCb, resetDailyData,
     refreshMeals, logMeal, removeMeal,
     bottomToast, showBottomToast, hideBottomToast,
     xpData, tempProUnlocks, levelUpPending, dismissLevelUp,
   }), [
-    settings, meals, isLoading, isPro, animationsEnabled,
+    settings, meals, isLoading, isPro, hasProFeature,
+    animationsEnabled, motionEnabled, animationLevel,
     userProfile, bodyProfile, streak, currentChallenge, badges,
     todayWater, notificationsEnabled, bottomToast,
     xpData, tempProUnlocks, levelUpPending,
     setUserName, setUserAvatar, updateBodyProfileCb, refreshStreak,
     incrementWater, toggleNotifications,
-    setDevMode, setDarkMode, setPro, setTheme, setUse24Hour, setAnimationsEnabled,
+    setDevMode, setDarkMode, setPro, setTheme, setUse24Hour,
+    setAnimationsEnabled, setAnimationLevel,
     updateUserGoals, setWaterGoalCb, resetDailyData,
     refreshMeals, logMeal, removeMeal,
     showBottomToast, hideBottomToast, dismissLevelUp,
