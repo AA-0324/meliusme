@@ -39,7 +39,7 @@ const getDailyTotals = (allMeals: Meal[], date: string) => {
 
 const DEFAULT_SETTINGS: Settings = {
   proStatus: false, devMode: false, darkMode: false, theme: 'default',
-  goals: { calories: 2000, protein: 50, fiber: 25, sugar: 50 }, waterGoal: 8, use24Hour: false, animationsEnabled: true,
+  goals: { calories: 2000, protein: 50, fiber: 25, sugar: 50 }, waterGoal: 8, use24Hour: false, animationsEnabled: true, animationLevel: 'full',
 };
 
 const DEFAULT_STREAK: StreakData = { currentStreak: 0, longestStreak: 0, lastLogDate: null, streakHistory: [] };
