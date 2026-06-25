@@ -289,6 +289,7 @@ const DEFAULT_SETTINGS: Settings = {
   waterGoal: 8,
   use24Hour: false,
   animationsEnabled: true,
+  animationLevel: 'full',
 };
 
 export async function getSettings(): Promise<Settings> {
