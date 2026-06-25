@@ -37,6 +37,8 @@ export interface Settings {
   use24Hour: boolean;
   personalizedGoals?: boolean;
   animationsEnabled?: boolean;
+  /** Three-tier animation preference. 'full' = all, 'reduced' = essential transitions only, 'off' = none. */
+  animationLevel?: 'full' | 'reduced' | 'off';
 }
 
 // ─── Encrypted localStorage helpers ────────────────────────────────
