@@ -154,8 +154,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Sync animations preference to window for motion.ts + CSS
   useEffect(() => {
     (window as any).__melius_animations_enabled = animationsEnabled;
+    (window as any).__melius_motion_enabled = motionEnabled;
+    (window as any).__melius_animation_level = animationLevel;
     document.documentElement.setAttribute('data-animations-disabled', String(!animationsEnabled));
-  }, [animationsEnabled]);
+    document.documentElement.setAttribute('data-animation-level', animationLevel);
+  }, [animationsEnabled, motionEnabled, animationLevel]);
 
   // ─── Async init ──────────────────────
   useEffect(() => {
