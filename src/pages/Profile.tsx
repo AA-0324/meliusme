@@ -290,18 +290,18 @@ export default function Profile() {
 
         {/* Personalized Goals */}
         <motion.div variants={fadeUp}
-          className={`bg-card rounded-2xl p-4 border border-border/50 ${!isPro ? proLocked : ''}`}>
+          onClick={!isPro ? () => setShowProModal(true) : undefined}
+          className={`bg-card rounded-2xl p-4 border border-border/50 ${!isPro ? `${proLocked} cursor-pointer active:scale-[0.98] transition-transform` : ''}`}>
           <div className="flex items-center gap-3">
-            <Button 
-              onClick={() => {
-                if (!personalizedGoalsEnabled && isPro) {
-                  // Auto-enable and open
+            <Button
+              onClick={(e) => {
+                if (!isPro) { e.stopPropagation(); setShowProModal(true); return; }
+                if (!personalizedGoalsEnabled) {
                   handleTogglePersonalizedGoals(true);
                   return;
                 }
-                if (!isPro) { setShowProModal(true); return; }
                 setShowBodyProfile(true);
-              }} 
+              }}
               variant="ghost"
               className={`flex-1 h-auto p-0 justify-start gap-3 font-semibold hover:bg-transparent ${!personalizedGoalsEnabled ? 'opacity-60' : ''}`}
             >
@@ -314,10 +314,12 @@ export default function Profile() {
                 </span>
               </div>
             </Button>
-            <Switch 
-              checked={personalizedGoalsEnabled} 
-              onCheckedChange={handleTogglePersonalizedGoals}
-              disabled={!isPro}
+            <Switch
+              checked={personalizedGoalsEnabled}
+              onCheckedChange={(checked) => {
+                if (!isPro) { setShowProModal(true); return; }
+                handleTogglePersonalizedGoals(checked);
+              }}
             />
           </div>
         </motion.div>
