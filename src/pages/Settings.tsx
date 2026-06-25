@@ -37,13 +37,13 @@ import { getMealTemplates, deleteMealTemplate, MealTemplate } from '@/lib/proFea
 import { restorePurchases, checkProEntitlement } from '@/lib/revenuecat';
 import logo from '@/assets/meliusme-logo-new.png';
 
-const APP_VERSION = '0.10.8-alpha';
+const APP_VERSION = '0.10.9-alpha';
 
 export default function Settings() {
-  const { 
+  const {
     settings, isPro, setPro, setDevMode, resetDailyData,
     notificationsEnabled, toggleNotifications,
-    setUse24Hour, animationsEnabled, setAnimationsEnabled,
+    setUse24Hour, animationLevel, setAnimationLevel,
   } = useApp();
   const navigate = useNavigate();
   const [showProModal, setShowProModal] = useState(false);
