@@ -322,7 +322,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setAnimationsEnabled = useCallback(async (enabled: boolean) => {
-    const updated = await saveSettings({ animationsEnabled: enabled });
+    const updated = await saveSettings({
+      animationsEnabled: enabled,
+      animationLevel: enabled ? 'full' : 'off',
+    });
+    setSettingsState(updated);
+  }, []);
+
+  const setAnimationLevel = useCallback(async (level: 'full' | 'reduced' | 'off') => {
+    const updated = await saveSettings({
+      animationLevel: level,
+      animationsEnabled: level !== 'off',
+    });
     setSettingsState(updated);
   }, []);
 
