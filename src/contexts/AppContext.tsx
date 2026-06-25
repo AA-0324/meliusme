@@ -116,8 +116,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const today = new Date().toISOString().split('T')[0];
   const [todayWater, setTodayWater] = useState(0);
 
-  const isPro = settings.proStatus || settings.devMode || tempProUnlocks.length > 0;
-  const animationsEnabled = settings.animationsEnabled !== false;
+  // Pro status only reflects an actual purchase or dev override. Temporary
+  // level rewards unlock specific features individually via hasProFeature().
+  const isPro = settings.proStatus || settings.devMode;
+  const hasProFeature = useCallback(
+    (featureId: string) => isPro || tempProUnlocks.some(u => u.featureId === featureId),
+    [isPro, tempProUnlocks],
+  );
+
+  // Migrate legacy boolean preference to tri-state level.
+  const animationLevel: 'full' | 'reduced' | 'off' =
+    settings.animationLevel ?? (settings.animationsEnabled === false ? 'off' : 'full');
+  const animationsEnabled = animationLevel === 'full';
+  const motionEnabled = animationLevel !== 'off';
 
   const dismissLevelUp = useCallback(() => setLevelUpQueue(q => q.slice(1)), []);
 
