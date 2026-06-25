@@ -53,7 +53,10 @@ interface AppContextType {
   meals: Meal[];
   isLoading: boolean;
   isPro: boolean;
+  hasProFeature: (featureId: string) => boolean;
   animationsEnabled: boolean;
+  motionEnabled: boolean;
+  animationLevel: 'full' | 'reduced' | 'off';
   userProfile: UserProfile | null;
   setUserName: (name: string) => Promise<void>;
   setUserAvatar: (avatar: string) => Promise<void>;
@@ -73,6 +76,7 @@ interface AppContextType {
   setTheme: (theme: string) => void;
   setUse24Hour: (use24Hour: boolean) => void;
   setAnimationsEnabled: (enabled: boolean) => void;
+  setAnimationLevel: (level: 'full' | 'reduced' | 'off') => void;
   updateUserGoals: (goals: Partial<Goals>) => void;
   setWaterGoal: (glasses: number) => void;
   resetDailyData: () => void;
