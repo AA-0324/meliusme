@@ -12,6 +12,7 @@ import { ScrollToTop } from "@/components/ScrollToTop";
 import { SplashScreen } from "@/components/SplashScreen";
 import { Onboarding } from "@/components/Onboarding";
 import { MealLoggedToast } from "@/components/MealLoggedToast";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LevelUpModal } from "@/components/LevelUpModal";
 import Home from "./pages/Home";
 import Log from "./pages/Log";
