@@ -24,13 +24,15 @@ export function MealLoggedToast({ show, onHide, message = 'Meal logged!', varian
     }
   }, [show, message, onHide, variant]);
 
-  const variantClasses: Record<ToastVariant, string> = {
-    primary: 'bg-primary text-primary-foreground shadow-primary/30',
-    success: 'bg-success text-success-foreground shadow-success/30',
-    warning: 'bg-warning text-warning-foreground shadow-warning/30',
-    destructive: 'bg-destructive text-destructive-foreground shadow-destructive/30',
-    // Unified with regular toasts: identical layout, just the success-green background.
-    challenge: 'bg-success text-success-foreground shadow-success/30',
+  // Unified look across every in-app toast: same neutral card, subtle
+  // border + shadow. Only the icon (and its accent color) shifts to hint
+  // at the semantic meaning of the message.
+  const iconColorClasses: Record<ToastVariant, string> = {
+    primary: 'text-primary',
+    success: 'text-success',
+    warning: 'text-warning',
+    destructive: 'text-destructive',
+    challenge: 'text-success',
   };
 
   const Icon = variant === 'warning' || variant === 'destructive' ? AlertTriangle : variant === 'challenge' ? Trophy : Check;
