@@ -134,7 +134,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Periodically prune expired temp Pro unlocks so the UI stays accurate.
   useEffect(() => {
-    const refresh = async () => setTempProUnlocks(await getTempProUnlocks());
+    const refresh = async () => {
+      setTempProUnlocks(await getTempProUnlocks());
+      setStreak(await validateStreakFreshness());
+    };
     const interval = window.setInterval(refresh, 60_000);
     const onVisible = () => { if (!document.hidden) refresh(); };
     document.addEventListener('visibilitychange', onVisible);
