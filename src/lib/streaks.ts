@@ -310,6 +310,13 @@ export async function saveStreakData(data: StreakData): Promise<void> {
   await writeEncLS(STREAK_KEY, data);
 }
 
+function getLocalDateString(d: Date = new Date()): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 export async function updateStreak(mealDate: string): Promise<StreakData> {
   const data = await getStreakData();
   if (data.streakHistory.includes(mealDate)) return data;
@@ -317,9 +324,12 @@ export async function updateStreak(mealDate: string): Promise<StreakData> {
   if (data.lastLogDate === null) {
     data.currentStreak = 1;
   } else {
-    const lastDate = new Date(data.lastLogDate);
-    const currentDate = new Date(mealDate);
-    const diffDays = Math.floor((currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+    // Parse as local date components to avoid UTC offset drift.
+    const [ly, lm, ld] = data.lastLogDate.split('-').map(Number);
+    const [cy, cm, cd] = mealDate.split('-').map(Number);
+    const lastDate = new Date(ly, lm - 1, ld);
+    const currentDate = new Date(cy, cm - 1, cd);
+    const diffDays = Math.round((currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
     if (diffDays === 1) data.currentStreak++;
     else if (diffDays !== 0) data.currentStreak = 1;
   }
@@ -332,17 +342,16 @@ export async function updateStreak(mealDate: string): Promise<StreakData> {
 
 /**
  * Passive streak expiry check. Resets currentStreak to 0 if the user hasn't
- * logged today or yesterday. Safe to call on every app load.
+ * logged today or yesterday (evaluated in local time). Safe to call anytime.
  */
 export async function validateStreakFreshness(): Promise<StreakData> {
   const data = await getStreakData();
   if (data.currentStreak === 0 || !data.lastLogDate) return data;
 
-  const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  const todayStr = getLocalDateString();
+  const y = new Date();
+  y.setDate(y.getDate() - 1);
+  const yesterdayStr = getLocalDateString(y);
 
   if (data.lastLogDate === todayStr || data.lastLogDate === yesterdayStr) {
     return data;

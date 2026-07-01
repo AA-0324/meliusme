@@ -24,13 +24,15 @@ export function MealLoggedToast({ show, onHide, message = 'Meal logged!', varian
     }
   }, [show, message, onHide, variant]);
 
-  const variantClasses: Record<ToastVariant, string> = {
-    primary: 'bg-primary text-primary-foreground shadow-primary/30',
-    success: 'bg-success text-success-foreground shadow-success/30',
-    warning: 'bg-warning text-warning-foreground shadow-warning/30',
-    destructive: 'bg-destructive text-destructive-foreground shadow-destructive/30',
-    // Unified with regular toasts: identical layout, just the success-green background.
-    challenge: 'bg-success text-success-foreground shadow-success/30',
+  // Unified look across every in-app toast: same neutral card, subtle
+  // border + shadow. Only the icon (and its accent color) shifts to hint
+  // at the semantic meaning of the message.
+  const iconColorClasses: Record<ToastVariant, string> = {
+    primary: 'text-primary',
+    success: 'text-success',
+    warning: 'text-warning',
+    destructive: 'text-destructive',
+    challenge: 'text-success',
   };
 
   const Icon = variant === 'warning' || variant === 'destructive' ? AlertTriangle : variant === 'challenge' ? Trophy : Check;
@@ -54,9 +56,9 @@ export function MealLoggedToast({ show, onHide, message = 'Meal logged!', varian
           onDragEnd={handleDragEnd}
           className="fixed inset-x-0 bottom-[72px] z-[200] px-4 safe-bottom cursor-grab active:cursor-grabbing"
         >
-          <div className={`w-full rounded-xl border border-border/40 backdrop-blur-sm shadow-lg ${variantClasses[variant]}`}>
+          <div className="w-full rounded-xl border border-border bg-background text-foreground shadow-lg">
             <div className="flex items-center gap-2.5 px-4 py-3">
-              <Icon className="w-4 h-4 flex-shrink-0" />
+              <Icon className={`w-4 h-4 flex-shrink-0 ${iconColorClasses[variant]}`} />
               <span className="font-semibold text-sm leading-tight flex-1 line-clamp-2">{message}</span>
             </div>
           </div>
