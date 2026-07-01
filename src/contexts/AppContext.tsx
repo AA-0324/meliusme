@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Meal, Settings, getSettings, saveSettings, getAllMeals, addMeal, deleteMeal, deleteMealsByDate, updateGoals, Goals, getWaterIntake, setWaterIntake } from '@/lib/db';
+import { Meal, Settings, getSettings, saveSettings, getAllMeals, addMeal, deleteMeal, deleteMealsByDate, updateGoals, Goals, getWaterIntake, setWaterIntake, DEFAULT_GOALS, DEFAULT_WATER_GOAL, resetToBasicSettings } from '@/lib/db';
 import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/userProfile';
 import { getBodyProfile, saveBodyProfile, BodyProfile, getAutoGoals } from '@/lib/bodyGoals';
 import { requestNotificationPermission, areNotificationsSupported } from '@/lib/notifications';
@@ -39,7 +39,7 @@ const getDailyTotals = (allMeals: Meal[], date: string) => {
 
 const DEFAULT_SETTINGS: Settings = {
   proStatus: false, devMode: false, darkMode: false, theme: 'default',
-  goals: { calories: 2000, protein: 50, fiber: 25, sugar: 50 }, waterGoal: 8, use24Hour: false, animationsEnabled: true, animationLevel: 'full',
+  goals: { ...DEFAULT_GOALS }, waterGoal: DEFAULT_WATER_GOAL, use24Hour: false, animationsEnabled: true, animationLevel: 'full',
 };
 
 const DEFAULT_STREAK: StreakData = { currentStreak: 0, longestStreak: 0, lastLogDate: null, streakHistory: [] };
@@ -77,6 +77,7 @@ interface AppContextType {
   setUse24Hour: (use24Hour: boolean) => void;
   setAnimationsEnabled: (enabled: boolean) => void;
   setAnimationLevel: (level: 'full' | 'reduced' | 'off') => void;
+  setPersonalizedGoals: (enabled: boolean) => Promise<void>;
   updateUserGoals: (goals: Partial<Goals>) => void;
   setWaterGoal: (glasses: number) => void;
   resetDailyData: () => void;
@@ -190,7 +191,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           getTempProUnlocks(),
         ]);
 
-        setSettingsState(s);
+        let activeSettings = s;
+
+        setSettingsState(activeSettings);
         setUserProfile(profile);
         setBodyProfile(body);
         setXpData(xp);
@@ -205,23 +208,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
         // One-shot migration: reset all existing users back to Basic and clear
         // any Pro-only side-effects (theme, personalized goals + custom goals).
-        const migrated = localStorage.getItem('meliusme-pro-reset-v1.2');
+        const migrated = localStorage.getItem('meliusme-pro-reset-v1.3');
         if (!migrated) {
-          const resetPatch: Partial<Settings> = { proStatus: false, theme: 'default' };
-          if (s.personalizedGoals) {
-            resetPatch.personalizedGoals = false;
-            resetPatch.goals = { ...DEFAULT_SETTINGS.goals };
-          }
-          const updated = await saveSettings(resetPatch);
+          const updated = await resetToBasicSettings();
+          activeSettings = updated;
           setSettingsState(updated);
-          localStorage.setItem('meliusme-pro-reset-v1.2', 'true');
+          localStorage.setItem('meliusme-pro-reset-v1.3', 'true');
         }
 
         // Check RevenueCat entitlement for Pro status
         try {
           const rcPro = await checkProEntitlement();
-          if (rcPro && !s.proStatus) {
+          if (rcPro && !activeSettings.proStatus) {
             const updated = await saveSettings({ proStatus: true });
+            activeSettings = updated;
             setSettingsState(updated);
           }
         } catch (rcError) {
@@ -230,8 +230,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
         // Apply auto-generated goals if the user has them but settings.goals is missing protein/fiber/sugar
         const autoGoals = await getAutoGoals();
-        if (autoGoals && autoGoals.acceptedAt) {
-          const currentGoals = s.goals;
+        if (activeSettings.personalizedGoals && autoGoals && autoGoals.acceptedAt) {
+          const currentGoals = activeSettings.goals;
           const needsUpdate =
             !currentGoals.protein || !currentGoals.fiber || !currentGoals.sugar;
           if (needsUpdate) {
@@ -242,6 +242,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             if (!currentGoals.calories && autoGoals.calories) goalsUpdate.calories = autoGoals.calories;
             if (Object.keys(goalsUpdate).length > 0) {
               const updatedSettings = await updateGoals(goalsUpdate);
+              activeSettings = updatedSettings;
               setSettingsState(updatedSettings);
             }
           }
@@ -298,7 +299,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const setDevMode = useCallback(async (enabled: boolean) => {
     if (!enabled && !settings.proStatus) {
-      const updated = await saveSettings({ devMode: enabled, theme: 'default' });
+      const updated = await resetToBasicSettings();
       setSettingsState(updated);
     } else {
       const updated = await saveSettings({ devMode: enabled });
@@ -313,19 +314,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const setPro = useCallback(async (enabled: boolean) => {
     if (!enabled) {
-      // Turning Pro off also reverts personalized goals (Pro-only) back to defaults.
-      const revert: Partial<Settings> = { proStatus: false, theme: 'default' };
-      if (settings.personalizedGoals) {
-        revert.personalizedGoals = false;
-        revert.goals = { ...DEFAULT_SETTINGS.goals };
-      }
-      const updated = await saveSettings(revert);
+      // Turning Pro off must fully remove Pro-only state, including custom and personalized goals.
+      const updated = await resetToBasicSettings();
       setSettingsState(updated);
     } else {
       const updated = await saveSettings({ proStatus: enabled });
       setSettingsState(updated);
     }
-  }, [settings.personalizedGoals]);
+  }, []);
 
   const setTheme = useCallback(async (theme: string) => {
     const updated = await saveSettings({ theme });
@@ -350,6 +346,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       animationLevel: level,
       animationsEnabled: level !== 'off',
     });
+    setSettingsState(updated);
+  }, []);
+
+  const setPersonalizedGoals = useCallback(async (enabled: boolean) => {
+    const updated = await saveSettings({ personalizedGoals: enabled });
     setSettingsState(updated);
   }, []);
 
@@ -581,7 +582,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     notificationsEnabled, toggleNotifications,
     setDevMode, setDarkMode, setPro, setTheme, setUse24Hour,
     setAnimationsEnabled, setAnimationLevel,
-    updateUserGoals, setWaterGoal: setWaterGoalCb, resetDailyData,
+    setPersonalizedGoals, updateUserGoals, setWaterGoal: setWaterGoalCb, resetDailyData,
     refreshMeals, logMeal, removeMeal,
     bottomToast, showBottomToast, hideBottomToast,
     xpData, tempProUnlocks, levelUpPending, dismissLevelUp,
@@ -594,7 +595,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setUserName, setUserAvatar, updateBodyProfileCb, refreshStreak,
     incrementWater, toggleNotifications,
     setDevMode, setDarkMode, setPro, setTheme, setUse24Hour,
-    setAnimationsEnabled, setAnimationLevel,
+    setAnimationsEnabled, setAnimationLevel, setPersonalizedGoals,
     updateUserGoals, setWaterGoalCb, resetDailyData,
     refreshMeals, logMeal, removeMeal,
     showBottomToast, hideBottomToast, dismissLevelUp,

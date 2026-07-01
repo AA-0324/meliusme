@@ -32,7 +32,7 @@ const themes = [
 const proLocked = 'relative opacity-75';
 
 export default function Profile() {
-  const { settings, isPro, setDarkMode, updateUserGoals, setWaterGoal, setTheme, userProfile, setUserName, setUserAvatar, bodyProfile, animationsEnabled } = useApp();
+  const { settings, isPro, setDarkMode, updateUserGoals, setWaterGoal, setTheme, setPersonalizedGoals, userProfile, setUserName, setUserAvatar, bodyProfile, animationsEnabled } = useApp();
   const navigate = useNavigate();
   const [showProModal, setShowProModal] = useState(false);
   const [showBodyProfile, setShowBodyProfile] = useState(false);
@@ -59,6 +59,10 @@ export default function Profile() {
     setWaterGoalInput(settings.waterGoal.toString());
     prevSugarRef.current = settings.goals.sugar?.toString() || '';
   }, [settings.goals.calories, settings.goals.protein, settings.goals.fiber, settings.goals.sugar, settings.waterGoal]);
+
+  useEffect(() => {
+    setPersonalizedGoalsEnabled(settings.personalizedGoals ?? false);
+  }, [settings.personalizedGoals]);
 
   const goalsChanged = useMemo(() => {
     return (
@@ -186,8 +190,7 @@ export default function Profile() {
     if (!isPro) { setShowProModal(true); return; }
     if (!checked && personalizedGoalsEnabled) { setShowDisablePersonalized(true); return; }
     setPersonalizedGoalsEnabled(checked);
-    const { saveSettings: saveSett } = await import('@/lib/db');
-    await saveSett({ personalizedGoals: checked });
+    await setPersonalizedGoals(checked);
     // If turning on and no body profile set, auto-open editor
     if (checked && !bodyProfile?.goal) {
       setTimeout(() => setShowBodyProfile(true), 300);
@@ -496,8 +499,7 @@ export default function Profile() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={async () => {
               setPersonalizedGoalsEnabled(false);
-              const { saveSettings: saveSett } = await import('@/lib/db');
-              await saveSett({ personalizedGoals: false });
+              await setPersonalizedGoals(false);
               setShowDisablePersonalized(false);
               toast.success('Personalized goals disabled');
             }}>
