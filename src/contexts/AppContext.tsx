@@ -303,13 +303,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const setPro = useCallback(async (enabled: boolean) => {
     if (!enabled) {
-      const updated = await saveSettings({ proStatus: enabled, theme: 'default' });
+      // Turning Pro off also reverts personalized goals (Pro-only) back to defaults.
+      const revert: Partial<Settings> = { proStatus: false, theme: 'default' };
+      if (settings.personalizedGoals) {
+        revert.personalizedGoals = false;
+        revert.goals = { ...DEFAULT_SETTINGS.goals };
+      }
+      const updated = await saveSettings(revert);
       setSettingsState(updated);
     } else {
       const updated = await saveSettings({ proStatus: enabled });
       setSettingsState(updated);
     }
-  }, []);
+  }, [settings.personalizedGoals]);
 
   const setTheme = useCallback(async (theme: string) => {
     const updated = await saveSettings({ theme });
