@@ -56,9 +56,9 @@ export function MealLoggedToast({ show, onHide, message = 'Meal logged!', varian
           onDragEnd={handleDragEnd}
           className="fixed inset-x-0 bottom-[72px] z-[200] px-4 safe-bottom cursor-grab active:cursor-grabbing"
         >
-          <div className={`w-full rounded-xl border border-border/40 backdrop-blur-sm shadow-lg ${variantClasses[variant]}`}>
+          <div className="w-full rounded-xl border border-border bg-background text-foreground shadow-lg">
             <div className="flex items-center gap-2.5 px-4 py-3">
-              <Icon className="w-4 h-4 flex-shrink-0" />
+              <Icon className={`w-4 h-4 flex-shrink-0 ${iconColorClasses[variant]}`} />
               <span className="font-semibold text-sm leading-tight flex-1 line-clamp-2">{message}</span>
             </div>
           </div>
