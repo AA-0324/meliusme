@@ -41,6 +41,20 @@ export interface Settings {
   animationLevel?: 'full' | 'reduced' | 'off';
 }
 
+export const DEFAULT_GOALS: Goals = { calories: 2000, protein: 50, fiber: 25, sugar: 50 };
+export const DEFAULT_WATER_GOAL = 8;
+
+export function getBasicSettingsResetPatch(): Partial<Settings> {
+  return {
+    proStatus: false,
+    devMode: false,
+    theme: 'default',
+    personalizedGoals: false,
+    goals: { ...DEFAULT_GOALS },
+    waterGoal: DEFAULT_WATER_GOAL,
+  };
+}
+
 // ─── Encrypted localStorage helpers ────────────────────────────────
 
 async function readEncryptedLS<T>(key: string, fallback: T): Promise<T> {
@@ -285,8 +299,8 @@ const DEFAULT_SETTINGS: Settings = {
   devMode: false,
   darkMode: false,
   theme: 'default',
-  goals: { calories: 2000 },
-  waterGoal: 8,
+  goals: { ...DEFAULT_GOALS },
+  waterGoal: DEFAULT_WATER_GOAL,
   use24Hour: false,
   animationsEnabled: true,
   animationLevel: 'full',
@@ -309,7 +323,11 @@ export async function updateGoals(goals: Partial<Goals>): Promise<Settings> {
 }
 
 export async function resetProStatus(): Promise<Settings> {
-  return saveSettings({ proStatus: false, devMode: false });
+  return saveSettings(getBasicSettingsResetPatch());
+}
+
+export async function resetToBasicSettings(): Promise<Settings> {
+  return saveSettings(getBasicSettingsResetPatch());
 }
 
 // ─── CSV export ────────────────────────────────────────────────────
