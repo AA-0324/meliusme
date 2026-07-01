@@ -200,12 +200,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const updatedChallenge = await getCurrentChallenge(allMeals);
         setCurrentChallenge(updatedChallenge);
 
-        const migrated = localStorage.getItem('meliusme-pro-reset-v1.1');
-        if (!migrated && s.proStatus) {
-          const updated = await saveSettings({ proStatus: false, theme: 'default' });
+        // One-shot migration: reset all existing users back to Basic and clear
+        // any Pro-only side-effects (theme, personalized goals + custom goals).
+        const migrated = localStorage.getItem('meliusme-pro-reset-v1.2');
+        if (!migrated) {
+          const resetPatch: Partial<Settings> = { proStatus: false, theme: 'default' };
+          if (s.personalizedGoals) {
+            resetPatch.personalizedGoals = false;
+            resetPatch.goals = { ...DEFAULT_SETTINGS.goals };
+          }
+          const updated = await saveSettings(resetPatch);
           setSettingsState(updated);
+          localStorage.setItem('meliusme-pro-reset-v1.2', 'true');
         }
-        if (!migrated) localStorage.setItem('meliusme-pro-reset-v1.1', 'true');
 
         // Check RevenueCat entitlement for Pro status
         try {
