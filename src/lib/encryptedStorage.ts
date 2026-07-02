@@ -1,5 +1,5 @@
-// Encrypted localStorage wrapper
-// All values are encrypted with AES-GCM before storage
+// Encrypted localStorage wrapper.
+// Sensitive values are never intentionally written as readable JSON.
 
 import { encrypt, decrypt, isEncrypted } from './crypto';
 
@@ -14,12 +14,15 @@ export async function getEncrypted(key: string): Promise<string | null> {
   
   // If the value is plaintext (not encrypted), migrate it
   if (!isEncrypted(raw)) {
-    // Auto-migrate: encrypt and replace
+    // Auto-migrate: encrypt and replace only after round-trip verification.
     try {
       const encrypted = await encrypt(raw);
+      const verified = await decrypt(encrypted);
+      if (verified !== raw) throw new Error('Encrypted storage verification failed');
       localStorage.setItem(key, encrypted);
     } catch {
-      // If encryption fails, return plaintext for now
+      // Preserve legacy plaintext if migration fails; callers still receive it
+      // in memory so existing users do not lose data.
     }
     return raw;
   }
@@ -27,9 +30,7 @@ export async function getEncrypted(key: string): Promise<string | null> {
   try {
     return await decrypt(raw);
   } catch {
-    // If decryption fails (e.g. key changed), return null
-    console.warn(`Failed to decrypt ${key}, clearing corrupted entry`);
-    localStorage.removeItem(key);
+    // Fall back safely without exposing or deleting unreadable data.
     return null;
   }
 }
@@ -39,6 +40,8 @@ export async function getEncrypted(key: string): Promise<string | null> {
  */
 export async function setEncrypted(key: string, value: string): Promise<void> {
   const encrypted = await encrypt(value);
+  const verified = await decrypt(encrypted);
+  if (verified !== value) throw new Error('Encrypted storage verification failed');
   localStorage.setItem(key, encrypted);
 }
 
@@ -85,13 +88,26 @@ export async function migrateAllToEncrypted(): Promise<void> {
     'melius-badges',
     'melius-reflection',
     'melius-xp',
+    'melius-xp-ledger',
+    'melius-temp-pro-unlocks',
+    'melius-last-reward-feature',
     'melius-notifications',
+    'melius-meal-templates',
+    'melius-meal-edits',
+    'melius-dashboard-layout',
+    'melius-pro-streaks',
+    'meliusme-consent',
   ];
   
   // Also migrate dynamic keys (goal toasts, etc.)
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && key.startsWith('meliusme-goal-toasts-')) {
+    if (
+      key && (
+        key.startsWith('meliusme-goal-toasts-') ||
+        key.startsWith('melius-daily-xp-awarded-')
+      )
+    ) {
       KNOWN_KEYS.push(key);
     }
   }
@@ -101,9 +117,11 @@ export async function migrateAllToEncrypted(): Promise<void> {
     if (raw !== null && !isEncrypted(raw)) {
       try {
         const encrypted = await encrypt(raw);
+        const verified = await decrypt(encrypted);
+        if (verified !== raw) throw new Error('Encrypted storage verification failed');
         localStorage.setItem(key, encrypted);
-      } catch (e) {
-        console.warn(`Migration failed for ${key}:`, e);
+      } catch {
+        // Preserve the original plaintext if migration cannot be verified.
       }
     }
   }
