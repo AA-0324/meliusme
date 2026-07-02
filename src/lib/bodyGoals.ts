@@ -45,8 +45,8 @@ export async function saveBodyProfile(profile: Partial<BodyProfile>): Promise<Bo
 }
 
 export async function deleteBodyProfile(): Promise<void> {
-  removeEncrypted(BODY_PROFILE_KEY);
-  removeEncrypted(AUTO_GOALS_KEY);
+  await removeEncrypted(BODY_PROFILE_KEY);
+  await removeEncrypted(AUTO_GOALS_KEY);
 }
 
 // Unit conversions

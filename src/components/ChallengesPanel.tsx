@@ -119,7 +119,7 @@ export function ChallengesPanel({ open, onClose }: ChallengesPanelProps) {
                 <div className="grid grid-cols-3 gap-3">
                   {badges.map((badge) => (
                     <div key={badge.id} className="flex flex-col items-center text-center p-3 bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl border border-primary/15">
-                      <span className="text-2xl mb-1">{badge.icon}</span>
+                      <span className="mb-1 min-w-8 rounded-full bg-primary/10 px-2 py-1 text-xs font-bold text-primary">{badge.icon}</span>
                       <span className="text-xs font-semibold">{badge.name}</span>
                     </div>
                   ))}

@@ -29,8 +29,8 @@ export async function saveUserProfile(profile: Partial<UserProfile>): Promise<Us
   return updated;
 }
 
-export function deleteUserProfile(): void {
-  removeEncrypted(PROFILE_KEY);
+export async function deleteUserProfile(): Promise<void> {
+  await removeEncrypted(PROFILE_KEY);
 }
 
 export function getGreeting(name?: string): string {
