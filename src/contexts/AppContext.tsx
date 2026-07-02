@@ -5,7 +5,7 @@ import { getBodyProfile, saveBodyProfile, BodyProfile, getAutoGoals, deleteBodyP
 import { requestNotificationPermission, areNotificationsSupported } from '@/lib/notifications';
 import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge, getEarnedBadges, Badge, awardBadge, addXP, LevelUpResult, TempProUnlock, getTempProUnlocks, getXPData, XPData, getDailyChallenges, rollbackDailyXP, validateStreakFreshness } from '@/lib/streaks';
 import { initEncryption } from '@/lib/crypto';
-import { getEncryptedJSON, setEncryptedJSON, removeEncrypted, getEncrypted, setEncrypted } from '@/lib/encryptedStorage';
+import { getEncryptedJSON, setEncryptedJSON, removeEncrypted, getEncrypted, setEncrypted, migrateAllToEncrypted } from '@/lib/encryptedStorage';
 import { initRevenueCat, checkProEntitlement } from '@/lib/revenuecat';
 
 type ToastVariant = 'primary' | 'success' | 'warning' | 'destructive' | 'challenge';
@@ -143,16 +143,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return () => { clearInterval(interval); document.removeEventListener('visibilitychange', onVisible); };
   }, []);
 
-  // Clean up stale awarded-challenge keys for days other than today (one-time per session).
-  useEffect(() => {
-    const prefix = 'melius-daily-xp-awarded-';
-    const todayKey = `${prefix}${today}`;
-    for (let i = localStorage.length - 1; i >= 0; i--) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith(prefix) && k !== todayKey) localStorage.removeItem(k);
-    }
-  }, [today]);
-
   // Sync animations preference to window for motion.ts + CSS
   useEffect(() => {
     (window as any).__melius_animations_enabled = animationsEnabled;
@@ -167,6 +157,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const init = async () => {
       try {
         await initEncryption();
+        await migrateAllToEncrypted();
         await migratePlaintextMeals();
         
         // Initialize RevenueCat
