@@ -1,23 +1,14 @@
 // Pro Features Storage and Management
-import { encrypt, decrypt, isEncrypted } from './crypto';
+import { getEncryptedJSON, setEncryptedJSON } from './encryptedStorage';
 import { Meal, Goals } from './db';
 
 // ─── Encrypted localStorage helpers ────────────────────────────────
 async function readEncLS<T>(key: string, fallback: T): Promise<T> {
-  const raw = localStorage.getItem(key);
-  if (!raw) return fallback;
-  let plaintext = raw;
-  if (isEncrypted(raw)) {
-    try { plaintext = await decrypt(raw); } catch { return fallback; }
-  } else {
-    try { localStorage.setItem(key, await encrypt(raw)); } catch {}
-  }
-  try { return JSON.parse(plaintext) as T; } catch { return fallback; }
+  return getEncryptedJSON<T>(key, fallback);
 }
 
 async function writeEncLS(key: string, value: unknown): Promise<void> {
-  const json = JSON.stringify(value);
-  try { localStorage.setItem(key, await encrypt(json)); } catch { localStorage.setItem(key, json); }
+  await setEncryptedJSON(key, value);
 }
 
 // ─── Meal Templates ────────────────────────────────────────────────
