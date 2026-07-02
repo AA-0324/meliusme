@@ -1,6 +1,6 @@
 // Push Notification Service for Melius — encrypted storage
 
-import { encrypt, decrypt, isEncrypted } from './crypto';
+import { getEncryptedJSON, setEncryptedJSON } from './encryptedStorage';
 
 const NOTIFICATION_KEY = 'melius-notifications';
 
@@ -14,20 +14,11 @@ interface NotificationSchedule {
 const DEFAULT_SCHEDULE: NotificationSchedule = { waterReminders: true, mealReminders: true };
 
 async function readEncLS<T>(key: string, fallback: T): Promise<T> {
-  const raw = localStorage.getItem(key);
-  if (!raw) return fallback;
-  let plaintext = raw;
-  if (isEncrypted(raw)) {
-    try { plaintext = await decrypt(raw); } catch { return fallback; }
-  } else {
-    try { localStorage.setItem(key, await encrypt(raw)); } catch {}
-  }
-  try { return JSON.parse(plaintext) as T; } catch { return fallback; }
+  return getEncryptedJSON<T>(key, fallback);
 }
 
 async function writeEncLS(key: string, value: unknown): Promise<void> {
-  const json = JSON.stringify(value);
-  try { localStorage.setItem(key, await encrypt(json)); } catch { localStorage.setItem(key, json); }
+  await setEncryptedJSON(key, value);
 }
 
 export async function getNotificationSettings(): Promise<NotificationSchedule> {
@@ -91,7 +82,7 @@ export function checkMealReminder(todayMealTypes: string[]): { shouldRemind: boo
 export function sendWaterReminder(currentGlasses: number, goalGlasses: number): void {
   const remaining = goalGlasses - currentGlasses;
   if (remaining <= 0) return;
-  sendNotification('💧 Time to hydrate!', { body: `You've had ${currentGlasses} glasses. ${remaining} more to reach your goal!`, tag: 'water-reminder' });
+  sendNotification('Time to hydrate', { body: `You've had ${currentGlasses} glasses. ${remaining} more to reach your goal!`, tag: 'water-reminder' });
 }
 
 export function sendMealReminder(mealType: string): void {
@@ -100,5 +91,5 @@ export function sendMealReminder(mealType: string): void {
     lunch: "It's lunchtime! Don't forget to eat.",
     dinner: "Time to think about dinner!",
   };
-  sendNotification(`🍽️ ${mealType.charAt(0).toUpperCase() + mealType.slice(1)} Reminder`, { body: messages[mealType] || 'Time for a meal!', tag: 'meal-reminder' });
+  sendNotification(`${mealType.charAt(0).toUpperCase() + mealType.slice(1)} reminder`, { body: messages[mealType] || 'Time for a meal!', tag: 'meal-reminder' });
 }
