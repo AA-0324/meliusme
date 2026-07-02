@@ -14,6 +14,7 @@ import { Onboarding } from "@/components/Onboarding";
 import { MealLoggedToast } from "@/components/MealLoggedToast";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LevelUpModal } from "@/components/LevelUpModal";
+import { getEncrypted } from "@/lib/encryptedStorage";
 import Home from "./pages/Home";
 import Log from "./pages/Log";
 import Dashboard from "./pages/Dashboard";
@@ -66,9 +67,9 @@ const App = () => {
   const [showSplash, setShowSplash] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
-  const handleSplashComplete = () => {
+  const handleSplashComplete = async () => {
     setShowSplash(false);
-    const onboarded = localStorage.getItem('meliusme-onboarded');
+    const onboarded = await getEncrypted('meliusme-onboarded');
     if (!onboarded) {
       setShowOnboarding(true);
     }

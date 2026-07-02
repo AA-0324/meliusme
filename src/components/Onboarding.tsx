@@ -11,6 +11,7 @@ import { ProUpgradeModal } from '@/components/ProUpgradeModal';
 import { validateName } from '@/lib/validation';
 import { toast } from 'sonner';
 import logo from '@/assets/meliusme-logo-new.png';
+import { setEncrypted, setEncryptedJSON } from '@/lib/encryptedStorage';
 import {
   BodyProfile,
   feetToCm,
@@ -117,8 +118,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     setStep(4);
   };
 
-  const handleFinish = () => {
-    localStorage.setItem('meliusme-onboarded', 'true');
+  const handleFinish = async () => {
+    await setEncrypted('meliusme-onboarded', 'true');
     onComplete();
   };
 
@@ -278,17 +279,17 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               <div className="px-8 pb-10 pt-3">
                 <motion.div whileTap={{ scale: allConsented ? 0.96 : 1 }} transition={{ type: 'spring', damping: 15 }}>
                   <Button
-                    onClick={() => {
+                    onClick={async () => {
                       if (!allConsented) return;
                       try {
-                        localStorage.setItem('meliusme-consent', JSON.stringify({
+                        await setEncryptedJSON('meliusme-consent', {
                           age13: true,
                           tos: true,
                           privacy: true,
                           timestamp: new Date().toISOString(),
                           tosUrl: 'https://aa-0324.github.io/meliusme/terms-of-service.html',
                           privacyUrl: 'https://aa-0324.github.io/meliusme/privacy-policy.html',
-                        }));
+                        });
                       } catch {}
                       setStep(2);
                     }}
