@@ -53,7 +53,7 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
         return;
       }
 
-      const rc = getRevenueCatInstance();
+      const rc = await getRevenueCatInstance();
       const result = await rc.presentPaywall({
         htmlTarget: paywallContainerRef.current!,
         onBack: (closePaywall) => {
@@ -61,8 +61,6 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
           onClose();
         },
       });
-
-      console.log('[ProUpgrade] Paywall result:', result);
 
       const hasPro = ENTITLEMENT_ID in result.customerInfo.entitlements.active;
       if (hasPro) {

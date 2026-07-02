@@ -162,7 +162,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         
         // Initialize RevenueCat
         try {
-          initRevenueCat();
+          await initRevenueCat();
         } catch (rcError) {
           console.warn('[RevenueCat] Init failed (non-blocking):', rcError);
         }
@@ -363,14 +363,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const todayStr = new Date().toISOString().split('T')[0];
     setTodayWater(0);
     await setWaterIntake(todayStr, 0);
-    sessionStorage.removeItem(`melius-confetti-${todayStr}`);
-
     const rolledBackXP = await rollbackDailyXP(todayStr, isPro);
     setXpData(rolledBackXP);
 
     // Daily challenge claims are encrypted at rest.
     await removeEncrypted(`melius-daily-xp-awarded-${todayStr}`);
-    sessionStorage.removeItem(`melius-daily-xp-awarded-${todayStr}`); // legacy cleanup
     inMemoryGoalToastFlags.delete(goalToastKey(todayStr));
 
     setMeals((prev) => prev.filter((m) => m.date !== todayStr));

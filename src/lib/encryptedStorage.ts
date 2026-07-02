@@ -15,11 +15,8 @@ function openStorageDB(): Promise<IDBDatabase> {
   if (storageDBPromise) return storageDBPromise;
   storageDBPromise = new Promise((resolve, reject) => {
     const req = indexedDB.open(STORAGE_DB_NAME, STORAGE_DB_VERSION);
-    req.onupgradeneeded = (event) => {
+    req.onupgradeneeded = () => {
       const db = req.result;
-      if (event.oldVersion < 2 && db.objectStoreNames.contains(STORAGE_STORE)) {
-        db.deleteObjectStore(STORAGE_STORE);
-      }
       if (!db.objectStoreNames.contains(STORAGE_STORE)) {
         db.createObjectStore(STORAGE_STORE);
       }
