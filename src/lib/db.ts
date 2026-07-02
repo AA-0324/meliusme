@@ -86,7 +86,7 @@ export async function getAllWaterData(): Promise<Record<string, number>> {
 interface MeliusDB extends DBSchema {
   meals: {
     key: string;
-    value: { id: string; encrypted: string; date: string; createdAt: number };
+    value: { id: string; encrypted: string };
     indexes: { 'by-date': string; 'by-created': number };
   };
 }
@@ -121,11 +121,11 @@ export async function getDB(): Promise<IDBPDatabase<MeliusDB>> {
   return dbInstance;
 }
 
-async function encryptMeal(meal: Meal): Promise<{ id: string; encrypted: string; date: string; createdAt: number }> {
+async function encryptMeal(meal: Meal): Promise<{ id: string; encrypted: string }> {
   const encrypted = await encrypt(JSON.stringify(meal));
   const verified = await decrypt(encrypted);
   if (verified !== JSON.stringify(meal)) throw new Error('Meal encryption verification failed');
-  return { id: meal.id, encrypted, date: meal.date, createdAt: meal.createdAt };
+  return { id: meal.id, encrypted };
 }
 
 async function decryptMeal(row: { id: string; encrypted: string }): Promise<Meal> {
@@ -237,13 +237,17 @@ export async function getAllMeals(): Promise<Meal[]> {
 
 export async function getMealsByDate(date: string): Promise<Meal[]> {
   const db = await getDB();
-  const rows = await db.getAllFromIndex('meals', 'by-date', date);
+  const rows = await db.getAll('meals');
   const meals: Meal[] = [];
   for (const row of rows) {
     try {
-      meals.push(await decryptMeal(row));
+      const meal = await decryptMeal(row);
+      if (meal.date === date) meals.push(meal);
     } catch {
-      try { meals.push(JSON.parse(row.encrypted) as Meal); } catch {}
+      try {
+        const meal = JSON.parse(row.encrypted) as Meal;
+        if (meal.date === date) meals.push(meal);
+      } catch {}
     }
   }
   return meals.sort((a, b) => b.createdAt - a.createdAt);
@@ -252,13 +256,16 @@ export async function getMealsByDate(date: string): Promise<Meal[]> {
 export async function getMealsByDateRange(startDate: string, endDate: string): Promise<Meal[]> {
   const db = await getDB();
   const allRows = await db.getAll('meals');
-  const filtered = allRows.filter((r) => r.date >= startDate && r.date <= endDate);
   const meals: Meal[] = [];
-  for (const row of filtered) {
+  for (const row of allRows) {
     try {
-      meals.push(await decryptMeal(row));
+      const meal = await decryptMeal(row);
+      if (meal.date >= startDate && meal.date <= endDate) meals.push(meal);
     } catch {
-      try { meals.push(JSON.parse(row.encrypted) as Meal); } catch {}
+      try {
+        const meal = JSON.parse(row.encrypted) as Meal;
+        if (meal.date >= startDate && meal.date <= endDate) meals.push(meal);
+      } catch {}
     }
   }
   return meals.sort((a, b) => b.createdAt - a.createdAt);
@@ -285,10 +292,18 @@ export async function deleteMeal(id: string): Promise<void> {
 
 export async function deleteMealsByDate(date: string): Promise<void> {
   const db = await getDB();
-  const rows = await db.getAllFromIndex('meals', 'by-date', date);
+  const rows = await db.getAll('meals');
   const tx = db.transaction('meals', 'readwrite');
   for (const row of rows) {
-    await tx.store.delete(row.id);
+    try {
+      const meal = await decryptMeal(row);
+      if (meal.date === date) await tx.store.delete(row.id);
+    } catch {
+      try {
+        const meal = JSON.parse(row.encrypted) as Meal;
+        if (meal.date === date) await tx.store.delete(row.id);
+      } catch {}
+    }
   }
   await tx.done;
 }
