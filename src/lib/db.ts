@@ -1,5 +1,6 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 import { encrypt, decrypt, isEncrypted } from './crypto';
+import { getEncryptedJSON, setEncryptedJSON } from './encryptedStorage';
 
 export interface Meal {
   id: string;
@@ -57,27 +58,8 @@ export function getBasicSettingsResetPatch(): Partial<Settings> {
 
 // ─── Encrypted localStorage helpers ────────────────────────────────
 
-async function readEncryptedLS<T>(key: string, fallback: T): Promise<T> {
-  const raw = localStorage.getItem(key);
-  if (raw === null) return fallback;
-
-  let plaintext = raw;
-  if (isEncrypted(raw)) {
-    try { plaintext = await decrypt(raw); } catch { localStorage.removeItem(key); return fallback; }
-  } else {
-    try { localStorage.setItem(key, await encrypt(raw)); } catch {}
-  }
-
-  try { return JSON.parse(plaintext) as T; } catch { return fallback; }
-}
-
 async function writeEncryptedLS(key: string, value: unknown): Promise<void> {
-  const json = JSON.stringify(value);
-  try {
-    localStorage.setItem(key, await encrypt(json));
-  } catch {
-    localStorage.setItem(key, json);
-  }
+  await setEncryptedJSON(key, value);
 }
 
 // ─── Water tracking ────────────────────────────────────────────────
@@ -85,18 +67,18 @@ async function writeEncryptedLS(key: string, value: unknown): Promise<void> {
 const WATER_KEY = 'melius-water';
 
 export async function getWaterIntake(date: string): Promise<number> {
-  const data = await readEncryptedLS<Record<string, number>>(WATER_KEY, {});
+  const data = await getEncryptedJSON<Record<string, number>>(WATER_KEY, {});
   return data[date] || 0;
 }
 
 export async function setWaterIntake(date: string, glasses: number): Promise<void> {
-  const data = await readEncryptedLS<Record<string, number>>(WATER_KEY, {});
+  const data = await getEncryptedJSON<Record<string, number>>(WATER_KEY, {});
   data[date] = glasses;
   await writeEncryptedLS(WATER_KEY, data);
 }
 
 export async function getAllWaterData(): Promise<Record<string, number>> {
-  return readEncryptedLS<Record<string, number>>(WATER_KEY, {});
+  return getEncryptedJSON<Record<string, number>>(WATER_KEY, {});
 }
 
 // ─── IndexedDB for meals (encrypted values) ───────────────────────
@@ -104,7 +86,7 @@ export async function getAllWaterData(): Promise<Record<string, number>> {
 interface MeliusDB extends DBSchema {
   meals: {
     key: string;
-    value: { id: string; encrypted: string; date: string; createdAt: number };
+    value: { id: string; encrypted: string };
     indexes: { 'by-date': string; 'by-created': number };
   };
 }
@@ -118,22 +100,32 @@ export async function getDB(): Promise<IDBPDatabase<MeliusDB>> {
   if (dbInstance) return dbInstance;
 
   dbInstance = await openDB<MeliusDB>(DB_NAME, DB_VERSION, {
-    upgrade(db) {
-      if (db.objectStoreNames.contains('meals')) {
-        db.deleteObjectStore('meals');
+    upgrade(db, oldVersion, _newVersion, tx) {
+      if (!db.objectStoreNames.contains('meals')) {
+        const store = db.createObjectStore('meals', { keyPath: 'id' });
+        store.createIndex('by-date', 'date');
+        store.createIndex('by-created', 'createdAt');
+        return;
       }
-      const store = db.createObjectStore('meals', { keyPath: 'id' });
-      store.createIndex('by-date', 'date');
-      store.createIndex('by-created', 'createdAt');
+
+      const store = tx.objectStore('meals');
+      if (oldVersion < 2 && !store.indexNames.contains('by-date')) {
+        store.createIndex('by-date', 'date');
+      }
+      if (oldVersion < 2 && !store.indexNames.contains('by-created')) {
+        store.createIndex('by-created', 'createdAt');
+      }
     },
   });
 
   return dbInstance;
 }
 
-async function encryptMeal(meal: Meal): Promise<{ id: string; encrypted: string; date: string; createdAt: number }> {
+async function encryptMeal(meal: Meal): Promise<{ id: string; encrypted: string }> {
   const encrypted = await encrypt(JSON.stringify(meal));
-  return { id: meal.id, encrypted, date: meal.date, createdAt: meal.createdAt };
+  const verified = await decrypt(encrypted);
+  if (verified !== JSON.stringify(meal)) throw new Error('Meal encryption verification failed');
+  return { id: meal.id, encrypted };
 }
 
 async function decryptMeal(row: { id: string; encrypted: string }): Promise<Meal> {
@@ -174,6 +166,33 @@ export async function migrateOldMeals(): Promise<void> {
   }
 }
 
+export async function migratePlaintextMeals(): Promise<void> {
+  const db = await getDB();
+  const rows = await db.getAll('meals');
+  if (rows.length === 0) return;
+
+  const tx = db.transaction('meals', 'readwrite');
+  for (const row of rows as any[]) {
+    const encryptedValue = row?.encrypted;
+    if (typeof encryptedValue === 'string' && isEncrypted(encryptedValue)) continue;
+
+    const candidate: Meal | null = encryptedValue
+      ? (() => { try { return JSON.parse(encryptedValue) as Meal; } catch { return null; } })()
+      : row?.id && row?.mealType
+        ? row as Meal
+        : null;
+
+    if (!candidate?.id) continue;
+    try {
+      const encryptedRow = await encryptMeal(candidate);
+      await tx.store.put(encryptedRow);
+    } catch {
+      // Keep original record untouched if encryption cannot be verified.
+    }
+  }
+  await tx.done;
+}
+
 // ─── Meal CRUD ─────────────────────────────────────────────────────
 
 export async function addMeal(meal: Omit<Meal, 'id' | 'createdAt'>): Promise<Meal> {
@@ -184,20 +203,8 @@ export async function addMeal(meal: Omit<Meal, 'id' | 'createdAt'>): Promise<Mea
     createdAt: Date.now(),
   };
   
-  try {
-    const row = await encryptMeal(newMeal);
-    await db.add('meals', row);
-  } catch (err) {
-    // Fallback: store without encryption if encryption fails
-    console.warn('Encryption failed for meal, storing with minimal encryption:', err);
-    const fallbackRow = {
-      id: newMeal.id,
-      encrypted: JSON.stringify(newMeal),
-      date: newMeal.date,
-      createdAt: newMeal.createdAt,
-    };
-    await db.add('meals', fallbackRow);
-  }
+  const row = await encryptMeal(newMeal);
+  await db.add('meals', row);
   
   return newMeal;
 }
@@ -209,7 +216,7 @@ export async function getMeal(id: string): Promise<Meal | undefined> {
   try {
     return await decryptMeal(row);
   } catch {
-    // Fallback: try parsing as plain JSON
+    // Legacy migration fallback: read old plaintext only in memory.
     try { return JSON.parse(row.encrypted) as Meal; } catch { return undefined; }
   }
 }
@@ -230,13 +237,17 @@ export async function getAllMeals(): Promise<Meal[]> {
 
 export async function getMealsByDate(date: string): Promise<Meal[]> {
   const db = await getDB();
-  const rows = await db.getAllFromIndex('meals', 'by-date', date);
+  const rows = await db.getAll('meals');
   const meals: Meal[] = [];
   for (const row of rows) {
     try {
-      meals.push(await decryptMeal(row));
+      const meal = await decryptMeal(row);
+      if (meal.date === date) meals.push(meal);
     } catch {
-      try { meals.push(JSON.parse(row.encrypted) as Meal); } catch {}
+      try {
+        const meal = JSON.parse(row.encrypted) as Meal;
+        if (meal.date === date) meals.push(meal);
+      } catch {}
     }
   }
   return meals.sort((a, b) => b.createdAt - a.createdAt);
@@ -245,13 +256,16 @@ export async function getMealsByDate(date: string): Promise<Meal[]> {
 export async function getMealsByDateRange(startDate: string, endDate: string): Promise<Meal[]> {
   const db = await getDB();
   const allRows = await db.getAll('meals');
-  const filtered = allRows.filter((r) => r.date >= startDate && r.date <= endDate);
   const meals: Meal[] = [];
-  for (const row of filtered) {
+  for (const row of allRows) {
     try {
-      meals.push(await decryptMeal(row));
+      const meal = await decryptMeal(row);
+      if (meal.date >= startDate && meal.date <= endDate) meals.push(meal);
     } catch {
-      try { meals.push(JSON.parse(row.encrypted) as Meal); } catch {}
+      try {
+        const meal = JSON.parse(row.encrypted) as Meal;
+        if (meal.date >= startDate && meal.date <= endDate) meals.push(meal);
+      } catch {}
     }
   }
   return meals.sort((a, b) => b.createdAt - a.createdAt);
@@ -266,12 +280,8 @@ export async function updateMeal(id: string, updates: Partial<Meal>): Promise<Me
     try { meal = JSON.parse(row.encrypted) as Meal; } catch { return undefined; }
   }
   const updated = { ...meal, ...updates };
-  try {
-    const newRow = await encryptMeal(updated);
-    await db.put('meals', newRow);
-  } catch {
-    await db.put('meals', { id: updated.id, encrypted: JSON.stringify(updated), date: updated.date, createdAt: updated.createdAt });
-  }
+  const newRow = await encryptMeal(updated);
+  await db.put('meals', newRow);
   return updated;
 }
 
@@ -282,10 +292,18 @@ export async function deleteMeal(id: string): Promise<void> {
 
 export async function deleteMealsByDate(date: string): Promise<void> {
   const db = await getDB();
-  const rows = await db.getAllFromIndex('meals', 'by-date', date);
+  const rows = await db.getAll('meals');
   const tx = db.transaction('meals', 'readwrite');
   for (const row of rows) {
-    await tx.store.delete(row.id);
+    try {
+      const meal = await decryptMeal(row);
+      if (meal.date === date) await tx.store.delete(row.id);
+    } catch {
+      try {
+        const meal = JSON.parse(row.encrypted) as Meal;
+        if (meal.date === date) await tx.store.delete(row.id);
+      } catch {}
+    }
   }
   await tx.done;
 }
@@ -307,7 +325,7 @@ const DEFAULT_SETTINGS: Settings = {
 };
 
 export async function getSettings(): Promise<Settings> {
-  return readEncryptedLS<Settings>(SETTINGS_KEY, DEFAULT_SETTINGS).then(s => ({ ...DEFAULT_SETTINGS, ...s }));
+  return getEncryptedJSON<Settings>(SETTINGS_KEY, DEFAULT_SETTINGS).then(s => ({ ...DEFAULT_SETTINGS, ...s }));
 }
 
 export async function saveSettings(settings: Partial<Settings>): Promise<Settings> {

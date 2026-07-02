@@ -1,6 +1,6 @@
 // Local User Profile for Melius — encrypted storage
 
-import { encrypt, decrypt, isEncrypted } from './crypto';
+import { getEncryptedJSON, setEncryptedJSON, removeEncrypted } from './encryptedStorage';
 
 const PROFILE_KEY = 'melius-user-profile';
 
@@ -11,17 +11,7 @@ export interface UserProfile {
 }
 
 async function readProfile(): Promise<UserProfile | null> {
-  const raw = localStorage.getItem(PROFILE_KEY);
-  if (!raw) return null;
-
-  let plaintext = raw;
-  if (isEncrypted(raw)) {
-    try { plaintext = await decrypt(raw); } catch { return null; }
-  } else {
-    try { localStorage.setItem(PROFILE_KEY, await encrypt(raw)); } catch {}
-  }
-
-  try { return JSON.parse(plaintext); } catch { return null; }
+  return getEncryptedJSON<UserProfile | null>(PROFILE_KEY, null);
 }
 
 export async function getUserProfile(): Promise<UserProfile | null> {
@@ -35,17 +25,12 @@ export async function saveUserProfile(profile: Partial<UserProfile>): Promise<Us
     avatar: profile.avatar ?? existing?.avatar,
     createdAt: existing?.createdAt || Date.now(),
   };
-  const json = JSON.stringify(updated);
-  try {
-    localStorage.setItem(PROFILE_KEY, await encrypt(json));
-  } catch {
-    localStorage.setItem(PROFILE_KEY, json);
-  }
+  await setEncryptedJSON(PROFILE_KEY, updated);
   return updated;
 }
 
-export function deleteUserProfile(): void {
-  localStorage.removeItem(PROFILE_KEY);
+export async function deleteUserProfile(): Promise<void> {
+  await removeEncrypted(PROFILE_KEY);
 }
 
 export function getGreeting(name?: string): string {

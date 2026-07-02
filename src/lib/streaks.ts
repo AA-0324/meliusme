@@ -1,6 +1,6 @@
 // Streak and Gamification System for MeliusMe — encrypted storage
 
-import { encrypt, decrypt, isEncrypted } from './crypto';
+import { getEncrypted, getEncryptedJSON, setEncrypted, setEncryptedJSON } from './encryptedStorage';
 
 const STREAK_KEY = 'melius-streak';
 const CHALLENGES_KEY = 'melius-challenges';
@@ -11,20 +11,11 @@ const XP_KEY = 'melius-xp';
 // ─── Encrypted helpers ─────────────────────────────────────────────
 
 async function readEncLS<T>(key: string, fallback: T): Promise<T> {
-  const raw = localStorage.getItem(key);
-  if (!raw) return fallback;
-  let plaintext = raw;
-  if (isEncrypted(raw)) {
-    try { plaintext = await decrypt(raw); } catch { return fallback; }
-  } else {
-    try { localStorage.setItem(key, await encrypt(raw)); } catch {}
-  }
-  try { return JSON.parse(plaintext) as T; } catch { return fallback; }
+  return getEncryptedJSON<T>(key, fallback);
 }
 
 async function writeEncLS(key: string, value: unknown): Promise<void> {
-  const json = JSON.stringify(value);
-  try { localStorage.setItem(key, await encrypt(json)); } catch { localStorage.setItem(key, json); }
+  await setEncryptedJSON(key, value);
 }
 
 // ─── Interfaces ────────────────────────────────────────────────────
@@ -192,21 +183,15 @@ export async function rollbackDailyXP(date: string, isProUser: boolean): Promise
   // Subtract XP
   const current = await getXP();
   const newTotal = Math.max(0, current - xpToRemove);
-  try { localStorage.setItem(XP_KEY, await encrypt(newTotal.toString())); } catch { localStorage.setItem(XP_KEY, newTotal.toString()); }
+  await setEncrypted(XP_KEY, newTotal.toString());
   
   return calculateLevel(newTotal);
 }
 
 export async function getXP(): Promise<number> {
-  const raw = localStorage.getItem(XP_KEY);
+  const raw = await getEncrypted(XP_KEY);
   if (!raw) return 0;
-  let plaintext = raw;
-  if (isEncrypted(raw)) {
-    try { plaintext = await decrypt(raw); } catch { return 0; }
-  } else {
-    try { localStorage.setItem(XP_KEY, await encrypt(raw)); } catch {}
-  }
-  return parseInt(plaintext, 10) || 0;
+  return parseInt(raw, 10) || 0;
 }
 
 export async function addXP(amount: number, isProUser: boolean = false, source: string = 'unknown'): Promise<LevelUpResult> {
@@ -217,7 +202,7 @@ export async function addXP(amount: number, isProUser: boolean = false, source: 
   const current = await getXP();
   const previousData = calculateLevel(current);
   const newTotal = current + amount;
-  try { localStorage.setItem(XP_KEY, await encrypt(newTotal.toString())); } catch { localStorage.setItem(XP_KEY, newTotal.toString()); }
+  await setEncrypted(XP_KEY, newTotal.toString());
   const newData = calculateLevel(newTotal);
 
   // Record in ledger
@@ -260,16 +245,16 @@ export async function getXPData(): Promise<XPData> {
 // ─── Badges ────────────────────────────────────────────────────────
 
 export const AVAILABLE_BADGES: Badge[] = [
-  { id: 'streak_7', name: '7 Day Streak', description: 'Logged meals 7 days in a row', icon: '🔥' },
-  { id: 'streak_14', name: '2 Week Warrior', description: 'Logged meals 14 days in a row', icon: '⚡' },
-  { id: 'streak_30', name: 'Month Master', description: 'Logged meals 30 days in a row', icon: '🏆' },
-  { id: 'streak_60', name: 'Dedication King', description: 'Logged meals 60 days in a row', icon: '👑' },
-  { id: 'streak_100', name: 'Century Champion', description: 'Logged meals 100 days in a row', icon: '💎' },
-  { id: 'meals_3', name: 'Triple Threat', description: 'Logged 3 meals in one day', icon: '🎯' },
-  { id: 'water_goal', name: 'Hydration Hero', description: 'Hit water goal 7 days straight', icon: '💧' },
-  { id: 'within_range', name: 'Calorie Control', description: 'Stayed within calorie range 5 days', icon: '⚖️' },
-  { id: 'dinner_week', name: 'Dinner Devotee', description: 'Logged dinner every day for a week', icon: '🍽️' },
-  { id: 'first_meal', name: 'First Step', description: 'Logged your first meal', icon: '🌟' },
+  { id: 'streak_7', name: '7 Day Streak', description: 'Logged meals 7 days in a row', icon: '7' },
+  { id: 'streak_14', name: '2 Week Warrior', description: 'Logged meals 14 days in a row', icon: '14' },
+  { id: 'streak_30', name: 'Month Master', description: 'Logged meals 30 days in a row', icon: '30' },
+  { id: 'streak_60', name: 'Dedication King', description: 'Logged meals 60 days in a row', icon: '60' },
+  { id: 'streak_100', name: 'Century Champion', description: 'Logged meals 100 days in a row', icon: '100' },
+  { id: 'meals_3', name: 'Triple Threat', description: 'Logged 3 meals in one day', icon: '3' },
+  { id: 'water_goal', name: 'Hydration Hero', description: 'Hit water goal 7 days straight', icon: 'H2O' },
+  { id: 'within_range', name: 'Calorie Control', description: 'Stayed within calorie range 5 days', icon: 'OK' },
+  { id: 'dinner_week', name: 'Dinner Devotee', description: 'Logged dinner every day for a week', icon: 'D' },
+  { id: 'first_meal', name: 'First Step', description: 'Logged your first meal', icon: '1' },
 ];
 
 export const STREAK_MILESTONES = [7, 14, 30, 60, 100];

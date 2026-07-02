@@ -13,6 +13,7 @@ interface WaterTrackerProps {
 }
 
 const getConfettiKey = () => `melius-confetti-${new Date().toISOString().split('T')[0]}`;
+const shownConfettiKeys = new Set<string>();
 
 export function WaterTracker({ glasses, goal, onIncrement }: WaterTrackerProps) {
   const { animationsEnabled } = useApp();
@@ -22,9 +23,9 @@ export function WaterTracker({ glasses, goal, onIncrement }: WaterTrackerProps) 
 
   useEffect(() => {
     const confettiKey = getConfettiKey();
-    const alreadyShown = sessionStorage.getItem(confettiKey) === 'true';
+    const alreadyShown = shownConfettiKeys.has(confettiKey);
     if (isComplete && !alreadyShown) {
-      sessionStorage.setItem(confettiKey, 'true');
+      shownConfettiKeys.add(confettiKey);
       confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 }, colors: ['#22d3ee', '#0ea5e9', '#3b82f6', '#06b6d4'] });
     }
   }, [isComplete]);

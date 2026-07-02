@@ -1,28 +1,26 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Meal, Settings, getSettings, saveSettings, getAllMeals, addMeal, deleteMeal, deleteMealsByDate, updateGoals, Goals, getWaterIntake, setWaterIntake, DEFAULT_GOALS, DEFAULT_WATER_GOAL, resetToBasicSettings } from '@/lib/db';
+import { Meal, Settings, getSettings, saveSettings, getAllMeals, addMeal, deleteMeal, deleteMealsByDate, updateGoals, Goals, getWaterIntake, setWaterIntake, DEFAULT_GOALS, DEFAULT_WATER_GOAL, resetToBasicSettings, migratePlaintextMeals } from '@/lib/db';
 import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/userProfile';
-import { getBodyProfile, saveBodyProfile, BodyProfile, getAutoGoals } from '@/lib/bodyGoals';
+import { getBodyProfile, saveBodyProfile, BodyProfile, getAutoGoals, deleteBodyProfile } from '@/lib/bodyGoals';
 import { requestNotificationPermission, areNotificationsSupported } from '@/lib/notifications';
 import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge, getEarnedBadges, Badge, awardBadge, addXP, LevelUpResult, TempProUnlock, getTempProUnlocks, getXPData, XPData, getDailyChallenges, rollbackDailyXP, validateStreakFreshness } from '@/lib/streaks';
 import { initEncryption } from '@/lib/crypto';
-import { migrateAllToEncrypted } from '@/lib/encryptedStorage';
+import { getEncryptedJSON, setEncryptedJSON, removeEncrypted, getEncrypted, setEncrypted, migrateAllToEncrypted } from '@/lib/encryptedStorage';
 import { initRevenueCat, checkProEntitlement } from '@/lib/revenuecat';
 
 type ToastVariant = 'primary' | 'success' | 'warning' | 'destructive' | 'challenge';
 
 const goalToastKey = (date: string) => `meliusme-goal-toasts-${date}`;
 
-const getGoalToastFlags = (date: string): Record<string, boolean> => {
-  const stored = sessionStorage.getItem(goalToastKey(date));
-  if (!stored) return {};
-  try { return JSON.parse(stored); } catch { return {}; }
-};
+const inMemoryGoalToastFlags = new Map<string, Record<string, boolean>>();
+
+const getGoalToastFlags = (date: string): Record<string, boolean> => inMemoryGoalToastFlags.get(goalToastKey(date)) ?? {};
 
 const setGoalToastFlag = (date: string, key: string) => {
   const flags = getGoalToastFlags(date);
   if (flags[key]) return;
   flags[key] = true;
-  sessionStorage.setItem(goalToastKey(date), JSON.stringify(flags));
+  inMemoryGoalToastFlags.set(goalToastKey(date), flags);
 };
 
 const getDailyTotals = (allMeals: Meal[], date: string) => {
@@ -145,16 +143,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return () => { clearInterval(interval); document.removeEventListener('visibilitychange', onVisible); };
   }, []);
 
-  // Clean up stale awarded-challenge keys for days other than today (one-time per session).
-  useEffect(() => {
-    const prefix = 'melius-daily-xp-awarded-';
-    const todayKey = `${prefix}${today}`;
-    for (let i = localStorage.length - 1; i >= 0; i--) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith(prefix) && k !== todayKey) localStorage.removeItem(k);
-    }
-  }, [today]);
-
   // Sync animations preference to window for motion.ts + CSS
   useEffect(() => {
     (window as any).__melius_animations_enabled = animationsEnabled;
@@ -170,10 +158,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try {
         await initEncryption();
         await migrateAllToEncrypted();
+        await migratePlaintextMeals();
         
         // Initialize RevenueCat
         try {
-          initRevenueCat();
+          await initRevenueCat();
         } catch (rcError) {
           console.warn('[RevenueCat] Init failed (non-blocking):', rcError);
         }
@@ -208,12 +197,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
         // One-shot migration: reset all existing users back to Basic and clear
         // any Pro-only side-effects (theme, personalized goals + custom goals).
-        const migrated = localStorage.getItem('meliusme-pro-reset-v1.3');
+        const migrated = await getEncrypted('meliusme-pro-reset-v1.3');
         if (!migrated) {
           const updated = await resetToBasicSettings();
+          await deleteBodyProfile();
+          setBodyProfile(null);
           activeSettings = updated;
           setSettingsState(updated);
-          localStorage.setItem('meliusme-pro-reset-v1.3', 'true');
+          await setEncrypted('meliusme-pro-reset-v1.3', 'true');
         }
 
         // Check RevenueCat entitlement for Pro status
@@ -300,6 +291,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const setDevMode = useCallback(async (enabled: boolean) => {
     if (!enabled && !settings.proStatus) {
       const updated = await resetToBasicSettings();
+      await deleteBodyProfile();
+      setBodyProfile(null);
       setSettingsState(updated);
     } else {
       const updated = await saveSettings({ devMode: enabled });
@@ -316,6 +309,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!enabled) {
       // Turning Pro off must fully remove Pro-only state, including custom and personalized goals.
       const updated = await resetToBasicSettings();
+      await deleteBodyProfile();
+      setBodyProfile(null);
       setSettingsState(updated);
     } else {
       const updated = await saveSettings({ proStatus: enabled });
@@ -368,15 +363,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const todayStr = new Date().toISOString().split('T')[0];
     setTodayWater(0);
     await setWaterIntake(todayStr, 0);
-    sessionStorage.removeItem(`melius-confetti-${todayStr}`);
-
     const rolledBackXP = await rollbackDailyXP(todayStr, isPro);
     setXpData(rolledBackXP);
 
-    // Daily challenge claims live in localStorage now (persistent).
-    localStorage.removeItem(`melius-daily-xp-awarded-${todayStr}`);
-    sessionStorage.removeItem(`melius-daily-xp-awarded-${todayStr}`); // legacy cleanup
-    sessionStorage.removeItem(goalToastKey(todayStr));
+    // Daily challenge claims are encrypted at rest.
+    await removeEncrypted(`melius-daily-xp-awarded-${todayStr}`);
+    inMemoryGoalToastFlags.delete(goalToastKey(todayStr));
 
     setMeals((prev) => prev.filter((m) => m.date !== todayStr));
     void deleteMealsByDate(todayStr);
@@ -421,29 +413,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ─── Daily challenge XP tracking ──────────────────────
   // Persistent across app reloads — sessionStorage would let users farm XP
   // by closing/reopening the app and re-claiming the same challenge.
-  const getAwardedChallenges = useCallback((): Set<string> => {
+  const getAwardedChallenges = useCallback(async (): Promise<Set<string>> => {
     const key = `melius-daily-xp-awarded-${today}`;
-    const raw = localStorage.getItem(key);
-    if (!raw) return new Set();
-    try { return new Set(JSON.parse(raw)); } catch { return new Set(); }
+    return new Set(await getEncryptedJSON<string[]>(key, []));
   }, [today]);
 
-  const markChallengeAwarded = useCallback((id: string) => {
+  const markChallengeAwarded = useCallback(async (id: string) => {
     const key = `melius-daily-xp-awarded-${today}`;
-    const awarded = getAwardedChallenges();
+    const awarded = await getAwardedChallenges();
     awarded.add(id);
-    localStorage.setItem(key, JSON.stringify([...awarded]));
+    await setEncryptedJSON(key, [...awarded]);
   }, [today, getAwardedChallenges]);
 
   const checkAndAwardDailyChallengeXP = useCallback(async (
     mealTypes: string[], water: number, cals?: number, prot?: number
   ) => {
     const challenges = getDailyChallenges(mealTypes, water, settings.waterGoal, settings.goals, cals, prot);
-    const awarded = getAwardedChallenges();
+    const awarded = await getAwardedChallenges();
     for (const c of challenges) {
       if (c.completed && !awarded.has(c.id)) {
         // Mark BEFORE awarding to prevent double-grants from concurrent calls.
-        markChallengeAwarded(c.id);
+        await markChallengeAwarded(c.id);
+        awarded.add(c.id);
         const result = await addXP(c.xp, isPro, `challenge:${c.id}`);
         setXpData(result.xpData);
         if (result.leveledUp) {
