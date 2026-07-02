@@ -6,14 +6,8 @@
 import { encrypt, decrypt, isEncrypted } from './crypto';
 
 const STORAGE_DB_NAME = 'melius-secure-storage';
-const STORAGE_DB_VERSION = 1;
+const STORAGE_DB_VERSION = 2;
 const STORAGE_STORE = 'records';
-
-interface StoredRecord {
-  key: string;
-  value: string;
-  updatedAt: number;
-}
 
 let storageDBPromise: Promise<IDBDatabase> | null = null;
 
@@ -21,10 +15,13 @@ function openStorageDB(): Promise<IDBDatabase> {
   if (storageDBPromise) return storageDBPromise;
   storageDBPromise = new Promise((resolve, reject) => {
     const req = indexedDB.open(STORAGE_DB_NAME, STORAGE_DB_VERSION);
-    req.onupgradeneeded = () => {
+    req.onupgradeneeded = (event) => {
       const db = req.result;
+      if (event.oldVersion < 2 && db.objectStoreNames.contains(STORAGE_STORE)) {
+        db.deleteObjectStore(STORAGE_STORE);
+      }
       if (!db.objectStoreNames.contains(STORAGE_STORE)) {
-        db.createObjectStore(STORAGE_STORE, { keyPath: 'key' });
+        db.createObjectStore(STORAGE_STORE);
       }
     };
     req.onsuccess = () => resolve(req.result);
@@ -38,7 +35,7 @@ async function readRecord(key: string): Promise<string | null> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORAGE_STORE, 'readonly');
     const req = tx.objectStore(STORAGE_STORE).get(key);
-    req.onsuccess = () => resolve((req.result as StoredRecord | undefined)?.value ?? null);
+    req.onsuccess = () => resolve(typeof req.result === 'string' ? req.result : null);
     req.onerror = () => reject(req.error);
   });
 }
@@ -47,7 +44,7 @@ async function writeRecord(key: string, value: string): Promise<void> {
   const db = await openStorageDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORAGE_STORE, 'readwrite');
-    tx.objectStore(STORAGE_STORE).put({ key, value, updatedAt: Date.now() } satisfies StoredRecord);
+    tx.objectStore(STORAGE_STORE).put(value, key);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
