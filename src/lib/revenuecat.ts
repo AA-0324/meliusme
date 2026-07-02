@@ -1,5 +1,6 @@
 // RevenueCat Web SDK Integration
 import { Purchases, type CustomerInfo, type Package, type PurchasesError, ErrorCode } from '@revenuecat/purchases-js';
+import { getEncrypted, setEncrypted } from './encryptedStorage';
 
 // Public API key (safe to include in client code)
 const RC_API_KEY = 'test_bfVjcQrjQkSYSlezfcbSEpCZRaE';
@@ -10,19 +11,19 @@ let purchasesInstance: Purchases | null = null;
 
 // ─── Initialization ────────────────────────────────────────────────
 
-function getOrCreateUserId(): string {
-  let userId = localStorage.getItem(RC_USER_ID_KEY);
+async function getOrCreateUserId(): Promise<string> {
+  let userId = await getEncrypted(RC_USER_ID_KEY);
   if (!userId) {
     userId = Purchases.generateRevenueCatAnonymousAppUserId();
-    localStorage.setItem(RC_USER_ID_KEY, userId);
+    await setEncrypted(RC_USER_ID_KEY, userId);
   }
   return userId;
 }
 
-export function initRevenueCat(): Purchases {
+export async function initRevenueCat(): Promise<Purchases> {
   if (purchasesInstance) return purchasesInstance;
 
-  const appUserId = getOrCreateUserId();
+  const appUserId = await getOrCreateUserId();
   purchasesInstance = Purchases.configure({
     apiKey: RC_API_KEY,
     appUserId,
@@ -31,7 +32,7 @@ export function initRevenueCat(): Purchases {
   return purchasesInstance;
 }
 
-export function getRevenueCatInstance(): Purchases {
+export async function getRevenueCatInstance(): Promise<Purchases> {
   if (!purchasesInstance) {
     return initRevenueCat();
   }
@@ -41,7 +42,7 @@ export function getRevenueCatInstance(): Purchases {
 // ─── Customer Info & Entitlements ──────────────────────────────────
 
 export async function getCustomerInfo(): Promise<CustomerInfo> {
-  const rc = getRevenueCatInstance();
+  const rc = await getRevenueCatInstance();
   return await rc.getCustomerInfo();
 }
 
@@ -69,7 +70,7 @@ export async function hasAnyActiveEntitlement(): Promise<boolean> {
 
 export async function getCurrentOffering() {
   try {
-    const rc = getRevenueCatInstance();
+    const rc = await getRevenueCatInstance();
     const offerings = await rc.getOfferings();
     return offerings.current;
   } catch (error) {
@@ -122,7 +123,7 @@ export interface PurchaseResult {
 
 export async function purchasePackage(pkg: Package): Promise<PurchaseResult> {
   try {
-    const rc = getRevenueCatInstance();
+    const rc = await getRevenueCatInstance();
     const { customerInfo } = await rc.purchase({ rcPackage: pkg });
 
     const hasPro = ENTITLEMENT_ID in customerInfo.entitlements.active;
@@ -149,7 +150,7 @@ export async function presentPaywall(
   containerElement: HTMLElement
 ): Promise<PaywallResult> {
   try {
-    const rc = getRevenueCatInstance();
+    const rc = await getRevenueCatInstance();
     const result = await rc.presentPaywall({
       htmlTarget: containerElement,
     });
@@ -174,7 +175,7 @@ export async function restorePurchases(): Promise<PurchaseResult> {
     // On the web SDK, "restoring" means re-initializing with the same
     // anonymous user ID and fetching the latest customer info from the
     // RevenueCat backend. This picks up any purchases tied to this user.
-    const rc = getRevenueCatInstance();
+    const rc = await getRevenueCatInstance();
     const customerInfo = await rc.getCustomerInfo();
     const hasPro = ENTITLEMENT_ID in customerInfo.entitlements.active;
     return { success: hasPro, customerInfo };
