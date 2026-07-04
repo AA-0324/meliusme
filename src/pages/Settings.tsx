@@ -7,8 +7,6 @@ import {
   ChevronLeft,
   AlertTriangle,
   RefreshCw,
-  Bell,
-  BellOff,
   Eye,
   EyeOff,
   BookmarkPlus,
@@ -37,12 +35,11 @@ import { getMealTemplates, deleteMealTemplate, MealTemplate } from '@/lib/proFea
 import { restorePurchases, checkProEntitlement } from '@/lib/revenuecat';
 import logo from '@/assets/meliusme-logo-new.png';
 
-const APP_VERSION = '0.11.2-alpha';
+const APP_VERSION = '0.11.3-alpha';
 
 export default function Settings() {
   const {
     settings, isPro, setPro, setDevMode, resetDailyData,
-    notificationsEnabled, toggleNotifications,
     setUse24Hour, animationLevel, setAnimationLevel,
   } = useApp();
   const navigate = useNavigate();
@@ -89,14 +86,6 @@ export default function Settings() {
     } catch {
       toast.error('Failed to restore. Please try again.');
     }
-  };
-
-  const handleToggleNotifications = async () => {
-    if (!notificationsEnabled) {
-      toast.info('Push notifications are not available yet');
-      return;
-    }
-    await toggleNotifications();
   };
 
   const macroIcon = (type: string) => {
@@ -162,29 +151,6 @@ export default function Settings() {
             <span>Off</span>
             <span>Reduced</span>
             <span>Full</span>
-          </div>
-        </motion.div>
-
-        {/* Notifications */}
-        <motion.div variants={fadeUp}
-          className="bg-card rounded-2xl p-5 border border-border/50">
-          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Notifications</h2>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {notificationsEnabled ? (
-                <Bell className="w-5 h-5 text-primary" />
-              ) : (
-                <BellOff className="w-5 h-5 text-muted-foreground" />
-              )}
-              <div>
-                <span className="font-semibold">Push Notifications</span>
-                <p className="text-xs text-muted-foreground">Meal & water reminders</p>
-              </div>
-            </div>
-            <Switch 
-              checked={notificationsEnabled} 
-              onCheckedChange={handleToggleNotifications} 
-            />
           </div>
         </motion.div>
 

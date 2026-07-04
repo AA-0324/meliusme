@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { Meal, Settings, getSettings, saveSettings, getAllMeals, addMeal, deleteMeal, deleteMealsByDate, updateGoals, Goals, getWaterIntake, setWaterIntake, DEFAULT_GOALS, DEFAULT_WATER_GOAL, resetToBasicSettings, migratePlaintextMeals } from '@/lib/db';
 import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/userProfile';
 import { getBodyProfile, saveBodyProfile, BodyProfile, getAutoGoals, deleteBodyProfile } from '@/lib/bodyGoals';
-import { requestNotificationPermission, areNotificationsSupported } from '@/lib/notifications';
+
 import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge, getEarnedBadges, Badge, awardBadge, addXP, LevelUpResult, TempProUnlock, getTempProUnlocks, getXPData, XPData, getDailyChallenges, rollbackDailyXP, validateStreakFreshness } from '@/lib/streaks';
 import { initEncryption } from '@/lib/crypto';
 import { getEncryptedJSON, setEncryptedJSON, removeEncrypted, getEncrypted, setEncrypted, migrateAllToEncrypted } from '@/lib/encryptedStorage';
@@ -66,8 +66,6 @@ interface AppContextType {
   refreshStreak: () => void;
   todayWater: number;
   incrementWater: () => void;
-  notificationsEnabled: boolean;
-  toggleNotifications: () => Promise<void>;
   setDevMode: (enabled: boolean) => void;
   setDarkMode: (enabled: boolean) => void;
   setPro: (enabled: boolean) => void;
@@ -100,7 +98,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [bodyProfile, setBodyProfile] = useState<BodyProfile | null>(null);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  
   const [streak, setStreak] = useState<StreakData>(DEFAULT_STREAK);
   const [currentChallenge, setCurrentChallenge] = useState<Challenge>(DEFAULT_CHALLENGE);
   const [badges, setBadges] = useState<Badge[]>([]);
@@ -257,9 +255,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (isPro && settings.theme && settings.theme !== 'default') root.classList.add(`theme-${settings.theme}`);
   }, [settings.darkMode, settings.theme, isPro]);
 
-  useEffect(() => {
-    if (areNotificationsSupported() && Notification.permission === 'granted') setNotificationsEnabled(true);
-  }, []);
 
   const refreshMeals = useCallback(async () => {
     const allMeals = await getAllMeals();
@@ -379,15 +374,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setTempProUnlocks(await getTempProUnlocks());
   }, [isPro, meals]);
 
-  const toggleNotifications = useCallback(async () => {
-    if (!areNotificationsSupported()) return;
-    if (notificationsEnabled) {
-      setNotificationsEnabled(false);
-    } else {
-      const granted = await requestNotificationPermission();
-      setNotificationsEnabled(granted);
-    }
-  }, [notificationsEnabled]);
 
   const showBottomToast = useCallback((message: string, variant: ToastVariant = 'primary') => {
     setBottomToast((prev) => {
@@ -570,7 +556,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     bodyProfile, updateBodyProfile: updateBodyProfileCb,
     streak, currentChallenge, badges, refreshStreak,
     todayWater, incrementWater,
-    notificationsEnabled, toggleNotifications,
     setDevMode, setDarkMode, setPro, setTheme, setUse24Hour,
     setAnimationsEnabled, setAnimationLevel,
     setPersonalizedGoals, updateUserGoals, setWaterGoal: setWaterGoalCb, resetDailyData,
@@ -581,10 +566,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     settings, meals, isLoading, isPro, hasProFeature,
     animationsEnabled, motionEnabled, animationLevel,
     userProfile, bodyProfile, streak, currentChallenge, badges,
-    todayWater, notificationsEnabled, bottomToast,
+    todayWater, bottomToast,
     xpData, tempProUnlocks, levelUpPending,
     setUserName, setUserAvatar, updateBodyProfileCb, refreshStreak,
-    incrementWater, toggleNotifications,
+    incrementWater,
     setDevMode, setDarkMode, setPro, setTheme, setUse24Hour,
     setAnimationsEnabled, setAnimationLevel, setPersonalizedGoals,
     updateUserGoals, setWaterGoalCb, resetDailyData,

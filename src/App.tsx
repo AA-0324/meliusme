@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { MotionConfig } from 'framer-motion';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -16,12 +16,13 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LevelUpModal } from "@/components/LevelUpModal";
 import { getEncrypted } from "@/lib/encryptedStorage";
 import Home from "./pages/Home";
-import Log from "./pages/Log";
-import Dashboard from "./pages/Dashboard";
-import Profile from "./pages/Profile";
-import Settings from "./pages/Settings";
-import Challenges from "./pages/Challenges";
-import NotFound from "./pages/NotFound";
+
+const Log = lazy(() => import("./pages/Log"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Challenges = lazy(() => import("./pages/Challenges"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
@@ -99,15 +100,17 @@ const App = () => {
                     <ProfileButton />
                   </div>
                   <ErrorBoundary name="Routes">
-                    <Routes>
-                      <Route path="/" element={<Home />} />
-                      <Route path="/log" element={<Log />} />
-                      <Route path="/dashboard" element={<Dashboard />} />
-                      <Route path="/profile" element={<Profile />} />
-                      <Route path="/settings" element={<Settings />} />
-                      <Route path="/challenges" element={<Challenges />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
+                    <Suspense fallback={<div className="min-h-screen" />}>
+                      <Routes>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/log" element={<Log />} />
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/profile" element={<Profile />} />
+                        <Route path="/settings" element={<Settings />} />
+                        <Route path="/challenges" element={<Challenges />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </Suspense>
                   </ErrorBoundary>
                   <BottomNav />
                 </div>
