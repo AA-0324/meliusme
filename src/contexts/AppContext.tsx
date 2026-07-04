@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { Meal, Settings, getSettings, saveSettings, getAllMeals, addMeal, deleteMeal, deleteMealsByDate, updateGoals, Goals, getWaterIntake, setWaterIntake, DEFAULT_GOALS, DEFAULT_WATER_GOAL, resetToBasicSettings, migratePlaintextMeals } from '@/lib/db';
 import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/userProfile';
 import { getBodyProfile, saveBodyProfile, BodyProfile, getAutoGoals, deleteBodyProfile } from '@/lib/bodyGoals';
-import { requestNotificationPermission, areNotificationsSupported } from '@/lib/notifications';
+
 import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge, getEarnedBadges, Badge, awardBadge, addXP, LevelUpResult, TempProUnlock, getTempProUnlocks, getXPData, XPData, getDailyChallenges, rollbackDailyXP, validateStreakFreshness } from '@/lib/streaks';
 import { initEncryption } from '@/lib/crypto';
 import { getEncryptedJSON, setEncryptedJSON, removeEncrypted, getEncrypted, setEncrypted, migrateAllToEncrypted } from '@/lib/encryptedStorage';
