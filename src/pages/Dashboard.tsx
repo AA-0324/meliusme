@@ -502,7 +502,7 @@ export default function Dashboard() {
   };
 
   // Order widgets based on layout for Pro users
-  const orderedWidgetIds = isPro
+  const orderedWidgetIds = canCustomizeLayout
     ? dashboardLayout.sort((a, b) => a.order - b.order).map(w => w.id)
     : ['stats', 'goals', 'weekly-chart', 'meal-type', 'averages', 'streaks', 'nutrition-score', 'trends'];
 
