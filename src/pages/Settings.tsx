@@ -156,29 +156,6 @@ export default function Settings() {
           </div>
         </motion.div>
 
-        {/* Notifications */}
-        <motion.div variants={fadeUp}
-          className="bg-card rounded-2xl p-5 border border-border/50">
-          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-4">Notifications</h2>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {notificationsEnabled ? (
-                <Bell className="w-5 h-5 text-primary" />
-              ) : (
-                <BellOff className="w-5 h-5 text-muted-foreground" />
-              )}
-              <div>
-                <span className="font-semibold">Push Notifications</span>
-                <p className="text-xs text-muted-foreground">Meal & water reminders</p>
-              </div>
-            </div>
-            <Switch 
-              checked={notificationsEnabled} 
-              onCheckedChange={handleToggleNotifications} 
-            />
-          </div>
-        </motion.div>
-
         {/* Meal Templates */}
         {isPro && (
           <motion.div variants={fadeUp}
