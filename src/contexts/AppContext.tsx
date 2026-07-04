@@ -374,15 +374,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setTempProUnlocks(await getTempProUnlocks());
   }, [isPro, meals]);
 
-  const toggleNotifications = useCallback(async () => {
-    if (!areNotificationsSupported()) return;
-    if (notificationsEnabled) {
-      setNotificationsEnabled(false);
-    } else {
-      const granted = await requestNotificationPermission();
-      setNotificationsEnabled(granted);
-    }
-  }, [notificationsEnabled]);
 
   const showBottomToast = useCallback((message: string, variant: ToastVariant = 'primary') => {
     setBottomToast((prev) => {
