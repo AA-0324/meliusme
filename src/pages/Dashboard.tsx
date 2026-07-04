@@ -533,7 +533,7 @@ export default function Dashboard() {
       </div>
 
       {/* Filters row - Pro only */}
-      {isPro && (
+      {hasProFeature('dashboard_filters') && (
         <div className="px-6 mb-4">
           <div className="flex items-center gap-2">
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none flex-1">
