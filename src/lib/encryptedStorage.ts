@@ -161,7 +161,7 @@ export async function migrateAllToEncrypted(): Promise<void> {
     'melius-xp-ledger',
     'melius-temp-pro-unlocks',
     'melius-last-reward-feature',
-    'melius-notifications',
+    
     'melius-meal-templates',
     'melius-meal-edits',
     'melius-dashboard-layout',
