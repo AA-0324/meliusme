@@ -101,9 +101,12 @@ const LAST_REWARD_KEY = 'melius-last-reward-feature';
 
 export async function getTempProUnlocks(): Promise<TempProUnlock[]> {
   const unlocks = await readEncLS<TempProUnlock[]>(TEMP_UNLOCKS_KEY, []);
-  // Filter out expired unlocks
   const now = Date.now();
-  const active = unlocks.filter(u => u.expiresAt > now);
+  const validIds = new Set<string>(PRO_FEATURE_POOL.map(f => f.id));
+  // Drop expired unlocks AND unlocks referencing feature ids that no longer exist
+  // (e.g. after the reward pool was rewritten). These would otherwise show as
+  // "Active Reward" but unlock nothing.
+  const active = unlocks.filter(u => u.expiresAt > now && validIds.has(u.featureId));
   if (active.length !== unlocks.length) {
     await writeEncLS(TEMP_UNLOCKS_KEY, active);
   }
