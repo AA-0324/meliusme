@@ -472,7 +472,7 @@ export default function Dashboard() {
         loggingStreak={streaksData.loggingStreak}
         calorieTargetStreak={streaksData.calorieTargetStreak}
         proteinGoalStreak={streaksData.proteinGoalStreak}
-        isPro={isPro}
+        isPro={hasProFeature('streak_tracker')}
         onUpgradeClick={() => setShowProModal(true)}
         animationsEnabled={animationsEnabled}
       />
