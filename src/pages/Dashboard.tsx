@@ -424,7 +424,7 @@ export default function Dashboard() {
               {filterDays <= 7 ? 'Weekly' : `${filterDays}-Day`} Averages
             </h2>
           </div>
-          {isPro ? (
+          {hasProFeature('daily_averages') ? (
             <div className="grid grid-cols-2 gap-4">
               {[
                 { label: 'Protein', value: Math.round(filteredMeals.reduce((s, m) => s + (m.protein || 0), 0) / Math.max(rangeStats.daysWithMeals, 1)), suffix: 'g' },
