@@ -255,9 +255,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (isPro && settings.theme && settings.theme !== 'default') root.classList.add(`theme-${settings.theme}`);
   }, [settings.darkMode, settings.theme, isPro]);
 
-  useEffect(() => {
-    if (areNotificationsSupported() && Notification.permission === 'granted') setNotificationsEnabled(true);
-  }, []);
 
   const refreshMeals = useCallback(async () => {
     const allMeals = await getAllMeals();
