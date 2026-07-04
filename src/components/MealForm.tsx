@@ -555,7 +555,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
         open={showTemplatePicker}
         onClose={() => setShowTemplatePicker(false)}
         onSelect={handleTemplateSelect}
-        isPro={isPro}
+        isPro={hasProFeature('meal_templates')}
         onUpgradeClick={() => { setShowTemplatePicker(false); setShowProModal(true); }}
       />
     </>
