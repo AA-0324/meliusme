@@ -100,15 +100,17 @@ const App = () => {
                     <ProfileButton />
                   </div>
                   <ErrorBoundary name="Routes">
-                    <Routes>
-                      <Route path="/" element={<Home />} />
-                      <Route path="/log" element={<Log />} />
-                      <Route path="/dashboard" element={<Dashboard />} />
-                      <Route path="/profile" element={<Profile />} />
-                      <Route path="/settings" element={<Settings />} />
-                      <Route path="/challenges" element={<Challenges />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
+                    <Suspense fallback={<div className="min-h-screen" />}>
+                      <Routes>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/log" element={<Log />} />
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/profile" element={<Profile />} />
+                        <Route path="/settings" element={<Settings />} />
+                        <Route path="/challenges" element={<Challenges />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </Suspense>
                   </ErrorBoundary>
                   <BottomNav />
                 </div>
