@@ -90,14 +90,6 @@ export default function Settings() {
     }
   };
 
-  const handleToggleNotifications = async () => {
-    if (!notificationsEnabled) {
-      toast.info('Push notifications are not available yet');
-      return;
-    }
-    await toggleNotifications();
-  };
-
   const macroIcon = (type: string) => {
     switch (type) {
       case 'breakfast': case 'lunch': case 'dinner': case 'snack': return Flame;
