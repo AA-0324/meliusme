@@ -56,7 +56,7 @@ const nutritionFields = [
 ] as const;
 
 export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
-  const { logMeal, isPro, settings, meals } = useApp();
+  const { logMeal, isPro, hasProFeature, settings, meals } = useApp();
   const [showProModal, setShowProModal] = useState(false);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
