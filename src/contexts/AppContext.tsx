@@ -98,7 +98,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [bodyProfile, setBodyProfile] = useState<BodyProfile | null>(null);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  
   const [streak, setStreak] = useState<StreakData>(DEFAULT_STREAK);
   const [currentChallenge, setCurrentChallenge] = useState<Challenge>(DEFAULT_CHALLENGE);
   const [badges, setBadges] = useState<Badge[]>([]);
