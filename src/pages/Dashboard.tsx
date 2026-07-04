@@ -345,7 +345,7 @@ export default function Dashboard() {
             </motion.div>
             <h2 className="text-lg font-semibold">By Meal Type</h2>
           </div>
-          {isPro ? (
+          {hasProFeature('meal_type_chart') ? (
             mealsByType.length > 0 ? (
               <div className="flex flex-col sm:flex-row items-center gap-4">
                 <motion.div 
