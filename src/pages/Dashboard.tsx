@@ -483,7 +483,7 @@ export default function Dashboard() {
         key="nutrition-score"
         score={nutritionScore}
         hasMealsToday={hasMealsToday}
-        isPro={isPro}
+        isPro={hasProFeature('nutrition_score')}
         onUpgradeClick={() => setShowProModal(true)}
         animationsEnabled={animationsEnabled}
       />
