@@ -190,7 +190,7 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
                 >
                   <BookmarkPlus className="w-5 h-5" />
                   Save as Template
-                  {!isPro && <ProBadge className="ml-1" />}
+                  {!hasProFeature('meal_templates') && <ProBadge className="ml-1" />}
                 </Button>
               )}
 
