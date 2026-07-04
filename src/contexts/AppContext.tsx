@@ -66,8 +66,6 @@ interface AppContextType {
   refreshStreak: () => void;
   todayWater: number;
   incrementWater: () => void;
-  notificationsEnabled: boolean;
-  toggleNotifications: () => Promise<void>;
   setDevMode: (enabled: boolean) => void;
   setDarkMode: (enabled: boolean) => void;
   setPro: (enabled: boolean) => void;
