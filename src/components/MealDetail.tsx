@@ -52,7 +52,7 @@ function getNutritionColor(type: 'calories' | 'protein' | 'fiber' | 'sugar', val
 }
 
 export function MealDetail({ meal, onClose }: MealDetailProps) {
-  const { removeMeal, settings, isPro } = useApp();
+  const { removeMeal, settings, isPro, hasProFeature } = useApp();
   const userGoals = settings.goals;
   const [showProModal, setShowProModal] = useState(false);
   const [showTemplateNameDialog, setShowTemplateNameDialog] = useState(false);
