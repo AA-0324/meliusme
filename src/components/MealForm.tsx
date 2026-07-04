@@ -434,7 +434,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
               )}
 
               {/* Tags (Pro) */}
-              {isPro && (
+              {hasProFeature('meal_tags') && (
                 <motion.div 
                   initial={{ opacity: 0, y: 24 }} 
                   animate={{ opacity: 1, y: 0 }} 
