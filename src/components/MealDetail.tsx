@@ -80,7 +80,7 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
 
   const handleSaveAsTemplate = () => {
     if (!meal) return;
-    if (!isPro) {
+    if (!hasProFeature('meal_templates')) {
       setShowProModal(true);
       return;
     }
