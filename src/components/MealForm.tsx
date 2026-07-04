@@ -275,7 +275,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    if (!isPro) {
+                    if (!hasProFeature('meal_templates')) {
                       setShowProModal(true);
                     } else {
                       setShowTemplatePicker(true);
@@ -285,7 +285,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                 >
                   <BookmarkPlus className="w-4 h-4" />
                   Load from Template
-                  {!isPro && <ProBadge className="ml-1" />}
+                  {!hasProFeature('meal_templates') && <ProBadge className="ml-1" />}
                 </Button>
               </motion.div>
 
