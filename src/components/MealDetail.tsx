@@ -60,7 +60,7 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
   const [alreadyTemplate, setAlreadyTemplate] = useState(false);
 
   useEffect(() => {
-    if (meal && isPro) {
+    if (meal && hasProFeature('meal_templates')) {
       getMealTemplates().then((templates) => {
         const exists = templates.some(t =>
           t.mealType === meal.mealType &&
@@ -72,7 +72,7 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
         setAlreadyTemplate(exists);
       });
     }
-  }, [meal, isPro]);
+  }, [meal, hasProFeature]);
 
   const handleDelete = async () => {
     if (meal) { await removeMeal(meal.id); onClose(); }
