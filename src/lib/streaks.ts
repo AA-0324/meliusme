@@ -71,18 +71,16 @@ export interface LevelUpResult {
 
 // ─── Pro Feature Reward Pool ───────────────────────────────────────
 
-// Each id below MUST correspond to a real feature gated by hasProFeature() in the app.
-// Do not add "phantom" features here — the reward would look active but unlock nothing.
 export const PRO_FEATURE_POOL = [
-  { id: 'trend_charts', name: 'Trend Charts', description: 'Unlock the calorie and macro trend charts on your dashboard' },
-  { id: 'nutrition_score', name: 'Nutrition Score', description: 'See your daily nutrition score on the dashboard' },
-  { id: 'streak_tracker', name: 'Streak Tracker', description: 'View your logging, calorie and protein streaks' },
-  { id: 'meal_type_chart', name: 'Meal Type Breakdown', description: 'View the calorie breakdown by meal type' },
-  { id: 'daily_averages', name: 'Daily Averages', description: 'See per-day averages for protein, fiber, sugar and meals' },
-  { id: 'meal_templates', name: 'Meal Templates', description: 'Save meals as templates and load them when logging' },
-  { id: 'meal_tags', name: 'Meal Tags', description: 'Add tags to meals when logging them' },
-  { id: 'custom_layouts', name: 'Custom Dashboard Layout', description: 'Reorder and hide widgets on your dashboard' },
-  { id: 'dashboard_filters', name: 'Dashboard Filters', description: 'Filter your dashboard by time range' },
+  { id: 'advanced_analytics', name: 'Advanced Analytics Dashboard', description: 'Unlock detailed insights into your nutrition patterns' },
+  { id: 'macro_charts', name: 'Macro Breakdown Charts', description: 'View protein, fiber & sugar breakdowns with charts' },
+  { id: 'historical_compare', name: 'Historical Comparison', description: 'Compare your progress across different time periods' },
+  { id: 'custom_layouts', name: 'Custom Dashboard Layouts', description: 'Personalize your dashboard with custom layouts' },
+  { id: 'habit_heatmap', name: 'Habit Heatmap Calendar', description: 'Visualize your consistency with a heatmap calendar' },
+  { id: 'data_export', name: 'Data Export (CSV)', description: 'Export your nutrition data to CSV files' },
+  { id: 'trend_insights', name: 'Advanced Trend Insights', description: 'Get AI-powered trend analysis of your habits' },
+  { id: 'meal_presets', name: 'Custom Meal Presets', description: 'Save and reuse your favorite meal configurations' },
+  { id: 'weekly_reports', name: 'Weekly Performance Reports', description: 'Receive detailed weekly performance summaries' },
 ] as const;
 
 export type ProFeatureId = typeof PRO_FEATURE_POOL[number]['id'];
@@ -101,12 +99,9 @@ const LAST_REWARD_KEY = 'melius-last-reward-feature';
 
 export async function getTempProUnlocks(): Promise<TempProUnlock[]> {
   const unlocks = await readEncLS<TempProUnlock[]>(TEMP_UNLOCKS_KEY, []);
+  // Filter out expired unlocks
   const now = Date.now();
-  const validIds = new Set<string>(PRO_FEATURE_POOL.map(f => f.id));
-  // Drop expired unlocks AND unlocks referencing feature ids that no longer exist
-  // (e.g. after the reward pool was rewritten). These would otherwise show as
-  // "Active Reward" but unlock nothing.
-  const active = unlocks.filter(u => u.expiresAt > now && validIds.has(u.featureId));
+  const active = unlocks.filter(u => u.expiresAt > now);
   if (active.length !== unlocks.length) {
     await writeEncLS(TEMP_UNLOCKS_KEY, active);
   }

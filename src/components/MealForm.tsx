@@ -56,7 +56,7 @@ const nutritionFields = [
 ] as const;
 
 export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
-  const { logMeal, isPro, hasProFeature, settings, meals } = useApp();
+  const { logMeal, isPro, settings, meals } = useApp();
   const [showProModal, setShowProModal] = useState(false);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
@@ -275,7 +275,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    if (!hasProFeature('meal_templates')) {
+                    if (!isPro) {
                       setShowProModal(true);
                     } else {
                       setShowTemplatePicker(true);
@@ -285,7 +285,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
                 >
                   <BookmarkPlus className="w-4 h-4" />
                   Load from Template
-                  {!hasProFeature('meal_templates') && <ProBadge className="ml-1" />}
+                  {!isPro && <ProBadge className="ml-1" />}
                 </Button>
               </motion.div>
 
@@ -434,7 +434,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
               )}
 
               {/* Tags (Pro) */}
-              {hasProFeature('meal_tags') && (
+              {isPro && (
                 <motion.div 
                   initial={{ opacity: 0, y: 24 }} 
                   animate={{ opacity: 1, y: 0 }} 
@@ -555,7 +555,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
         open={showTemplatePicker}
         onClose={() => setShowTemplatePicker(false)}
         onSelect={handleTemplateSelect}
-        isPro={hasProFeature('meal_templates')}
+        isPro={isPro}
         onUpgradeClick={() => { setShowTemplatePicker(false); setShowProModal(true); }}
       />
     </>

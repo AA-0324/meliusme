@@ -52,7 +52,7 @@ function getNutritionColor(type: 'calories' | 'protein' | 'fiber' | 'sugar', val
 }
 
 export function MealDetail({ meal, onClose }: MealDetailProps) {
-  const { removeMeal, settings, isPro, hasProFeature } = useApp();
+  const { removeMeal, settings, isPro } = useApp();
   const userGoals = settings.goals;
   const [showProModal, setShowProModal] = useState(false);
   const [showTemplateNameDialog, setShowTemplateNameDialog] = useState(false);
@@ -60,7 +60,7 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
   const [alreadyTemplate, setAlreadyTemplate] = useState(false);
 
   useEffect(() => {
-    if (meal && hasProFeature('meal_templates')) {
+    if (meal && isPro) {
       getMealTemplates().then((templates) => {
         const exists = templates.some(t =>
           t.mealType === meal.mealType &&
@@ -72,7 +72,7 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
         setAlreadyTemplate(exists);
       });
     }
-  }, [meal, hasProFeature]);
+  }, [meal, isPro]);
 
   const handleDelete = async () => {
     if (meal) { await removeMeal(meal.id); onClose(); }
@@ -80,7 +80,7 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
 
   const handleSaveAsTemplate = () => {
     if (!meal) return;
-    if (!hasProFeature('meal_templates')) {
+    if (!isPro) {
       setShowProModal(true);
       return;
     }
@@ -190,7 +190,7 @@ export function MealDetail({ meal, onClose }: MealDetailProps) {
                 >
                   <BookmarkPlus className="w-5 h-5" />
                   Save as Template
-                  {!hasProFeature('meal_templates') && <ProBadge className="ml-1" />}
+                  {!isPro && <ProBadge className="ml-1" />}
                 </Button>
               )}
 
