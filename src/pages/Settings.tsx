@@ -42,7 +42,6 @@ const APP_VERSION = '0.11.2-alpha';
 export default function Settings() {
   const {
     settings, isPro, setPro, setDevMode, resetDailyData,
-    notificationsEnabled, toggleNotifications,
     setUse24Hour, animationLevel, setAnimationLevel,
   } = useApp();
   const navigate = useNavigate();
