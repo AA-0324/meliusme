@@ -494,7 +494,7 @@ export default function Dashboard() {
         key="trends"
         meals={meals}
         goals={settings.goals}
-        isPro={isPro}
+        isPro={hasProFeature('trend_charts')}
         onUpgradeClick={() => setShowProModal(true)}
         animationsEnabled={animationsEnabled}
       />
