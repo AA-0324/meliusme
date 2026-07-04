@@ -7,8 +7,6 @@ import {
   ChevronLeft,
   AlertTriangle,
   RefreshCw,
-  Bell,
-  BellOff,
   Eye,
   EyeOff,
   BookmarkPlus,
