@@ -345,7 +345,7 @@ export default function Dashboard() {
             </motion.div>
             <h2 className="text-lg font-semibold">By Meal Type</h2>
           </div>
-          {isPro ? (
+          {hasProFeature('meal_type_chart') ? (
             mealsByType.length > 0 ? (
               <div className="flex flex-col sm:flex-row items-center gap-4">
                 <motion.div 
@@ -424,7 +424,7 @@ export default function Dashboard() {
               {filterDays <= 7 ? 'Weekly' : `${filterDays}-Day`} Averages
             </h2>
           </div>
-          {isPro ? (
+          {hasProFeature('daily_averages') ? (
             <div className="grid grid-cols-2 gap-4">
               {[
                 { label: 'Protein', value: Math.round(filteredMeals.reduce((s, m) => s + (m.protein || 0), 0) / Math.max(rangeStats.daysWithMeals, 1)), suffix: 'g' },
@@ -472,7 +472,7 @@ export default function Dashboard() {
         loggingStreak={streaksData.loggingStreak}
         calorieTargetStreak={streaksData.calorieTargetStreak}
         proteinGoalStreak={streaksData.proteinGoalStreak}
-        isPro={isPro}
+        isPro={hasProFeature('streak_tracker')}
         onUpgradeClick={() => setShowProModal(true)}
         animationsEnabled={animationsEnabled}
       />
@@ -483,7 +483,7 @@ export default function Dashboard() {
         key="nutrition-score"
         score={nutritionScore}
         hasMealsToday={hasMealsToday}
-        isPro={isPro}
+        isPro={hasProFeature('nutrition_score')}
         onUpgradeClick={() => setShowProModal(true)}
         animationsEnabled={animationsEnabled}
       />
@@ -494,7 +494,7 @@ export default function Dashboard() {
         key="trends"
         meals={meals}
         goals={settings.goals}
-        isPro={isPro}
+        isPro={hasProFeature('trend_charts')}
         onUpgradeClick={() => setShowProModal(true)}
         animationsEnabled={animationsEnabled}
       />
@@ -502,7 +502,7 @@ export default function Dashboard() {
   };
 
   // Order widgets based on layout for Pro users
-  const orderedWidgetIds = isPro
+  const orderedWidgetIds = canCustomizeLayout
     ? dashboardLayout.sort((a, b) => a.order - b.order).map(w => w.id)
     : ['stats', 'goals', 'weekly-chart', 'meal-type', 'averages', 'streaks', 'nutrition-score', 'trends'];
 
@@ -533,7 +533,7 @@ export default function Dashboard() {
       </div>
 
       {/* Filters row - Pro only */}
-      {isPro && (
+      {hasProFeature('dashboard_filters') && (
         <div className="px-6 mb-4">
           <div className="flex items-center gap-2">
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none flex-1">
