@@ -39,7 +39,7 @@ const APP_VERSION = '0.11.4-alpha';
 
 export default function Settings() {
   const {
-    settings, isPro, setPro, setDevMode, resetDailyData,
+    settings, isPro, setPro, resetDailyData,
     setUse24Hour, animationLevel, setAnimationLevel,
   } = useApp();
   const navigate = useNavigate();
