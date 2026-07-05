@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { 
   Settings as SettingsIcon, 
   RotateCcw, 
-  Code2, 
+   
   ChevronLeft,
   AlertTriangle,
   RefreshCw,
