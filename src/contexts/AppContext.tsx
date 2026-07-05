@@ -282,17 +282,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setBodyProfile(updated);
   }, []);
 
-  const setDevMode = useCallback(async (enabled: boolean) => {
-    if (!enabled && !settings.proStatus) {
-      const updated = await resetToBasicSettings();
-      await deleteBodyProfile();
-      setBodyProfile(null);
-      setSettingsState(updated);
-    } else {
-      const updated = await saveSettings({ devMode: enabled });
-      setSettingsState(updated);
-    }
-  }, [settings.proStatus]);
 
   const setDarkMode = useCallback(async (enabled: boolean) => {
     const updated = await saveSettings({ darkMode: enabled });
