@@ -544,7 +544,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     bodyProfile, updateBodyProfile: updateBodyProfileCb,
     streak, currentChallenge, badges, refreshStreak,
     todayWater, incrementWater,
-    setDevMode, setDarkMode, setPro, setTheme, setUse24Hour,
+    setDarkMode, setPro, setTheme, setUse24Hour,
     setAnimationsEnabled, setAnimationLevel,
     setPersonalizedGoals, updateUserGoals, setWaterGoal: setWaterGoalCb, resetDailyData,
     refreshMeals, logMeal, removeMeal,
