@@ -558,7 +558,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     xpData, tempProUnlocks, levelUpPending,
     setUserName, setUserAvatar, updateBodyProfileCb, refreshStreak,
     incrementWater,
-    setDevMode, setDarkMode, setPro, setTheme, setUse24Hour,
+    setDarkMode, setPro, setTheme, setUse24Hour,
     setAnimationsEnabled, setAnimationLevel, setPersonalizedGoals,
     updateUserGoals, setWaterGoalCb, resetDailyData,
     refreshMeals, logMeal, removeMeal,
