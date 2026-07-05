@@ -347,7 +347,7 @@ export default function Settings() {
         <motion.div variants={fadeUp} className="text-center py-4">
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
             <SettingsIcon className="w-4 h-4" />
-            <span className="text-sm font-medium">Version {APP_VERSION}</span>
+            <span className="text-sm font-medium">Version {APP_VERSION} (Build {BUILD_NUMBER})</span>
           </div>
         </motion.div>
 
