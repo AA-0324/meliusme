@@ -36,7 +36,7 @@ const getDailyTotals = (allMeals: Meal[], date: string) => {
 };
 
 const DEFAULT_SETTINGS: Settings = {
-  proStatus: false, devMode: false, darkMode: false, theme: 'default',
+  proStatus: false, darkMode: false, theme: 'default',
   goals: { ...DEFAULT_GOALS }, waterGoal: DEFAULT_WATER_GOAL, use24Hour: false, animationsEnabled: true, animationLevel: 'full',
 };
 
@@ -66,7 +66,6 @@ interface AppContextType {
   refreshStreak: () => void;
   todayWater: number;
   incrementWater: () => void;
-  setDevMode: (enabled: boolean) => void;
   setDarkMode: (enabled: boolean) => void;
   setPro: (enabled: boolean) => void;
   setTheme: (theme: string) => void;
@@ -113,9 +112,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const today = new Date().toISOString().split('T')[0];
   const [todayWater, setTodayWater] = useState(0);
 
-  // Pro status only reflects an actual purchase or dev override. Temporary
-  // level rewards unlock specific features individually via hasProFeature().
-  const isPro = settings.proStatus || settings.devMode;
+  // Pro status only reflects an actual purchase. Temporary level rewards
+  // unlock specific features individually via hasProFeature().
+  const isPro = settings.proStatus;
   const hasProFeature = useCallback(
     (featureId: string) => isPro || tempProUnlocks.some(u => u.featureId === featureId),
     [isPro, tempProUnlocks],
@@ -283,17 +282,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setBodyProfile(updated);
   }, []);
 
-  const setDevMode = useCallback(async (enabled: boolean) => {
-    if (!enabled && !settings.proStatus) {
-      const updated = await resetToBasicSettings();
-      await deleteBodyProfile();
-      setBodyProfile(null);
-      setSettingsState(updated);
-    } else {
-      const updated = await saveSettings({ devMode: enabled });
-      setSettingsState(updated);
-    }
-  }, [settings.proStatus]);
 
   const setDarkMode = useCallback(async (enabled: boolean) => {
     const updated = await saveSettings({ darkMode: enabled });
@@ -556,7 +544,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     bodyProfile, updateBodyProfile: updateBodyProfileCb,
     streak, currentChallenge, badges, refreshStreak,
     todayWater, incrementWater,
-    setDevMode, setDarkMode, setPro, setTheme, setUse24Hour,
+    setDarkMode, setPro, setTheme, setUse24Hour,
     setAnimationsEnabled, setAnimationLevel,
     setPersonalizedGoals, updateUserGoals, setWaterGoal: setWaterGoalCb, resetDailyData,
     refreshMeals, logMeal, removeMeal,
@@ -570,7 +558,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     xpData, tempProUnlocks, levelUpPending,
     setUserName, setUserAvatar, updateBodyProfileCb, refreshStreak,
     incrementWater,
-    setDevMode, setDarkMode, setPro, setTheme, setUse24Hour,
+    setDarkMode, setPro, setTheme, setUse24Hour,
     setAnimationsEnabled, setAnimationLevel, setPersonalizedGoals,
     updateUserGoals, setWaterGoalCb, resetDailyData,
     refreshMeals, logMeal, removeMeal,

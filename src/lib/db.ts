@@ -30,7 +30,6 @@ export interface WaterIntake {
 
 export interface Settings {
   proStatus: boolean;
-  devMode: boolean;
   darkMode: boolean;
   theme: string;
   goals: Goals;
@@ -48,7 +47,6 @@ export const DEFAULT_WATER_GOAL = 8;
 export function getBasicSettingsResetPatch(): Partial<Settings> {
   return {
     proStatus: false,
-    devMode: false,
     theme: 'default',
     personalizedGoals: false,
     goals: { ...DEFAULT_GOALS },
@@ -314,7 +312,6 @@ const SETTINGS_KEY = 'melius-settings';
 
 const DEFAULT_SETTINGS: Settings = {
   proStatus: false,
-  devMode: false,
   darkMode: false,
   theme: 'default',
   goals: { ...DEFAULT_GOALS },

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { 
   Settings as SettingsIcon, 
   RotateCcw, 
-  Code2, 
+   
   ChevronLeft,
   AlertTriangle,
   RefreshCw,
@@ -35,11 +35,12 @@ import { getMealTemplates, deleteMealTemplate, MealTemplate } from '@/lib/proFea
 import { restorePurchases, checkProEntitlement } from '@/lib/revenuecat';
 import logo from '@/assets/meliusme-logo-new.png';
 
-const APP_VERSION = '0.11.4-alpha';
+const APP_VERSION = '1.0.0';
+const BUILD_NUMBER = 114;
 
 export default function Settings() {
   const {
-    settings, isPro, setPro, setDevMode, resetDailyData,
+    settings, isPro, setPro, resetDailyData,
     setUse24Hour, animationLevel, setAnimationLevel,
   } = useApp();
   const navigate = useNavigate();
@@ -307,20 +308,6 @@ export default function Settings() {
           </motion.div>
         )}
 
-        {/* Developer */}
-        <motion.div variants={fadeUp}
-          className="bg-card rounded-2xl p-5 border border-dashed border-border/50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Code2 className="w-5 h-5 text-muted-foreground" />
-              <div>
-                <span className="font-semibold">Developer Mode</span>
-                <p className="text-xs text-muted-foreground">DEV ONLY - Unlocks Pro</p>
-              </div>
-            </div>
-            <Switch checked={settings.devMode} onCheckedChange={setDevMode} />
-          </div>
-        </motion.div>
 
         {/* Legal */}
         <motion.div variants={fadeUp} className="space-y-3">
@@ -360,7 +347,7 @@ export default function Settings() {
         <motion.div variants={fadeUp} className="text-center py-4">
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
             <SettingsIcon className="w-4 h-4" />
-            <span className="text-sm font-medium">Version {APP_VERSION}</span>
+            <span className="text-sm font-medium">Version {APP_VERSION} (Build {BUILD_NUMBER})</span>
           </div>
         </motion.div>
 
