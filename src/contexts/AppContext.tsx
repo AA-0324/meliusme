@@ -112,9 +112,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const today = new Date().toISOString().split('T')[0];
   const [todayWater, setTodayWater] = useState(0);
 
-  // Pro status only reflects an actual purchase or dev override. Temporary
-  // level rewards unlock specific features individually via hasProFeature().
-  const isPro = settings.proStatus || settings.devMode;
+  // Pro status only reflects an actual purchase. Temporary level rewards
+  // unlock specific features individually via hasProFeature().
+  const isPro = settings.proStatus;
   const hasProFeature = useCallback(
     (featureId: string) => isPro || tempProUnlocks.some(u => u.featureId === featureId),
     [isPro, tempProUnlocks],
