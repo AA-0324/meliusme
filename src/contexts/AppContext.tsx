@@ -36,7 +36,7 @@ const getDailyTotals = (allMeals: Meal[], date: string) => {
 };
 
 const DEFAULT_SETTINGS: Settings = {
-  proStatus: false, devMode: false, darkMode: false, theme: 'default',
+  proStatus: false, darkMode: false, theme: 'default',
   goals: { ...DEFAULT_GOALS }, waterGoal: DEFAULT_WATER_GOAL, use24Hour: false, animationsEnabled: true, animationLevel: 'full',
 };
 
