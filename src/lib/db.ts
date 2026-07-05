@@ -312,7 +312,6 @@ const SETTINGS_KEY = 'melius-settings';
 
 const DEFAULT_SETTINGS: Settings = {
   proStatus: false,
-  devMode: false,
   darkMode: false,
   theme: 'default',
   goals: { ...DEFAULT_GOALS },
