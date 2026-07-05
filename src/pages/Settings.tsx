@@ -307,20 +307,6 @@ export default function Settings() {
           </motion.div>
         )}
 
-        {/* Developer */}
-        <motion.div variants={fadeUp}
-          className="bg-card rounded-2xl p-5 border border-dashed border-border/50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Code2 className="w-5 h-5 text-muted-foreground" />
-              <div>
-                <span className="font-semibold">Developer Mode</span>
-                <p className="text-xs text-muted-foreground">DEV ONLY - Unlocks Pro</p>
-              </div>
-            </div>
-            <Switch checked={settings.devMode} onCheckedChange={setDevMode} />
-          </div>
-        </motion.div>
 
         {/* Legal */}
         <motion.div variants={fadeUp} className="space-y-3">
