@@ -43,6 +43,25 @@
   display: none !important;
 }
 
+/* Median / mobile-native: remove tap delays and accidental highlights on interactive elements */
+button,
+[role="button"],
+a,
+input,
+label,
+.card-interactive {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+button,
+[role="button"],
+.card-interactive {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+
+
 @layer base {
   :root {
     --background: 220 20% 10%;
