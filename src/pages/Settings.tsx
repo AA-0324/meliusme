@@ -36,7 +36,7 @@ import { restorePurchases, checkProEntitlement } from '@/lib/revenuecat';
 import logo from '@/assets/meliusme-logo-new.png';
 
 const APP_VERSION = '1.0.0';
-const BUILD_NUMBER = 114;
+const BUILD_NUMBER = 116;
 
 export default function Settings() {
   const {
