@@ -27,12 +27,17 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const queryClient = new QueryClient();
 
 const ForceHomeOnLoad = () => {
+  // Preserve deep links (needed for Median push/routing). Only reset to '/'
+  // when the initial path is unknown or clearly invalid.
   const navigate = useNavigate();
   const didRun = useRef(false);
   useEffect(() => {
     if (didRun.current) return;
     didRun.current = true;
-    navigate('/', { replace: true });
+    const validPaths = ['/', '/log', '/dashboard', '/profile', '/settings', '/challenges'];
+    if (!validPaths.includes(window.location.pathname)) {
+      navigate('/', { replace: true });
+    }
   }, [navigate]);
   return null;
 };
