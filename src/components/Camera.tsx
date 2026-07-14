@@ -132,10 +132,9 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
     setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
   }, [stopCamera]);
 
-  const handleChooseGallery = useCallback(async () => {
-    if (await handleMediaCapture('gallery')) return;
+  const handleChooseGallery = useCallback(() => {
     fileInputRef.current?.click();
-  }, [handleMediaCapture]);
+  }, []);
 
   // Start camera when facingMode changes
   useEffect(() => {
