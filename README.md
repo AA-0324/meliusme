@@ -27,3 +27,26 @@ MeliusMe was developed using an iterative, AI-assisted vibe-coding workflow. Doi
 I did not start this project half-baked. I researched for around 3 weeks, using articles, forums, videos, and real-life examples to see what to do and what not to do. While doing this, I came across Zero-Trust review processes. I decided to implement an altered version of them into my use of vibe-coding, so now I continuously perform manual 'audits' of all AI-generated logic.
 
 **Ideal Deadline: December 31, 2026**
+
+## Publishing as an Android TWA (Trusted Web Activity)
+
+MeliusMe is a PWA and ships to Google Play as a TWA — Chrome-on-Android renders the live site inside a signed Android shell. No native code, no Median wrapper.
+
+### Steps
+1. Publish the site to a production HTTPS URL (e.g. `meliusme.lovable.app` or a custom domain).
+2. Generate the Android project:
+   - Easiest: [PWABuilder](https://www.pwabuilder.com/) — paste the URL, download the Android package.
+   - Or CLI: `bubblewrap init --manifest=https://YOUR_DOMAIN/manifest.webmanifest`, then `bubblewrap build`.
+3. The generator produces a signed `.aab` and a **SHA-256 signing key fingerprint**.
+4. Open `public/.well-known/assetlinks.json` and replace:
+   - `REPLACE_WITH_ANDROID_PACKAGE_NAME` with the app's package (e.g. `app.meliusme.twa`).
+   - `REPLACE_WITH_APP_SIGNING_KEY_SHA256_FINGERPRINT` with the fingerprint from step 3.
+5. Republish the site so `https://YOUR_DOMAIN/.well-known/assetlinks.json` is live.
+6. Upload the `.aab` to Google Play Console.
+
+### Permissions
+Chrome auto-requests camera and photo access the first time the user opens the log screen. No permission declarations required on the TWA side.
+
+### Play Billing note
+Google Play's payments policy requires **Play Billing** for digital in-app purchases when distributed via Play. RevenueCat Web + Stripe checkout is compliant when distributed outside Play (direct APK) but may be rejected on Play. Options later: integrate the Digital Goods API + Play Billing, hide Pro in the TWA build, or distribute the APK outside Play.
+

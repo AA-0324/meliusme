@@ -2,7 +2,7 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, RotateCcw, Check, ImagePlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { isMedianEnvironment, medianPickImage } from '@/lib/median';
+
 
 interface CameraProps {
   open: boolean;
@@ -59,21 +59,7 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
     onClose();
   }, [stopCamera, onClose]);
 
-  const handleMediaCapture = useCallback(async (type: 'camera' | 'gallery') => {
-    if (isMedianEnvironment()) {
-      const dataUrl = await medianPickImage(type);
-      if (dataUrl) {
-        setCapturedPhoto(dataUrl);
-        setMode('preview');
-        stopCamera();
-        return true;
-      }
-    }
-    return false;
-  }, [stopCamera]);
-
   const capturePhoto = useCallback(async () => {
-    if (await handleMediaCapture('camera')) return;
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
@@ -146,10 +132,9 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
     setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
   }, [stopCamera]);
 
-  const handleChooseGallery = useCallback(async () => {
-    if (await handleMediaCapture('gallery')) return;
+  const handleChooseGallery = useCallback(() => {
     fileInputRef.current?.click();
-  }, [handleMediaCapture]);
+  }, []);
 
   // Start camera when facingMode changes
   useEffect(() => {
