@@ -1,0 +1,139 @@
+MELIUSME PROPRIETARY SOFTWARE LICENSE
+
+Version 1.0
+Effective Date: June 18, 2026
+
+Copyright © 2026 Akshar Arvind. All Rights Reserved.
+
+1. Ownership
+
+MeliusMe, including all source code, object code, software architecture, algorithms, user interface designs, graphics, branding, documentation, assets, and related materials (collectively, the "Software"), is the exclusive intellectual property of Akshar Arvind.
+
+"Melius" is the trade name used by Akshar Arvind.
+
+The Software is protected by United States and international copyright laws, intellectual property laws, and applicable treaties.
+
+2. Limited Permission
+
+Permission is granted to access and view this repository solely for:
+
+• Educational purposes
+• Portfolio evaluation
+• Personal review
+• Code inspection
+
+This permission does not grant ownership, licensing rights, or permission to use the Software.
+
+3. Restrictions
+
+Except where expressly authorized in writing by the copyright owner, you may NOT:
+
+• Copy or reproduce any portion of the Software.
+• Modify, adapt, translate, or create derivative works.
+• Fork this repository for development purposes.
+• Redistribute any part of the Software.
+• Publish the Software on another website or repository.
+• Use any portion of the source code in personal projects.
+• Use any portion of the source code in academic projects.
+• Use any portion of the source code in commercial projects.
+• Sell, sublicense, lease, rent, or otherwise distribute the Software.
+• Reverse engineer any compiled versions of the Software where prohibited by law.
+• Remove or modify copyright notices or ownership information.
+• Build competing products using this Software or substantial portions of its implementation.
+• Use the Software for any purpose not expressly permitted by this License.
+
+4. No Open Source License
+
+This repository is NOT open source.
+
+No rights are granted under the MIT License, Apache License, GPL, BSD License, Mozilla Public License, or any other open-source license.
+
+Access to this repository does not grant permission to copy, reuse, distribute, or modify any portion of the Software.
+
+5. No License Granted
+
+Except for the limited permission to view this repository described in Section 2, no license, express or implied, is granted.
+
+All rights not expressly granted remain reserved by Akshar Arvind.
+
+6. Intellectual Property
+
+The following are protected by copyright and other intellectual property laws:
+
+• Source code
+• Software architecture
+• Application design
+• User interface
+• Visual design
+• Icons
+• Graphics
+• Animations
+• Documentation
+• Algorithms
+• Database structure
+• Branding
+• The name "MeliusMe"
+• The name "Melius"
+• Logos and other identifying marks
+
+Nothing contained in this License grants permission to use any trademarks, branding, logos, or trade dress associated with the Software.
+
+7. Educational Viewing
+
+Viewing the repository through GitHub's interface does not grant permission to copy, reproduce, modify, or reuse the Software.
+
+Viewing is permitted solely for educational, evaluation, and portfolio review purposes.
+
+8. Contributions
+
+Unless otherwise agreed in writing, no third-party contribution transfers ownership of the Software.
+
+The repository owner reserves the right to accept, reject, modify, or remove any contribution.
+
+9. Disclaimer of Warranty
+
+THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND.
+
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE COPYRIGHT OWNER DISCLAIMS ALL WARRANTIES, WHETHER EXPRESS, IMPLIED, OR STATUTORY, INCLUDING BUT NOT LIMITED TO:
+
+• MERCHANTABILITY
+• FITNESS FOR A PARTICULAR PURPOSE
+• NON-INFRINGEMENT
+• ACCURACY
+• RELIABILITY
+• SECURITY
+• AVAILABILITY
+
+THE COPYRIGHT OWNER DOES NOT WARRANT THAT THE SOFTWARE WILL BE ERROR-FREE, UNINTERRUPTED, OR FREE FROM DEFECTS.
+
+10. Limitation of Liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, AKSHAR ARVIND SHALL NOT BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, CONSEQUENTIAL, SPECIAL, EXEMPLARY, OR PUNITIVE DAMAGES ARISING FROM OR RELATED TO:
+
+• USE OF THE SOFTWARE
+• INABILITY TO USE THE SOFTWARE
+• MODIFICATION OF THE SOFTWARE
+• RELIANCE ON THE SOFTWARE
+• DATA LOSS
+• BUSINESS INTERRUPTION
+• LOSS OF PROFITS
+• SECURITY ISSUES
+
+11. Reservation of Rights
+
+All rights not expressly granted under this License are reserved exclusively by Akshar Arvind.
+
+Failure to enforce any provision of this License shall not constitute a waiver of any rights.
+
+12. Governing Law
+
+This License shall be governed by and interpreted in accordance with the laws of the State of New York, United States, without regard to conflict of law principles.
+
+13. Contact
+
+For licensing requests, commercial permissions, or other inquiries regarding the Software, contact:
+
+Akshar Arvind
+Email: akshararvind5@gmail.com
+
+END OF LICENSE
