@@ -1,6 +1,12 @@
 // RevenueCat Web SDK Integration
 import { Purchases, type CustomerInfo, type Package, type PurchasesError, ErrorCode } from '@revenuecat/purchases-js';
 import { getEncrypted, setEncrypted } from './encryptedStorage';
+import {
+  readEntitlementCache,
+  writeEntitlementCache,
+  resolveEntitlement,
+  type EntitlementState,
+} from './entitlement';
 
 // Public API key (safe to include in client code)
 const RC_API_KEY = 'test_bfVjcQrjQkSYSlezfcbSEpCZRaE';
@@ -46,15 +52,37 @@ export async function getCustomerInfo(): Promise<CustomerInfo> {
   return await rc.getCustomerInfo();
 }
 
-export async function checkProEntitlement(): Promise<boolean> {
+/**
+ * Ask RevenueCat whether the Pro entitlement is active.
+ * Returns `null` when RevenueCat could not be reached, so callers can tell
+ * "verified as not entitled" apart from "unknown, fall back to cache".
+ */
+export async function verifyProEntitlement(): Promise<boolean | null> {
   try {
     const customerInfo = await getCustomerInfo();
-    return ENTITLEMENT_ID in customerInfo.entitlements.active;
+    const active = ENTITLEMENT_ID in customerInfo.entitlements.active;
+    await writeEntitlementCache(active);
+    return active;
   } catch (error) {
-    console.error('[RevenueCat] Failed to check entitlement:', error);
-    return false;
+    console.warn('[RevenueCat] Entitlement verification unavailable:', error);
+    return null;
   }
 }
+
+/**
+ * Entitlement state combining a fresh verification with the offline cache.
+ * The `source` field says whether the answer is verified or merely cached.
+ */
+export async function getProEntitlementState(): Promise<EntitlementState> {
+  const [verified, cache] = await Promise.all([verifyProEntitlement(), readEntitlementCache()]);
+  return resolveEntitlement(verified, cache);
+}
+
+/** Boolean convenience wrapper. Unknown verification resolves to false. */
+export async function checkProEntitlement(): Promise<boolean> {
+  return (await verifyProEntitlement()) === true;
+}
+
 
 export async function hasAnyActiveEntitlement(): Promise<boolean> {
   try {

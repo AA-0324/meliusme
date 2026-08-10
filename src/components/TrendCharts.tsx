@@ -5,6 +5,7 @@ import { Meal, Goals } from '@/lib/db';
 import { TrendingUp, Lock } from 'lucide-react';
 import { fadeUpBounce } from '@/lib/motion';
 import { format } from 'date-fns';
+import { toDateKey } from '@/lib/date';
 
 interface TrendChartsProps {
   meals: Meal[];
@@ -28,7 +29,7 @@ export function TrendCharts({ meals, goals, isPro, onUpgradeClick, animationsEna
     for (let i = days - 1; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(today.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = toDateKey(date);
       const dayMeals = meals.filter(m => m.date === dateStr);
 
       data.push({

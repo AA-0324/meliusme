@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { AnimatedNumber } from '@/components/AnimatedNumber';
 import { useApp } from '@/contexts/AppContext';
 import confetti from 'canvas-confetti';
+import { todayKey } from '@/lib/date';
 
 interface WaterTrackerProps {
   glasses: number;
@@ -12,7 +13,7 @@ interface WaterTrackerProps {
   onIncrement: () => void;
 }
 
-const getConfettiKey = () => `melius-confetti-${new Date().toISOString().split('T')[0]}`;
+const getConfettiKey = () => `melius-confetti-${todayKey()}`;
 const shownConfettiKeys = new Set<string>();
 
 export function WaterTracker({ glasses, goal, onIncrement }: WaterTrackerProps) {

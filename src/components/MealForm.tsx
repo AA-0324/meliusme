@@ -16,6 +16,7 @@ import { validateNutrition, validateTag } from '@/lib/validation';
 import { toast } from 'sonner';
 import { TemplatePicker } from './TemplatePicker';
 import { MealTemplate } from '@/lib/proFeatures';
+import { todayKey, toDateKey } from '@/lib/date';
 
 interface MealFormProps {
   open: boolean;
@@ -96,7 +97,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
   }, [open]);
 
   const todayMealTypes = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = todayKey();
     return meals.filter(m => m.date === today).map(m => m.mealType);
   }, [meals]);
 
@@ -172,7 +173,7 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
     if (!validation.valid) { toast.error(validation.errors[0]); return; }
     setIsSubmitting(true);
     const now = new Date();
-    const date = now.toISOString().split('T')[0];
+    const date = toDateKey(now);
     const time = now.toTimeString().slice(0, 5);
     try {
       await logMeal({ photo, calories: cal, protein: prot, fiber: fib, sugar: sug, mealType, date, time, tags: tags.length > 0 ? tags : undefined });

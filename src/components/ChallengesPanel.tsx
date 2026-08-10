@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Challenge, Badge, getEarnedBadges, REFLECTION_QUESTIONS, saveLastReflection, getLastReflection, ReflectionData } from '@/lib/streaks';
 import { useApp } from '@/contexts/AppContext';
+import { todayKey } from '@/lib/date';
 
 interface ChallengesPanelProps {
   open: boolean;
@@ -28,7 +29,7 @@ export function ChallengesPanel({ open, onClose }: ChallengesPanelProps) {
   const thisWeekStart = weekNumber * 7 * 24 * 60 * 60 * 1000;
   const thisWeekMeals = meals.filter((m) => new Date(m.date).getTime() >= thisWeekStart);
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = todayKey();
   const todaysMeals = useMemo(() => meals.filter((m) => m.date === today), [meals, today]);
 
   const availableChallenges = useMemo(() => {

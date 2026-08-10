@@ -15,6 +15,8 @@ import { StreakTracker } from '@/components/StreakTracker';
 import { NutritionScore } from '@/components/NutritionScore';
 import { DashboardLayoutEditor } from '@/components/DashboardLayoutEditor';
 import { calculateNutritionScore, getDashboardLayout, DashboardWidget, getStreaksData, StreaksData, updateStreaksData } from '@/lib/proFeatures';
+import { groupMealsByDate, getDailyTotals, sumMeals } from '@/lib/nutrition';
+import { todayKey, toDateKey } from '@/lib/date';
 
 const MEAL_TYPE_COLORS = {
   breakfast: 'hsl(38, 92%, 50%)',
@@ -39,23 +41,22 @@ export default function Dashboard() {
     getStreaksData().then(setStreaksData);
   }, []);
 
-  // Update streaks based on today's data — single pass, runs only when today's data changes
+  // Index meals by day once per change instead of re-filtering the whole array
+  // inside every widget memo below.
+  const mealsByDate = useMemo(() => groupMealsByDate(meals), [meals]);
+
+  // Update streaks based on today's data — runs only when today's data changes
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    let totalCal = 0, totalProt = 0, hasMeal = false;
-    for (const m of meals) {
-      if (m.date !== today) continue;
-      hasMeal = true;
-      totalCal += m.calories;
-      totalProt += m.protein || 0;
-    }
-    if (!hasMeal) return;
+    const today = todayKey();
+    const todayMeals = mealsByDate.get(today);
+    if (!todayMeals?.length) return;
+    const totals = getDailyTotals(mealsByDate, today);
     const calGoal = settings.goals.calories;
     const protGoal = settings.goals.protein;
-    const metCalorie = calGoal ? (totalCal <= calGoal * 1.1 && totalCal >= calGoal * 0.8) : false;
-    const metProtein = protGoal ? totalProt >= protGoal : false;
+    const metCalorie = calGoal ? (totals.calories <= calGoal * 1.1 && totals.calories >= calGoal * 0.8) : false;
+    const metProtein = protGoal ? totals.protein >= protGoal : false;
     updateStreaksData(today, true, metCalorie, metProtein).then(setStreaksData);
-  }, [meals, settings.goals]);
+  }, [mealsByDate, settings.goals]);
 
   const canCustomizeLayout = hasProFeature('custom_layouts');
   const isWidgetVisible = (id: string) => {
@@ -75,15 +76,6 @@ export default function Dashboard() {
     }
   }, [dashboardFilter]);
 
-  // Filtered meals based on the selected time range
-  const filteredMeals = useMemo(() => {
-    const today = new Date();
-    const startDate = new Date(today);
-    startDate.setDate(today.getDate() - (filterDays - 1));
-    const startStr = startDate.toISOString().split('T')[0];
-    return meals.filter(m => m.date >= startStr);
-  }, [meals, filterDays]);
-
   // Build day-by-day data for the active range
   const rangeData = useMemo(() => {
     const today = new Date();
@@ -93,44 +85,36 @@ export default function Dashboard() {
     for (let i = filterDays - 1; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(today.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
-      const dayMeals = meals.filter((m) => m.date === dateStr);
+      const dateStr = toDateKey(date);
+      const dayMeals = mealsByDate.get(dateStr) ?? [];
+      const totals = sumMeals(dayMeals);
       days.push({
         date: dateStr,
         day: filterDays <= 7 ? dayNames[date.getDay()] : `${date.getMonth() + 1}/${date.getDate()}`,
-        calories: dayMeals.reduce((sum, m) => sum + m.calories, 0),
-        protein: dayMeals.reduce((sum, m) => sum + (m.protein || 0), 0),
-        fiber: dayMeals.reduce((sum, m) => sum + (m.fiber || 0), 0),
-        sugar: dayMeals.reduce((sum, m) => sum + (m.sugar || 0), 0),
+        ...totals,
         meals: dayMeals,
       });
     }
     return days;
-  }, [meals, filterDays]);
+  }, [mealsByDate, filterDays]);
+
+  // Meals inside the active range, derived from the day buckets above.
+  const filteredMeals = useMemo(() => rangeData.flatMap(d => d.meals), [rangeData]);
 
   const rangeStats = useMemo(() => {
-    const totalCalories = rangeData.reduce((sum, d) => sum + d.calories, 0);
-    const totalMeals = rangeData.reduce((sum, d) => sum + d.meals.length, 0);
-    const daysWithMeals = rangeData.filter((d) => d.meals.length > 0).length;
+    let totalCalories = 0, totalMeals = 0, daysWithMeals = 0;
+    for (const d of rangeData) {
+      totalCalories += d.calories;
+      totalMeals += d.meals.length;
+      if (d.meals.length > 0) daysWithMeals++;
+    }
     const avgCalories = daysWithMeals > 0 ? Math.round(totalCalories / daysWithMeals) : 0;
     return { totalCalories, totalMeals, avgCalories, daysWithMeals };
   }, [rangeData]);
 
-  const todayTotals = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
-    const todayData = rangeData.find(d => d.date === today);
-    return {
-      calories: todayData?.calories || 0,
-      protein: todayData?.protein || 0,
-      fiber: todayData?.fiber || 0,
-      sugar: todayData?.sugar || 0,
-    };
-  }, [rangeData]);
+  const todayTotals = useMemo(() => getDailyTotals(mealsByDate, todayKey()), [mealsByDate]);
 
-  const hasMealsToday = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
-    return meals.some(m => m.date === today);
-  }, [meals]);
+  const hasMealsToday = useMemo(() => (mealsByDate.get(todayKey())?.length ?? 0) > 0, [mealsByDate]);
 
   const nutritionScore = useMemo(() => {
     return calculateNutritionScore(
@@ -144,9 +128,8 @@ export default function Dashboard() {
   }, [todayTotals, settings.goals, hasMealsToday]);
 
   const mealsByType = useMemo(() => {
-    const allMeals = filteredMeals;
     const grouped = { breakfast: 0, lunch: 0, dinner: 0, snack: 0 };
-    allMeals.forEach((meal) => { grouped[meal.mealType] += meal.calories; });
+    for (const meal of filteredMeals) grouped[meal.mealType] += meal.calories;
     return Object.entries(grouped)
       .filter(([, value]) => value > 0)
       .map(([name, value]) => ({
@@ -155,6 +138,7 @@ export default function Dashboard() {
         color: MEAL_TYPE_COLORS[name as keyof typeof MEAL_TYPE_COLORS],
       }));
   }, [filteredMeals]);
+
 
   const maxCalories = Math.max(...rangeData.map((d) => d.calories), settings.goals.calories);
 

@@ -319,7 +319,7 @@ export function HealthWarning({ calories, protein, fiber, sugar, mealType, compa
       <div className="flex items-start gap-2">
         <AlertTriangle className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
         <div className="flex-1">
-          <p className="text-xs font-semibold text-warning mb-1">Health Notice</p>
+          <p className="text-xs font-semibold text-warning mb-1">Nutrition notes</p>
           <div className="flex flex-wrap gap-1.5">
             {warnings.messages.map((msg) => (
               <span
@@ -354,7 +354,7 @@ export function HealthPositive({ calories, protein, fiber, sugar, mealType, user
       <div className="flex items-start gap-2">
         <CheckCircle className="w-4 h-4 text-success flex-shrink-0 mt-0.5" />
         <div className="flex-1">
-          <p className="text-xs font-semibold text-success mb-1">Looking Good!</p>
+          <p className="text-xs font-semibold text-success mb-1">On track</p>
           <div className="flex flex-wrap gap-1.5">
             {warnings.positiveMessages.map((msg) => (
               <span

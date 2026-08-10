@@ -1,6 +1,7 @@
 // Streak and Gamification System for MeliusMe — encrypted storage
 
 import { getEncrypted, getEncryptedJSON, setEncrypted, setEncryptedJSON } from './encryptedStorage';
+import { todayKey, toDateKey, daysBetween } from './date';
 
 const STREAK_KEY = 'melius-streak';
 const CHALLENGES_KEY = 'melius-challenges';
@@ -211,7 +212,7 @@ export async function addXP(amount: number, isProUser: boolean = false, source: 
   const newData = calculateLevel(newTotal);
 
   // Record in ledger
-  const today = new Date().toISOString().split('T')[0];
+  const today = todayKey();
   await addXPLedgerEntry(today, amount, source);
 
   const leveledUp = newData.level > previousData.level;
@@ -300,13 +301,6 @@ export async function saveStreakData(data: StreakData): Promise<void> {
   await writeEncLS(STREAK_KEY, data);
 }
 
-function getLocalDateString(d: Date = new Date()): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
 export async function updateStreak(mealDate: string): Promise<StreakData> {
   const data = await getStreakData();
   if (data.streakHistory.includes(mealDate)) return data;
@@ -314,12 +308,8 @@ export async function updateStreak(mealDate: string): Promise<StreakData> {
   if (data.lastLogDate === null) {
     data.currentStreak = 1;
   } else {
-    // Parse as local date components to avoid UTC offset drift.
-    const [ly, lm, ld] = data.lastLogDate.split('-').map(Number);
-    const [cy, cm, cd] = mealDate.split('-').map(Number);
-    const lastDate = new Date(ly, lm - 1, ld);
-    const currentDate = new Date(cy, cm - 1, cd);
-    const diffDays = Math.round((currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+    // Compared as local calendar days to avoid UTC offset drift.
+    const diffDays = daysBetween(data.lastLogDate, mealDate);
     if (diffDays === 1) data.currentStreak++;
     else if (diffDays !== 0) data.currentStreak = 1;
   }
@@ -338,10 +328,10 @@ export async function validateStreakFreshness(): Promise<StreakData> {
   const data = await getStreakData();
   if (data.currentStreak === 0 || !data.lastLogDate) return data;
 
-  const todayStr = getLocalDateString();
+  const todayStr = todayKey();
   const y = new Date();
   y.setDate(y.getDate() - 1);
-  const yesterdayStr = getLocalDateString(y);
+  const yesterdayStr = toDateKey(y);
 
   if (data.lastLogDate === todayStr || data.lastLogDate === yesterdayStr) {
     return data;
@@ -460,7 +450,7 @@ export function getDailyChallenges(
   todayCalories?: number,
   todayProtein?: number
 ): DailyChallenge[] {
-  const today = new Date().toISOString().split('T')[0];
+  const today = todayKey();
   // Use a stronger hash so consecutive days produce very different seeds
   let seed = 0;
   for (let i = 0; i < today.length; i++) {
@@ -512,9 +502,10 @@ export function getWeeklyReflectionQuestion(): string {
 }
 
 async function calculateWeeklyChallengeProgress(challengeId: string, meals: any[], weekStart: string): Promise<number> {
-  const weekStartDate = new Date(weekStart);
-  const weekMeals = meals.filter(m => new Date(m.date) >= weekStartDate);
-  const today = new Date().toISOString().split('T')[0];
+  // Date keys are zero-padded ISO days, so lexical comparison is a safe and
+  // timezone-independent way to filter the current week.
+  const weekMeals = meals.filter(m => m.date >= weekStart);
+  const today = todayKey();
 
   // Lazy-import db helpers to avoid circular deps and to read encrypted storage correctly
   const { getSettings, getAllWaterData } = await import('./db');
@@ -546,7 +537,7 @@ async function calculateWeeklyChallengeProgress(challengeId: string, meals: any[
       const waterData = await getAllWaterData();
       let count = 0;
       for (const [date, glasses] of Object.entries(waterData)) {
-        if (new Date(date) >= weekStartDate && (glasses as number) >= waterGoal) count++;
+        if (date >= weekStart && (glasses as number) >= waterGoal) count++;
       }
       return count;
     }
@@ -615,7 +606,7 @@ export function getLastWeekStart(): string {
   const day = today.getDay();
   const diff = today.getDate() - day + (day === 0 ? -6 : 1) - 7;
   const lastMonday = new Date(today.getFullYear(), today.getMonth(), diff);
-  return lastMonday.toISOString().split('T')[0];
+  return toDateKey(lastMonday);
 }
 
 function getWeekStart(): string {
@@ -623,7 +614,7 @@ function getWeekStart(): string {
   const day = today.getDay();
   const diff = today.getDate() - day + (day === 0 ? -6 : 1);
   const monday = new Date(today.getFullYear(), today.getMonth(), diff);
-  return monday.toISOString().split('T')[0];
+  return toDateKey(monday);
 }
 
 function getWeekNumber(): number {
