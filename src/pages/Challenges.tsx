@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { REFLECTION_QUESTIONS, saveLastReflection, getDailyChallenges, getLastWeekNumber, getLastWeekStart, ReflectionData } from '@/lib/streaks';
 import { useApp } from '@/contexts/AppContext';
 import { staggerContainer, fadeUpBounce } from '@/lib/motion';
+import { todayKey } from '@/lib/date';
 
 export default function Challenges() {
   const { currentChallenge, meals, todayWater, settings, xpData, tempProUnlocks, animationsEnabled } = useApp();
@@ -31,7 +32,7 @@ export default function Challenges() {
     return mealDate >= lastWeekStartDate && mealDate < thisWeekMonday;
   });
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = todayKey();
   const todaysMeals = useMemo(() => meals.filter((m) => m.date === today), [meals, today]);
   const todaysMealTypes = useMemo(() => todaysMeals.map(m => m.mealType), [todaysMeals]);
 

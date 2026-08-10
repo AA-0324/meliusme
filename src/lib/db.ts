@@ -119,6 +119,19 @@ export async function getDB(): Promise<IDBPDatabase<MeliusDB>> {
   return dbInstance;
 }
 
+// ─── Decrypted meal cache ─────────────────────────────────────────
+//
+// Meal payloads are stored as opaque ciphertext, so IndexedDB indexes cannot
+// be used for date lookups without persisting plaintext metadata (which would
+// weaken the encryption guarantee). Instead we decrypt each row at most once
+// and keep the plaintext in memory only, so repeated date queries cost an
+// array scan rather than N AES-GCM operations.
+const mealCache = new Map<string, Meal>();
+
+function invalidateMeal(id: string) {
+  mealCache.delete(id);
+}
+
 async function encryptMeal(meal: Meal): Promise<{ id: string; encrypted: string }> {
   const encrypted = await encrypt(JSON.stringify(meal));
   const verified = await decrypt(encrypted);
@@ -126,10 +139,37 @@ async function encryptMeal(meal: Meal): Promise<{ id: string; encrypted: string 
   return { id: meal.id, encrypted };
 }
 
-async function decryptMeal(row: { id: string; encrypted: string }): Promise<Meal> {
-  const json = await decrypt(row.encrypted);
-  return JSON.parse(json) as Meal;
+/**
+ * Decrypt a stored row. Falls back to reading legacy plaintext rows in memory
+ * so pre-encryption data stays readable. Returns null for unreadable rows.
+ */
+async function decryptMeal(row: { id: string; encrypted: string }): Promise<Meal | null> {
+  const cached = mealCache.get(row.id);
+  if (cached) return cached;
+  let meal: Meal | null = null;
+  try {
+    meal = JSON.parse(await decrypt(row.encrypted)) as Meal;
+  } catch {
+    try { meal = JSON.parse(row.encrypted) as Meal; } catch { meal = null; }
+  }
+  if (meal && meal.id) mealCache.set(meal.id, meal);
+  return meal;
 }
+
+/** Decrypt every stored row once, skipping unreadable ones. */
+async function readAllMeals(): Promise<Meal[]> {
+  const db = await getDB();
+  const rows = await db.getAll('meals');
+  const meals: Meal[] = [];
+  for (const row of rows) {
+    const meal = await decryptMeal(row);
+    if (meal) meals.push(meal);
+  }
+  return meals;
+}
+
+const byNewest = (a: Meal, b: Meal) => b.createdAt - a.createdAt;
+
 
 // ─── Migration ──────
 
@@ -200,111 +240,69 @@ export async function addMeal(meal: Omit<Meal, 'id' | 'createdAt'>): Promise<Mea
     id: crypto.randomUUID(),
     createdAt: Date.now(),
   };
-  
+
   const row = await encryptMeal(newMeal);
   await db.add('meals', row);
-  
+  mealCache.set(newMeal.id, newMeal);
+
   return newMeal;
 }
 
 export async function getMeal(id: string): Promise<Meal | undefined> {
+  const cached = mealCache.get(id);
+  if (cached) return cached;
   const db = await getDB();
   const row = await db.get('meals', id);
   if (!row) return undefined;
-  try {
-    return await decryptMeal(row);
-  } catch {
-    // Legacy migration fallback: read old plaintext only in memory.
-    try { return JSON.parse(row.encrypted) as Meal; } catch { return undefined; }
-  }
+  return (await decryptMeal(row)) ?? undefined;
 }
 
 export async function getAllMeals(): Promise<Meal[]> {
-  const db = await getDB();
-  const rows = await db.getAll('meals');
-  const meals: Meal[] = [];
-  for (const row of rows) {
-    try {
-      meals.push(await decryptMeal(row));
-    } catch {
-      try { meals.push(JSON.parse(row.encrypted) as Meal); } catch {}
-    }
-  }
-  return meals.sort((a, b) => b.createdAt - a.createdAt);
+  return (await readAllMeals()).sort(byNewest);
 }
 
 export async function getMealsByDate(date: string): Promise<Meal[]> {
-  const db = await getDB();
-  const rows = await db.getAll('meals');
-  const meals: Meal[] = [];
-  for (const row of rows) {
-    try {
-      const meal = await decryptMeal(row);
-      if (meal.date === date) meals.push(meal);
-    } catch {
-      try {
-        const meal = JSON.parse(row.encrypted) as Meal;
-        if (meal.date === date) meals.push(meal);
-      } catch {}
-    }
-  }
-  return meals.sort((a, b) => b.createdAt - a.createdAt);
+  const meals = await readAllMeals();
+  return meals.filter(m => m.date === date).sort(byNewest);
 }
 
 export async function getMealsByDateRange(startDate: string, endDate: string): Promise<Meal[]> {
-  const db = await getDB();
-  const allRows = await db.getAll('meals');
-  const meals: Meal[] = [];
-  for (const row of allRows) {
-    try {
-      const meal = await decryptMeal(row);
-      if (meal.date >= startDate && meal.date <= endDate) meals.push(meal);
-    } catch {
-      try {
-        const meal = JSON.parse(row.encrypted) as Meal;
-        if (meal.date >= startDate && meal.date <= endDate) meals.push(meal);
-      } catch {}
-    }
-  }
-  return meals.sort((a, b) => b.createdAt - a.createdAt);
+  const meals = await readAllMeals();
+  return meals.filter(m => m.date >= startDate && m.date <= endDate).sort(byNewest);
 }
 
 export async function updateMeal(id: string, updates: Partial<Meal>): Promise<Meal | undefined> {
   const db = await getDB();
   const row = await db.get('meals', id);
   if (!row) return undefined;
-  let meal: Meal;
-  try { meal = await decryptMeal(row); } catch {
-    try { meal = JSON.parse(row.encrypted) as Meal; } catch { return undefined; }
-  }
+  const meal = await decryptMeal(row);
+  if (!meal) return undefined;
   const updated = { ...meal, ...updates };
   const newRow = await encryptMeal(updated);
   await db.put('meals', newRow);
+  mealCache.set(id, updated);
   return updated;
 }
 
 export async function deleteMeal(id: string): Promise<void> {
   const db = await getDB();
   await db.delete('meals', id);
+  invalidateMeal(id);
 }
 
 export async function deleteMealsByDate(date: string): Promise<void> {
+  const meals = await readAllMeals();
+  const doomed = meals.filter(m => m.date === date);
+  if (doomed.length === 0) return;
   const db = await getDB();
-  const rows = await db.getAll('meals');
   const tx = db.transaction('meals', 'readwrite');
-  for (const row of rows) {
-    try {
-      const meal = await decryptMeal(row);
-      if (meal.date === date) await tx.store.delete(row.id);
-    } catch {
-      try {
-        const meal = JSON.parse(row.encrypted) as Meal;
-        if (meal.date === date) await tx.store.delete(row.id);
-      } catch {}
-    }
+  for (const meal of doomed) {
+    await tx.store.delete(meal.id);
+    invalidateMeal(meal.id);
   }
   await tx.done;
 }
+
 
 // ─── Settings (encrypted localStorage) ────────────────────────────
 

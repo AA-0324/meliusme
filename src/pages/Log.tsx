@@ -7,6 +7,7 @@ import { PageTransition } from '@/components/PageTransition';
 import { Meal } from '@/lib/db';
 import { Calendar } from 'lucide-react';
 import { staggerContainer, fadeUpBounce } from '@/lib/motion';
+import { toDateKey } from '@/lib/date';
 
 export default function Log() {
   const { meals, animationsEnabled } = useApp();
@@ -29,8 +30,8 @@ export default function Log() {
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-    if (dateStr === today.toISOString().split('T')[0]) return 'Today';
-    if (dateStr === yesterday.toISOString().split('T')[0]) return 'Yesterday';
+    if (dateStr === toDateKey(today)) return 'Today';
+    if (dateStr === toDateKey(yesterday)) return 'Yesterday';
     return date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
   };
 

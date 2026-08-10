@@ -20,6 +20,7 @@ import { getGreeting } from '@/lib/userProfile';
 import { generateInsight } from '@/lib/streaks';
 import { useNavigate } from 'react-router-dom';
 import { staggerContainer, fadeUp, fadeUpBounce, prefersReducedMotion } from '@/lib/motion';
+import { todayKey } from '@/lib/date';
 
 export default function Home() {
   const { meals, settings, isLoading, todayWater, incrementWater, userProfile, streak, currentChallenge, refreshMeals, animationsEnabled } = useApp();
@@ -31,7 +32,7 @@ export default function Home() {
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
   const [showDayComplete, setShowDayComplete] = useState(false);
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = todayKey();
   const todaysMeals = useMemo(() => meals.filter((meal) => meal.date === today), [meals, today]);
   const todayMealTypes = useMemo(() => todaysMeals.map(m => m.mealType), [todaysMeals]);
   const lastMealTime = useMemo(() => todaysMeals.length === 0 ? undefined : todaysMeals[0].time, [todaysMeals]);
@@ -203,9 +204,9 @@ export default function Home() {
                   initial={noMotion ? false : { opacity: 0, y: 20, scale: 0.8 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ type: 'spring', damping: 10, stiffness: 150 }}
-                  className={`mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-xl flex items-center gap-2 ${animationsEnabled ? 'animate-shake' : ''}`}>
+                  className={`mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-xl flex items-center gap-2`}>
                   <Flame className="w-4 h-4 text-destructive" />
-                  <span className="text-xs font-semibold text-destructive">You've exceeded your calorie goal</span>
+                  <span className="text-xs font-semibold text-destructive">You're above your calorie target for today</span>
                 </motion.div>
               )}
             </div>

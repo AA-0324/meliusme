@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { staggerContainer, fadeUp } from '@/lib/motion';
 import logo from '@/assets/meliusme-logo-new.png';
+import { todayKey } from '@/lib/date';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -169,7 +170,7 @@ export default function Profile() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `meliusme-export-${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = `meliusme-export-${todayKey()}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

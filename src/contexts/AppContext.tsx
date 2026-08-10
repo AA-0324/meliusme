@@ -6,34 +6,26 @@ import { getBodyProfile, saveBodyProfile, BodyProfile, getAutoGoals, deleteBodyP
 import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge, getEarnedBadges, Badge, awardBadge, addXP, LevelUpResult, TempProUnlock, getTempProUnlocks, getXPData, XPData, getDailyChallenges, rollbackDailyXP, validateStreakFreshness } from '@/lib/streaks';
 import { initEncryption } from '@/lib/crypto';
 import { getEncryptedJSON, setEncryptedJSON, removeEncrypted, getEncrypted, setEncrypted, migrateAllToEncrypted } from '@/lib/encryptedStorage';
-import { initRevenueCat, checkProEntitlement } from '@/lib/revenuecat';
+import { initRevenueCat, getProEntitlementState } from '@/lib/revenuecat';
+import { todayKey } from '@/lib/date';
+import { getDailyTotals, addTotals } from '@/lib/nutrition';
+import { getGoalFeedback } from '@/lib/goalFeedback';
 
 type ToastVariant = 'primary' | 'success' | 'warning' | 'destructive' | 'challenge';
 
-const goalToastKey = (date: string) => `meliusme-goal-toasts-${date}`;
-
+// One-shot flags so a goal message fires at most once per day. Kept in memory
+// on purpose: they are transient UI state, not user data worth persisting.
 const inMemoryGoalToastFlags = new Map<string, Record<string, boolean>>();
 
-const getGoalToastFlags = (date: string): Record<string, boolean> => inMemoryGoalToastFlags.get(goalToastKey(date)) ?? {};
+const getGoalToastFlags = (date: string): Record<string, boolean> => inMemoryGoalToastFlags.get(date) ?? {};
 
 const setGoalToastFlag = (date: string, key: string) => {
   const flags = getGoalToastFlags(date);
   if (flags[key]) return;
   flags[key] = true;
-  inMemoryGoalToastFlags.set(goalToastKey(date), flags);
+  inMemoryGoalToastFlags.set(date, flags);
 };
 
-const getDailyTotals = (allMeals: Meal[], date: string) => {
-  let calories = 0, protein = 0, fiber = 0, sugar = 0;
-  for (const m of allMeals) {
-    if (m.date !== date) continue;
-    calories += m.calories;
-    protein += m.protein || 0;
-    fiber += m.fiber || 0;
-    sugar += m.sugar || 0;
-  }
-  return { calories, protein, fiber, sugar };
-};
 
 const DEFAULT_SETTINGS: Settings = {
   proStatus: false, darkMode: false, theme: 'default',
@@ -109,7 +101,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [bottomToast, setBottomToast] = useState<AppContextType['bottomToast']>({ open: false, message: '', variant: 'primary' });
   const toastQueueRef = useRef<Array<{ message: string; variant: ToastVariant }>>([]);
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = todayKey();
   const [todayWater, setTodayWater] = useState(0);
 
   // Pro status only reflects an actual purchase. Temporary level rewards
@@ -204,10 +196,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           await setEncrypted('meliusme-pro-reset-v1.3', 'true');
         }
 
-        // Check RevenueCat entitlement for Pro status
+        // RevenueCat is the source of truth for a verified entitlement. When it
+        // can't be reached we fall back to the cached answer so offline users
+        // keep the Pro UX they paid for. Revocation is deliberately left to the
+        // in-progress RevenueCat work — we only ever grant here.
         try {
-          const rcPro = await checkProEntitlement();
-          if (rcPro && !activeSettings.proStatus) {
+          const entitlement = await getProEntitlementState();
+          if (entitlement.active && !activeSettings.proStatus) {
             const updated = await saveSettings({ proStatus: true });
             activeSettings = updated;
             setSettingsState(updated);
@@ -215,6 +210,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         } catch (rcError) {
           console.warn('[RevenueCat] Entitlement check failed (non-blocking):', rcError);
         }
+
 
         // Apply auto-generated goals if the user has them but settings.goals is missing protein/fiber/sugar
         const autoGoals = await getAutoGoals();
@@ -343,7 +339,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const resetDailyData = useCallback(async () => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = todayKey();
     setTodayWater(0);
     await setWaterIntake(todayStr, 0);
     const rolledBackXP = await rollbackDailyXP(todayStr, isPro);
@@ -351,7 +347,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     // Daily challenge claims are encrypted at rest.
     await removeEncrypted(`melius-daily-xp-awarded-${todayStr}`);
-    inMemoryGoalToastFlags.delete(goalToastKey(todayStr));
+    inMemoryGoalToastFlags.delete(todayStr);
 
     setMeals((prev) => prev.filter((m) => m.date !== todayStr));
     void deleteMealsByDate(todayStr);
@@ -473,7 +469,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       badgesChanged = true;
     }
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = todayKey();
     const todayMealCountBefore = meals.reduce((c, m) => c + (m.date === todayStr ? 1 : 0), 0);
     if (todayMealCountBefore >= 2 && !earnedIds.has('meals_3')) {
       await awardBadge('meals_3');
@@ -483,47 +479,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     showBottomToast('Meal logged!', 'primary');
 
-    const nextTotals = {
-      calories: prevTotals.calories + newMeal.calories,
-      protein: prevTotals.protein + (newMeal.protein || 0),
-      fiber: prevTotals.fiber + (newMeal.fiber || 0),
-      sugar: prevTotals.sugar + (newMeal.sugar || 0),
-    };
+    const nextTotals = addTotals(prevTotals, newMeal);
 
     const dateKey = meal.date;
-    const flags = getGoalToastFlags(dateKey);
-
-    const calGoal = settings.goals.calories;
-    if (!flags.calories_done && prevTotals.calories < calGoal && nextTotals.calories >= calGoal) {
-      setGoalToastFlag(dateKey, 'calories_done');
-      showBottomToast('Daily calorie goal completed!', 'success');
-    }
-    if (!flags.calories_over && prevTotals.calories <= calGoal && nextTotals.calories > calGoal) {
-      setGoalToastFlag(dateKey, 'calories_over');
-      showBottomToast("You're over your calorie goal — consider a lighter choice.", 'warning');
+    for (const feedback of getGoalFeedback(prevTotals, nextTotals, settings.goals, getGoalToastFlags(dateKey))) {
+      setGoalToastFlag(dateKey, feedback.key);
+      showBottomToast(feedback.message, feedback.variant);
     }
 
-    if (settings.goals.protein) {
-      const g = settings.goals.protein;
-      if (!flags.protein_done && prevTotals.protein < g && nextTotals.protein >= g) {
-        setGoalToastFlag(dateKey, 'protein_done');
-        showBottomToast('Protein goal completed!', 'success');
-      }
-    }
-    if (settings.goals.fiber) {
-      const g = settings.goals.fiber;
-      if (!flags.fiber_done && prevTotals.fiber < g && nextTotals.fiber >= g) {
-        setGoalToastFlag(dateKey, 'fiber_done');
-        showBottomToast('Fiber goal completed!', 'success');
-      }
-    }
-    if (settings.goals.sugar) {
-      const g = settings.goals.sugar;
-      if (!flags.sugar_over && prevTotals.sugar <= g && nextTotals.sugar > g) {
-        setGoalToastFlag(dateKey, 'sugar_over');
-        showBottomToast("You've exceeded your sugar limit today.", 'warning');
-      }
-    }
 
     // Check daily challenges after meal log
     const allMealTypes = updatedMeals.filter(m => m.date === today).map(m => m.mealType);
