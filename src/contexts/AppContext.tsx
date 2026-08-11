@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Meal, Settings, getSettings, saveSettings, getAllMeals, addMeal, deleteMeal, deleteMealsByDate, updateGoals, Goals, getWaterIntake, setWaterIntake, DEFAULT_GOALS, DEFAULT_WATER_GOAL, resetToBasicSettings, migratePlaintextMeals } from '@/lib/db';
+import { Meal, Settings, getSettings, saveSettings, getAllMeals, addMeal, deleteMeal, deleteMealsByDate, updateGoals, Goals, getWaterIntake, setWaterIntake, DEFAULT_GOALS, DEFAULT_WATER_GOAL, resetToBasicSettings, revokeProStatus, migratePlaintextMeals } from '@/lib/db';
 import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/userProfile';
 import { getBodyProfile, saveBodyProfile, BodyProfile, getAutoGoals, deleteBodyProfile } from '@/lib/bodyGoals';
 
@@ -7,6 +7,7 @@ import { getStreakData, updateStreak, StreakData, getCurrentChallenge, Challenge
 import { initEncryption } from '@/lib/crypto';
 import { getEncryptedJSON, setEncryptedJSON, removeEncrypted, getEncrypted, setEncrypted, migrateAllToEncrypted } from '@/lib/encryptedStorage';
 import { initRevenueCat, getProEntitlementState } from '@/lib/revenuecat';
+import { EMPTY_ENTITLEMENT, resolveEffectivePro, nextPersistedProStatus, writeEntitlementCache, type EntitlementState } from '@/lib/entitlement';
 import { todayKey } from '@/lib/date';
 import { getDailyTotals, addTotals } from '@/lib/nutrition';
 import { getGoalFeedback } from '@/lib/goalFeedback';
@@ -43,6 +44,9 @@ interface AppContextType {
   meals: Meal[];
   isLoading: boolean;
   isPro: boolean;
+  /** Where the current Pro answer came from: verified, cached (offline) or none. */
+  entitlement: EntitlementState;
+  refreshEntitlement: () => Promise<void>;
   hasProFeature: (featureId: string) => boolean;
   animationsEnabled: boolean;
   motionEnabled: boolean;
@@ -98,19 +102,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [levelUpQueue, setLevelUpQueue] = useState<LevelUpResult[]>([]);
   const levelUpPending = levelUpQueue[0] ?? null;
 
+  const [entitlement, setEntitlement] = useState<EntitlementState>(EMPTY_ENTITLEMENT);
+
   const [bottomToast, setBottomToast] = useState<AppContextType['bottomToast']>({ open: false, message: '', variant: 'primary' });
   const toastQueueRef = useRef<Array<{ message: string; variant: ToastVariant }>>([]);
 
   const today = todayKey();
   const [todayWater, setTodayWater] = useState(0);
 
-  // Pro status only reflects an actual purchase. Temporary level rewards
-  // unlock specific features individually via hasProFeature().
-  const isPro = settings.proStatus;
+  // Single entitlement abstraction. RevenueCat is authoritative when it can be
+  // reached; otherwise the cached answer, and only then the locally persisted
+  // flag, keep the app usable offline. Temporary level rewards unlock specific
+  // features individually via hasProFeature() and never grant full Pro.
+  const isPro = resolveEffectivePro(entitlement, settings.proStatus);
   const hasProFeature = useCallback(
     (featureId: string) => isPro || tempProUnlocks.some(u => u.featureId === featureId),
     [isPro, tempProUnlocks],
   );
+
 
   // Migrate legacy boolean preference to tri-state level.
   const animationLevel: 'full' | 'reduced' | 'off' =
@@ -201,9 +210,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         // keep the Pro UX they paid for. Revocation is deliberately left to the
         // in-progress RevenueCat work — we only ever grant here.
         try {
-          const entitlement = await getProEntitlementState();
-          if (entitlement.active && !activeSettings.proStatus) {
-            const updated = await saveSettings({ proStatus: true });
+          const state = await getProEntitlementState();
+          setEntitlement(state);
+          const persisted = nextPersistedProStatus(state, activeSettings.proStatus);
+          if (persisted !== activeSettings.proStatus) {
+            const updated = persisted
+              ? await saveSettings({ proStatus: true })
+              : await revokeProStatus();
             activeSettings = updated;
             setSettingsState(updated);
           }
@@ -284,7 +297,38 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setSettingsState(updated);
   }, []);
 
+  /**
+   * Re-ask RevenueCat for the entitlement and reconcile the persisted flag.
+   * Safe to call at any time: a failed check leaves current access untouched.
+   */
+  const refreshEntitlement = useCallback(async () => {
+    try {
+      const state = await getProEntitlementState();
+      setEntitlement(state);
+      const current = await getSettings();
+      const persisted = nextPersistedProStatus(state, current.proStatus);
+      if (persisted !== current.proStatus) {
+        const updated = persisted ? await saveSettings({ proStatus: true }) : await revokeProStatus();
+        setSettingsState(updated);
+      }
+    } catch (error) {
+      console.warn('[RevenueCat] Entitlement refresh failed:', error);
+    }
+  }, []);
+
+  // Re-verify entitlement when the app returns to the foreground (TWA re-entry,
+  // tab restore). Never blocks and never revokes on a failed check.
+  useEffect(() => {
+    const onVisible = () => { if (!document.hidden) void refreshEntitlement(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [refreshEntitlement]);
+
   const setPro = useCallback(async (enabled: boolean) => {
+    // Keep the entitlement cache in step so a later offline launch agrees with
+    // what the UI is showing right now.
+    await writeEntitlementCache(enabled);
+    setEntitlement({ active: enabled, source: 'verified', checkedAt: Date.now(), stale: false });
     if (!enabled) {
       // Turning Pro off must fully remove Pro-only state, including custom and personalized goals.
       const updated = await resetToBasicSettings();
@@ -501,7 +545,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo<AppContextType>(() => ({
-    settings, meals, isLoading, isPro, hasProFeature,
+    settings, meals, isLoading, isPro, entitlement, refreshEntitlement, hasProFeature,
     animationsEnabled, motionEnabled, animationLevel,
     userProfile, setUserName, setUserAvatar,
     bodyProfile, updateBodyProfile: updateBodyProfileCb,
@@ -514,7 +558,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     bottomToast, showBottomToast, hideBottomToast,
     xpData, tempProUnlocks, levelUpPending, dismissLevelUp,
   }), [
-    settings, meals, isLoading, isPro, hasProFeature,
+    settings, meals, isLoading, isPro, entitlement, refreshEntitlement, hasProFeature,
     animationsEnabled, motionEnabled, animationLevel,
     userProfile, bodyProfile, streak, currentChallenge, badges,
     todayWater, bottomToast,

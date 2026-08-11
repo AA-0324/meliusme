@@ -162,8 +162,8 @@ export default function Profile() {
     avatarInputRef.current?.click();
   };
 
+  // Exporting your own locally stored data is always free.
   const handleExport = async () => {
-    if (!isPro) { setShowProModal(true); return; }
     try {
       const csv = await exportMealsToCSV();
       const blob = new Blob([csv], { type: 'text/csv' });
@@ -432,8 +432,12 @@ export default function Profile() {
         <motion.div variants={fadeUp}>
           <motion.div whileTap={{ scale: 0.97 }}
             onClick={handleExport}
-            className={`bg-card rounded-2xl p-4 border border-border/50 cursor-pointer active:scale-[0.98] transition-transform ${!isPro ? '' : ''}`}>
-            <div className={`flex items-center gap-3 ${!isPro ? 'opacity-50' : ''}`}>
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleExport(); } }}
+            className="bg-card rounded-2xl p-4 border border-border/50 cursor-pointer active:scale-[0.98] transition-transform">
+            <div className="flex items-center gap-3">
+
               <Download className="w-5 h-5 text-muted-foreground flex-shrink-0" />
               <div className="text-left flex-1">
                 <span className="block text-sm font-semibold">Export Data (CSV)</span>

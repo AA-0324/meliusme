@@ -1,19 +1,36 @@
-// RevenueCat Web SDK Integration
+// RevenueCat Web SDK integration.
+//
+// Only the *public* SDK key belongs in client code. It is read from
+// `VITE_REVENUECAT_PUBLIC_KEY` so the sandbox/test key and the production key
+// can differ per build. When no key is configured the module degrades to a
+// no-op: Pro simply stays unverified and the free app keeps working.
 import { Purchases, type CustomerInfo, type Package, type PurchasesError, ErrorCode } from '@revenuecat/purchases-js';
 import { getEncrypted, setEncrypted } from './encryptedStorage';
 import {
   readEntitlementCache,
   writeEntitlementCache,
   resolveEntitlement,
+  PRO_ENTITLEMENT_ID,
+  EMPTY_ENTITLEMENT,
   type EntitlementState,
 } from './entitlement';
 
-// Public API key (safe to include in client code)
-const RC_API_KEY = 'test_bfVjcQrjQkSYSlezfcbSEpCZRaE';
-const ENTITLEMENT_ID = 'MeliusMe Pro';
+// Sandbox/test key kept as the development fallback so the paywall keeps
+// working in preview builds. Production builds must set
+// VITE_REVENUECAT_PUBLIC_KEY to the live *public* key.
+const RC_FALLBACK_TEST_KEY = 'test_bfVjcQrjQkSYSlezfcbSEpCZRaE';
+const RC_API_KEY =
+  ((import.meta.env?.VITE_REVENUECAT_PUBLIC_KEY as string | undefined)?.trim() || RC_FALLBACK_TEST_KEY).trim();
+const ENTITLEMENT_ID = PRO_ENTITLEMENT_ID;
 const RC_USER_ID_KEY = 'melius-rc-user-id';
 
 let purchasesInstance: Purchases | null = null;
+let initPromise: Promise<Purchases | null> | null = null;
+
+/** True when a public SDK key is configured for this build. */
+export function isRevenueCatConfigured(): boolean {
+  return RC_API_KEY.length > 0;
+}
 
 // ─── Initialization ────────────────────────────────────────────────
 
@@ -26,40 +43,55 @@ async function getOrCreateUserId(): Promise<string> {
   return userId;
 }
 
-export async function initRevenueCat(): Promise<Purchases> {
+/**
+ * Configure the SDK. Returns null when RevenueCat is unconfigured or cannot be
+ * reached — callers must treat null as "entitlement unknown", never as "free".
+ */
+export async function initRevenueCat(): Promise<Purchases | null> {
   if (purchasesInstance) return purchasesInstance;
+  if (!isRevenueCatConfigured()) {
+    console.warn('[RevenueCat] No VITE_REVENUECAT_PUBLIC_KEY configured — purchases are disabled.');
+    return null;
+  }
+  if (initPromise) return initPromise;
 
-  const appUserId = await getOrCreateUserId();
-  purchasesInstance = Purchases.configure({
-    apiKey: RC_API_KEY,
-    appUserId,
-  });
+  initPromise = (async () => {
+    try {
+      const appUserId = await getOrCreateUserId();
+      purchasesInstance = Purchases.configure({ apiKey: RC_API_KEY, appUserId });
+      return purchasesInstance;
+    } catch (error) {
+      console.warn('[RevenueCat] Configure failed:', error);
+      return null;
+    } finally {
+      initPromise = null;
+    }
+  })();
 
-  return purchasesInstance;
+  return initPromise;
 }
 
-export async function getRevenueCatInstance(): Promise<Purchases> {
-  if (!purchasesInstance) {
-    return initRevenueCat();
-  }
-  return purchasesInstance;
+export async function getRevenueCatInstance(): Promise<Purchases | null> {
+  return purchasesInstance ?? initRevenueCat();
 }
 
 // ─── Customer Info & Entitlements ──────────────────────────────────
 
-export async function getCustomerInfo(): Promise<CustomerInfo> {
+export async function getCustomerInfo(): Promise<CustomerInfo | null> {
   const rc = await getRevenueCatInstance();
-  return await rc.getCustomerInfo();
+  if (!rc) return null;
+  return rc.getCustomerInfo();
 }
 
 /**
  * Ask RevenueCat whether the Pro entitlement is active.
- * Returns `null` when RevenueCat could not be reached, so callers can tell
- * "verified as not entitled" apart from "unknown, fall back to cache".
+ * Returns `null` when RevenueCat could not be reached or is not configured, so
+ * callers can tell "verified as not entitled" apart from "unknown".
  */
 export async function verifyProEntitlement(): Promise<boolean | null> {
   try {
     const customerInfo = await getCustomerInfo();
+    if (!customerInfo) return null;
     const active = ENTITLEMENT_ID in customerInfo.entitlements.active;
     await writeEntitlementCache(active);
     return active;
@@ -74,8 +106,13 @@ export async function verifyProEntitlement(): Promise<boolean | null> {
  * The `source` field says whether the answer is verified or merely cached.
  */
 export async function getProEntitlementState(): Promise<EntitlementState> {
-  const [verified, cache] = await Promise.all([verifyProEntitlement(), readEntitlementCache()]);
-  return resolveEntitlement(verified, cache);
+  try {
+    const [verified, cache] = await Promise.all([verifyProEntitlement(), readEntitlementCache()]);
+    return resolveEntitlement(verified, cache);
+  } catch (error) {
+    console.warn('[RevenueCat] Entitlement state unavailable:', error);
+    return EMPTY_ENTITLEMENT;
+  }
 }
 
 /** Boolean convenience wrapper. Unknown verification resolves to false. */
@@ -83,10 +120,10 @@ export async function checkProEntitlement(): Promise<boolean> {
   return (await verifyProEntitlement()) === true;
 }
 
-
 export async function hasAnyActiveEntitlement(): Promise<boolean> {
   try {
     const customerInfo = await getCustomerInfo();
+    if (!customerInfo) return false;
     return Object.keys(customerInfo.entitlements.active).length > 0;
   } catch (error) {
     console.error('[RevenueCat] Failed to check entitlements:', error);
@@ -99,6 +136,7 @@ export async function hasAnyActiveEntitlement(): Promise<boolean> {
 export async function getCurrentOffering() {
   try {
     const rc = await getRevenueCatInstance();
+    if (!rc) return null;
     const offerings = await rc.getOfferings();
     return offerings.current;
   } catch (error) {
@@ -108,16 +146,8 @@ export async function getCurrentOffering() {
 }
 
 export async function getAvailablePackages(): Promise<Package[]> {
-  try {
-    const offering = await getCurrentOffering();
-    if (offering && offering.availablePackages.length > 0) {
-      return offering.availablePackages;
-    }
-    return [];
-  } catch (error) {
-    console.error('[RevenueCat] Failed to get packages:', error);
-    return [];
-  }
+  const offering = await getCurrentOffering();
+  return offering?.availablePackages ?? [];
 }
 
 /**
@@ -125,7 +155,12 @@ export async function getAvailablePackages(): Promise<Package[]> {
  * Returns a descriptive error string if something is wrong, or null if OK.
  */
 export async function validateOffering(): Promise<string | null> {
+  if (!isRevenueCatConfigured()) {
+    return 'Purchases are not configured for this build.';
+  }
   try {
+    const rc = await getRevenueCatInstance();
+    if (!rc) return 'Could not reach RevenueCat. Please check your internet connection.';
     const offering = await getCurrentOffering();
     if (!offering) {
       return 'No active offering found in RevenueCat. Please check your dashboard configuration.';
@@ -146,23 +181,27 @@ export interface PurchaseResult {
   success: boolean;
   customerInfo?: CustomerInfo;
   cancelled?: boolean;
+  /** True when RevenueCat could not be reached — entitlement is unknown, not false. */
+  unavailable?: boolean;
   error?: string;
 }
 
 export async function purchasePackage(pkg: Package): Promise<PurchaseResult> {
   try {
     const rc = await getRevenueCatInstance();
+    if (!rc) return { success: false, unavailable: true, error: 'Purchases are unavailable right now.' };
     const { customerInfo } = await rc.purchase({ rcPackage: pkg });
 
     const hasPro = ENTITLEMENT_ID in customerInfo.entitlements.active;
+    await writeEntitlementCache(hasPro);
     return { success: hasPro, customerInfo };
   } catch (e: unknown) {
     const error = e as PurchasesError;
-    if (error.errorCode === ErrorCode.UserCancelledError) {
+    if (error?.errorCode === ErrorCode.UserCancelledError) {
       return { success: false, cancelled: true };
     }
     console.error('[RevenueCat] Purchase failed:', error);
-    return { success: false, error: error.message || 'Purchase failed' };
+    return { success: false, error: error?.message || 'Purchase failed' };
   }
 }
 
@@ -174,25 +213,16 @@ export interface PaywallResult {
   error?: string;
 }
 
-export async function presentPaywall(
-  containerElement: HTMLElement
-): Promise<PaywallResult> {
+export async function presentPaywall(containerElement: HTMLElement): Promise<PaywallResult> {
   try {
     const rc = await getRevenueCatInstance();
-    const result = await rc.presentPaywall({
-      htmlTarget: containerElement,
-    });
+    if (!rc) return { success: false, error: 'Purchases are unavailable right now.' };
+    const result = await rc.presentPaywall({ htmlTarget: containerElement });
 
-    return {
-      success: true,
-      customerInfo: result.customerInfo,
-    };
+    return { success: true, customerInfo: result.customerInfo };
   } catch (error: unknown) {
     console.error('[RevenueCat] Paywall error:', error);
-    return {
-      success: false,
-      error: (error as Error).message || 'Paywall error',
-    };
+    return { success: false, error: (error as Error).message || 'Paywall error' };
   }
 }
 
@@ -200,16 +230,18 @@ export async function presentPaywall(
 
 export async function restorePurchases(): Promise<PurchaseResult> {
   try {
-    // On the web SDK, "restoring" means re-initializing with the same
-    // anonymous user ID and fetching the latest customer info from the
-    // RevenueCat backend. This picks up any purchases tied to this user.
-    const rc = await getRevenueCatInstance();
-    const customerInfo = await rc.getCustomerInfo();
+    // On the web SDK, "restoring" means re-reading customer info for the same
+    // anonymous app user id, which picks up any purchase tied to that user.
+    const customerInfo = await getCustomerInfo();
+    if (!customerInfo) {
+      return { success: false, unavailable: true, error: 'Could not reach RevenueCat.' };
+    }
     const hasPro = ENTITLEMENT_ID in customerInfo.entitlements.active;
+    await writeEntitlementCache(hasPro);
     return { success: hasPro, customerInfo };
   } catch (error: unknown) {
     console.error('[RevenueCat] Restore failed:', error);
-    return { success: false, error: (error as Error).message || 'Restore failed' };
+    return { success: false, unavailable: true, error: (error as Error).message || 'Restore failed' };
   }
 }
 

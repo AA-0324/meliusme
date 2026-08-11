@@ -1,6 +1,7 @@
 // Pro Features Storage and Management
 import { getEncryptedJSON, setEncryptedJSON } from './encryptedStorage';
 import { Meal, Goals } from './db';
+import { daysBetween } from './date';
 
 // ─── Encrypted localStorage helpers ────────────────────────────────
 async function readEncLS<T>(key: string, fallback: T): Promise<T> {
@@ -158,9 +159,7 @@ export async function updateStreaksData(
     if (streaks.lastLoggingDate === null) {
       streaks.loggingStreak = 1;
     } else if (streaks.lastLoggingDate !== date) {
-      const lastDate = new Date(streaks.lastLoggingDate);
-      const currentDate = new Date(date);
-      const diffDays = Math.floor((currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+      const diffDays = daysBetween(streaks.lastLoggingDate, date);
       if (diffDays === 1) {
         streaks.loggingStreak++;
       } else if (diffDays > 1) {
@@ -174,9 +173,7 @@ export async function updateStreaksData(
     if (streaks.lastCalorieDate === null) {
       streaks.calorieTargetStreak = 1;
     } else if (streaks.lastCalorieDate !== date) {
-      const lastDate = new Date(streaks.lastCalorieDate);
-      const currentDate = new Date(date);
-      const diffDays = Math.floor((currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+      const diffDays = daysBetween(streaks.lastCalorieDate, date);
       if (diffDays === 1) {
         streaks.calorieTargetStreak++;
       } else if (diffDays > 1) {
@@ -190,9 +187,7 @@ export async function updateStreaksData(
     if (streaks.lastProteinDate === null) {
       streaks.proteinGoalStreak = 1;
     } else if (streaks.lastProteinDate !== date) {
-      const lastDate = new Date(streaks.lastProteinDate);
-      const currentDate = new Date(date);
-      const diffDays = Math.floor((currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+      const diffDays = daysBetween(streaks.lastProteinDate, date);
       if (diffDays === 1) {
         streaks.proteinGoalStreak++;
       } else if (diffDays > 1) {

@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { getRevenueCatInstance, validateOffering } from '@/lib/revenuecat';
+import { PRO_ENTITLEMENT_ID as ENTITLEMENT_ID } from '@/lib/entitlement';
 import { toast } from 'sonner';
 
 interface ProUpgradeModalProps {
@@ -8,7 +9,7 @@ interface ProUpgradeModalProps {
   onClose: () => void;
 }
 
-const ENTITLEMENT_ID = 'MeliusMe Pro';
+
 
 // Theme classes that the app applies to <html> and that can leak into the paywall
 const THEME_CLASSES = ['dark', 'theme-ocean', 'theme-sunset', 'theme-berry', 'theme-midnight', 'theme-cyber'];
@@ -54,6 +55,11 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
       }
 
       const rc = await getRevenueCatInstance();
+      if (!rc) {
+        setError('Purchases are unavailable right now. Please try again later.');
+        paywallActiveRef.current = false;
+        return;
+      }
       const result = await rc.presentPaywall({
         htmlTarget: paywallContainerRef.current!,
         onBack: (closePaywall) => {
