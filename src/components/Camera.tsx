@@ -20,9 +20,25 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<'camera' | 'preview'>('camera');
 
+  // The live stream is held in a ref as well as state: the ref lets stopCamera
+  // stay identity-stable so unmount cleanup can never miss a running track
+  // (a leaked track keeps the camera LED on and drains the device).
+  const streamRef = useRef<MediaStream | null>(null);
+
+  const stopCamera = useCallback(() => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+    setStream(null);
+  }, []);
+
   const startCamera = useCallback(async () => {
+    setError(null);
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setError('Camera is not available on this device. You can upload a photo instead.');
+      return;
+    }
     try {
-      setError(null);
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { ideal: facingMode },
@@ -31,6 +47,7 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
         },
         audio: false,
       });
+      streamRef.current = mediaStream;
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
@@ -39,30 +56,33 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
         };
       }
     } catch (err) {
-      console.error('Camera error:', err);
-      setError('Camera access denied. You can upload a photo instead.');
+      // Denied, dismissed, in use by another app, or no camera at all: all of
+      // these are expected outcomes, so fall back to the gallery instead of
+      // leaving a dead screen.
+      const name = (err as DOMException)?.name;
+      setError(
+        name === 'NotAllowedError' || name === 'SecurityError'
+          ? 'Camera access denied. You can upload a photo instead.'
+          : name === 'NotFoundError' || name === 'OverconstrainedError'
+            ? 'No usable camera found. You can upload a photo instead.'
+            : name === 'NotReadableError'
+              ? 'The camera is being used by another app. You can upload a photo instead.'
+              : 'Camera unavailable. You can upload a photo instead.',
+      );
     }
   }, [facingMode]);
 
-  const stopCamera = useCallback(() => {
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-      setStream(null);
-    }
-  }, [stream]);
-
-  const handleClose = useCallback(() => {
-    stopCamera();
-    setCapturedPhoto(null);
-    setError(null);
-    setMode('camera');
-    onClose();
-  }, [stopCamera, onClose]);
+  // Always release the camera if the component goes away mid-session.
+  useEffect(() => stopCamera, [stopCamera]);
 
   const capturePhoto = useCallback(async () => {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
+      if (!video.videoWidth || !video.videoHeight) {
+        setError('The camera is still starting. Try again in a moment.');
+        return;
+      }
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');
@@ -91,8 +111,20 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
 
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    // Allow re-picking the same file after a cancel/error.
+    e.target.value = '';
     if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setError('That file is not an image. Please choose a photo.');
+      return;
+    }
+    const MAX_BYTES = 20 * 1024 * 1024;
+    if (file.size > MAX_BYTES) {
+      setError('That image is too large (max 20MB). Please choose a smaller photo.');
+      return;
+    }
     const reader = new FileReader();
+    reader.onerror = () => setError('That photo could not be read. Please try another one.');
     reader.onloadend = () => {
       const src = reader.result as string;
       const img = new Image();

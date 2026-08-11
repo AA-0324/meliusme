@@ -126,17 +126,42 @@ export async function getDB(): Promise<IDBPDatabase<MeliusDB>> {
 // weaken the encryption guarantee). Instead we decrypt each row at most once
 // and keep the plaintext in memory only, so repeated date queries cost an
 // array scan rather than N AES-GCM operations.
+//
+// The cache is bounded: meals carry photo data URLs, so an unbounded map would
+// grow with the whole history. Oldest insertions are evicted first and simply
+// get decrypted again on demand.
+const MEAL_CACHE_LIMIT = 400;
 const mealCache = new Map<string, Meal>();
+
+function cacheMeal(meal: Meal) {
+  if (mealCache.size >= MEAL_CACHE_LIMIT && !mealCache.has(meal.id)) {
+    const oldest = mealCache.keys().next();
+    if (!oldest.done) mealCache.delete(oldest.value);
+  }
+  mealCache.set(meal.id, meal);
+}
 
 function invalidateMeal(id: string) {
   mealCache.delete(id);
 }
 
+/** Drop the in-memory plaintext cache (used by destructive resets and tests). */
+export function clearMealCache() {
+  mealCache.clear();
+}
+
 async function encryptMeal(meal: Meal): Promise<{ id: string; encrypted: string }> {
-  const encrypted = await encrypt(JSON.stringify(meal));
+  const serialized = JSON.stringify(meal);
+  const encrypted = await encrypt(serialized);
   const verified = await decrypt(encrypted);
-  if (verified !== JSON.stringify(meal)) throw new Error('Meal encryption verification failed');
+  if (verified !== serialized) throw new Error('Meal encryption verification failed');
   return { id: meal.id, encrypted };
+}
+
+/** A decrypted payload is only usable if it still looks like a meal record. */
+function isMealShape(value: unknown): value is Meal {
+  const m = value as Meal | null;
+  return !!m && typeof m === 'object' && typeof m.id === 'string' && typeof m.date === 'string' && typeof m.calories === 'number';
 }
 
 /**
@@ -146,20 +171,28 @@ async function encryptMeal(meal: Meal): Promise<{ id: string; encrypted: string 
 async function decryptMeal(row: { id: string; encrypted: string }): Promise<Meal | null> {
   const cached = mealCache.get(row.id);
   if (cached) return cached;
-  let meal: Meal | null = null;
+  let meal: unknown = null;
   try {
-    meal = JSON.parse(await decrypt(row.encrypted)) as Meal;
+    meal = JSON.parse(await decrypt(row.encrypted));
   } catch {
-    try { meal = JSON.parse(row.encrypted) as Meal; } catch { meal = null; }
+    try { meal = JSON.parse(row.encrypted); } catch { meal = null; }
   }
-  if (meal && meal.id) mealCache.set(meal.id, meal);
+  if (!isMealShape(meal)) return null;
+  cacheMeal(meal);
   return meal;
 }
 
 /** Decrypt every stored row once, skipping unreadable ones. */
 async function readAllMeals(): Promise<Meal[]> {
-  const db = await getDB();
-  const rows = await db.getAll('meals');
+  let rows: { id: string; encrypted: string }[] = [];
+  try {
+    const db = await getDB();
+    rows = await db.getAll('meals');
+  } catch (error) {
+    // A failed IndexedDB open must not take the whole app down.
+    console.error('[db] Unable to read meals:', error);
+    return [];
+  }
   const meals: Meal[] = [];
   for (const row of rows) {
     const meal = await decryptMeal(row);
@@ -173,63 +206,60 @@ const byNewest = (a: Meal, b: Meal) => b.createdAt - a.createdAt;
 
 // ─── Migration ──────
 
-let migrationDone = false;
-
-export async function migrateOldMeals(): Promise<void> {
-  if (migrationDone) return;
-  migrationDone = true;
-
-  try {
-    const oldDB = await openDB('melius-db', 1, {
-      upgrade() {},
-    });
-    if (oldDB.objectStoreNames.contains('meals')) {
-      const oldMeals = await oldDB.getAll('meals');
-      oldDB.close();
-
-      if (oldMeals.length > 0 && !(oldMeals[0] as any).encrypted) {
-        const db = await getDB();
-        const tx = db.transaction('meals', 'readwrite');
-        for (const meal of oldMeals as unknown as Meal[]) {
-          const enc = await encryptMeal(meal);
-          await tx.store.put(enc);
-        }
-        await tx.done;
-      }
-    } else {
-      oldDB.close();
-    }
-  } catch {
-    // Old DB doesn't exist or migration already done
-  }
-}
-
+/**
+ * Encrypt any row still stored as plaintext (pre-encryption installs).
+ *
+ * Encryption happens *before* the write transaction is opened: awaiting a
+ * non-IndexedDB promise inside a transaction lets the browser auto-close it,
+ * which previously made this migration abort halfway. Rows that cannot be
+ * encrypted and verified are left exactly as they are — a migration failure
+ * must never delete or replace user data.
+ */
 export async function migratePlaintextMeals(): Promise<void> {
-  const db = await getDB();
-  const rows = await db.getAll('meals');
+  let rows: unknown[] = [];
+  try {
+    const db = await getDB();
+    rows = await db.getAll('meals');
+  } catch (error) {
+    console.error('[db] Meal migration skipped, database unavailable:', error);
+    return;
+  }
   if (rows.length === 0) return;
 
-  const tx = db.transaction('meals', 'readwrite');
-  for (const row of rows as any[]) {
+  const pending: { id: string; encrypted: string }[] = [];
+  for (const row of rows as Record<string, unknown>[]) {
     const encryptedValue = row?.encrypted;
     if (typeof encryptedValue === 'string' && isEncrypted(encryptedValue)) continue;
 
-    const candidate: Meal | null = encryptedValue
-      ? (() => { try { return JSON.parse(encryptedValue) as Meal; } catch { return null; } })()
-      : row?.id && row?.mealType
-        ? row as Meal
-        : null;
+    let candidate: unknown = null;
+    if (typeof encryptedValue === 'string') {
+      try { candidate = JSON.parse(encryptedValue); } catch { candidate = null; }
+    } else if (row?.id && row?.mealType) {
+      candidate = row;
+    }
 
-    if (!candidate?.id) continue;
+    if (!isMealShape(candidate)) continue;
     try {
-      const encryptedRow = await encryptMeal(candidate);
-      await tx.store.put(encryptedRow);
+      pending.push(await encryptMeal(candidate));
     } catch {
       // Keep original record untouched if encryption cannot be verified.
     }
   }
-  await tx.done;
+
+  if (pending.length === 0) return;
+  try {
+    const db = await getDB();
+    const tx = db.transaction('meals', 'readwrite');
+    for (const encryptedRow of pending) {
+      tx.store.put(encryptedRow);
+    }
+    await tx.done;
+  } catch (error) {
+    console.error('[db] Meal migration could not be committed:', error);
+  }
 }
+
+
 
 // ─── Meal CRUD ─────────────────────────────────────────────────────
 
@@ -343,8 +373,31 @@ export async function resetToBasicSettings(): Promise<Settings> {
   return saveSettings(getBasicSettingsResetPatch());
 }
 
+/**
+ * Entitlement revocation (verified "no longer entitled" from RevenueCat).
+ * Turns off Pro-only presentation state but deliberately keeps the user's own
+ * numbers — goals and water target are their data, not a Pro feature.
+ */
+export async function revokeProStatus(): Promise<Settings> {
+  return saveSettings({ proStatus: false, theme: 'default', personalizedGoals: false });
+}
+
 // ─── CSV export ────────────────────────────────────────────────────
 
+/**
+ * Escape a CSV field: quote it when needed and neutralise leading characters
+ * that spreadsheet apps would interpret as a formula.
+ */
+function csvField(value: string | number | undefined | null): string {
+  const raw = value === undefined || value === null ? '' : String(value);
+  const safe = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
+  return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
+}
+
+/**
+ * Export every readable meal as CSV. Only the user's own tracked fields are
+ * included — no keys, ids, encrypted blobs or photo payloads.
+ */
 export async function exportMealsToCSV(): Promise<string> {
   const meals = await getAllMeals();
   const headers = ['Date', 'Time', 'Meal Type', 'Calories', 'Protein', 'Fiber', 'Sugar', 'Tags'];
@@ -358,5 +411,5 @@ export async function exportMealsToCSV(): Promise<string> {
     meal.sugar ?? '',
     meal.tags?.join('; ') ?? '',
   ]);
-  return [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
+  return [headers.join(','), ...rows.map((row) => row.map(csvField).join(','))].join('\n');
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { addMeal, getMeal, getAllMeals, getMealsByDate, getMealsByDateRange, updateMeal, deleteMeal, deleteMealsByDate, getDB, exportMealsToCSV } from '@/lib/db';
+import { addMeal, getMeal, getAllMeals, getMealsByDate, getMealsByDateRange, updateMeal, deleteMeal, deleteMealsByDate, getDB, exportMealsToCSV, clearMealCache, migratePlaintextMeals } from '@/lib/db';
 import type { Meal } from '@/lib/db';
 import { isEncrypted } from '@/lib/crypto';
 
@@ -14,6 +14,7 @@ const base = {
 async function clearMeals() {
   const db = await getDB();
   await db.clear('meals');
+  clearMealCache();
 }
 
 describe('meal persistence', () => {
@@ -101,5 +102,33 @@ describe('meal persistence', () => {
     expect(header).toBe('Date,Time,Meal Type,Calories,Protein,Fiber,Sugar,Tags');
     expect(row).toContain('420');
     expect(row).toContain('a; b');
+  });
+
+  it('leaves an unreadable row in place instead of deleting it', async () => {
+    const db = await getDB();
+    await db.put('meals', { id: 'junk', encrypted: 'not-json-not-cipher' } as never);
+    await migratePlaintextMeals();
+    clearMealCache();
+    const row = await db.get('meals', 'junk');
+    expect(row).toBeDefined();
+    expect((row as { encrypted: string }).encrypted).toBe('not-json-not-cipher');
+  });
+
+  it('encrypts a legacy plaintext row during migration and keeps it readable', async () => {
+    const db = await getDB();
+    const legacy = { ...base, id: 'legacy-1', createdAt: Date.now(), calories: 777 };
+    await db.put('meals', { id: 'legacy-1', encrypted: JSON.stringify(legacy) } as never);
+    await migratePlaintextMeals();
+    clearMealCache();
+    const row = await db.get('meals', 'legacy-1');
+    expect(isEncrypted((row as { encrypted: string }).encrypted)).toBe(true);
+    expect((await getMeal('legacy-1'))?.calories).toBe(777);
+  });
+
+  it('escapes CSV formula injection in tags', async () => {
+    await addMeal({ ...base, tags: ['=SUM(A1)'] });
+    const csv = await exportMealsToCSV();
+    expect(csv).not.toContain(',=SUM(A1)');
+    expect(csv).toContain("'=SUM(A1)");
   });
 });

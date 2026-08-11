@@ -32,21 +32,22 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { staggerContainer, fadeUp } from '@/lib/motion';
 import { getMealTemplates, deleteMealTemplate, MealTemplate } from '@/lib/proFeatures';
-import { restorePurchases, checkProEntitlement } from '@/lib/revenuecat';
+import { restorePurchases } from '@/lib/revenuecat';
 import logo from '@/assets/meliusme-logo-new.png';
 
 const APP_VERSION = '1.0.0';
-const BUILD_NUMBER = 117;
+const BUILD_NUMBER = 118;
 
 export default function Settings() {
   const {
-    settings, isPro, setPro, resetDailyData,
+    settings, isPro, entitlement, refreshEntitlement, setPro, resetDailyData,
     setUse24Hour, animationLevel, setAnimationLevel,
   } = useApp();
   const navigate = useNavigate();
   const [showProModal, setShowProModal] = useState(false);
   const [showFinalConfirm, setShowFinalConfirm] = useState(false);
   const [templates, setTemplates] = useState<MealTemplate[]>([]);
+  const [restoring, setRestoring] = useState(false);
 
   useEffect(() => {
     if (isPro) {
@@ -68,24 +69,27 @@ export default function Settings() {
 
 
   const handleRestorePurchase = async () => {
+    if (restoring) return;
+    setRestoring(true);
     toast.info('Checking for previous purchases...');
     try {
       const result = await restorePurchases();
-      if (result.success) {
-        setPro(true);
-        toast.success('Pro restored successfully!');
-      } else {
-        // Double-check entitlement
-        const hasPro = await checkProEntitlement();
-        if (hasPro) {
-          setPro(true);
-          toast.success('Pro restored successfully!');
-        } else {
-          toast.error('No previous purchase detected');
-        }
+      if (result.unavailable) {
+        // Unknown, not "not entitled" — leave existing access untouched.
+        toast.error('Could not reach the store. Check your connection and try again.');
+        return;
       }
+      if (result.success) {
+        await setPro(true);
+        toast.success('Pro restored successfully');
+      } else {
+        toast.error('No previous purchase found for this device');
+      }
+      await refreshEntitlement();
     } catch {
       toast.error('Failed to restore. Please try again.');
+    } finally {
+      setRestoring(false);
     }
   };
 
@@ -285,9 +289,9 @@ export default function Settings() {
           
           
           <motion.div whileTap={{ scale: 0.97 }}>
-            <Button onClick={handleRestorePurchase} variant="outline" className="w-full h-12 rounded-xl justify-start gap-3 font-semibold">
-              <RefreshCw className="w-5 h-5 text-primary" />
-              <span>Restore Pro</span>
+            <Button onClick={handleRestorePurchase} disabled={restoring} variant="outline" className="w-full h-12 rounded-xl justify-start gap-3 font-semibold">
+              <RefreshCw className={`w-5 h-5 text-primary ${restoring ? 'animate-spin' : ''}`} />
+              <span>{restoring ? 'Checking…' : 'Restore Pro'}</span>
             </Button>
           </motion.div>
         </motion.div>
@@ -302,7 +306,11 @@ export default function Settings() {
               </div>
               <div>
                 <h2 className="text-lg font-bold">MeliusMe Pro</h2>
-                <p className="text-muted-foreground text-sm">All features unlocked</p>
+                <p className="text-muted-foreground text-sm">
+                  {entitlement.source === 'cached'
+                    ? 'All features unlocked \u2014 offline, using your last verified purchase'
+                    : 'All features unlocked'}
+                </p>
               </div>
             </div>
           </motion.div>
