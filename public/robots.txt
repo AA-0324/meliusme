@@ -1,8 +1,18 @@
 User-agent: Googlebot
-Allow: /
+Allow: /$
+Disallow: /log
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /settings
+Disallow: /challenges
 
 User-agent: Bingbot
-Allow: /
+Allow: /$
+Disallow: /log
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /settings
+Disallow: /challenges
 
 User-agent: Twitterbot
 Allow: /
@@ -11,4 +21,11 @@ User-agent: facebookexternalhit
 Allow: /
 
 User-agent: *
-Allow: /
+Allow: /$
+Disallow: /log
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /settings
+Disallow: /challenges
+
+Sitemap: https://meliusme.lovable.app/sitemap.xml

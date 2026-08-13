@@ -96,6 +96,14 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
     }
   }, [stopCamera]);
 
+  const handleClose = useCallback(() => {
+    stopCamera();
+    setCapturedPhoto(null);
+    setError(null);
+    setMode('camera');
+    onClose();
+  }, [stopCamera, onClose]);
+
   const retakePhoto = useCallback(() => {
     setCapturedPhoto(null);
     setMode('camera');
@@ -108,6 +116,7 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
       handleClose();
     }
   }, [capturedPhoto, onCapture, handleClose]);
+
 
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

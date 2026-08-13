@@ -8,19 +8,89 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/favicon.png" type="image/png" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-    <title>MeliusMe</title>
-    <meta name="description" content="MeliusMe — photo-based meal logging with goals, streaks, and insights." />
+
+    <title>MeliusMe — Private, Local-First Meal &amp; Nutrition Tracker</title>
+    <meta
+      name="description"
+      content="MeliusMe is a privacy-first nutrition tracker: log meals by photo, track calories, macros and water, and keep streaks — all stored encrypted on your own device. No account, no ads."
+    />
     <meta name="author" content="MeliusMe" />
+    <meta name="robots" content="index, follow" />
+    <meta name="application-name" content="MeliusMe" />
+    <meta name="apple-mobile-web-app-title" content="MeliusMe" />
 
-    <link rel="canonical" href="https://meliusme.lovable.app" />
+    <!-- TODO (external step): add the Google Search Console verification tag here
+         once Google generates it, e.g.
+         <meta name="google-site-verification" content="YOUR_TOKEN_FROM_SEARCH_CONSOLE" /> -->
 
-    <meta property="og:title" content="MeliusMe" />
-    <meta property="og:description" content="Photo-based meal logging with goals, streaks, and insights." />
+    <link rel="canonical" href="https://meliusme.lovable.app/" />
+
+    <meta property="og:site_name" content="MeliusMe" />
+    <meta property="og:title" content="MeliusMe — Private, Local-First Meal &amp; Nutrition Tracker" />
+    <meta
+      property="og:description"
+      content="Log meals by photo and track calories, macros, water and streaks. Your data stays encrypted on your device — no account, no ads."
+    />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta property="og:url" content="https://meliusme.lovable.app/" />
+    <meta property="og:image" content="https://meliusme.lovable.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="MeliusMe — private, local-first meal and nutrition tracking" />
+    <meta property="og:locale" content="en_US" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta name="twitter:title" content="MeliusMe — Private, Local-First Meal &amp; Nutrition Tracker" />
+    <meta
+      name="twitter:description"
+      content="Log meals by photo and track calories, macros, water and streaks. Your data stays encrypted on your device — no account, no ads."
+    />
+    <meta name="twitter:image" content="https://meliusme.lovable.app/og-image.png" />
+    <meta name="twitter:image:alt" content="MeliusMe — private, local-first meal and nutrition tracking" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://meliusme.lovable.app/#organization",
+            "name": "MeliusMe",
+            "url": "https://meliusme.lovable.app/",
+            "logo": "https://meliusme.lovable.app/icons/icon-512.png"
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://meliusme.lovable.app/#website",
+            "name": "MeliusMe",
+            "url": "https://meliusme.lovable.app/",
+            "inLanguage": "en",
+            "publisher": { "@id": "https://meliusme.lovable.app/#organization" }
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "https://meliusme.lovable.app/#app",
+            "name": "MeliusMe",
+            "url": "https://meliusme.lovable.app/",
+            "applicationCategory": "HealthApplication",
+            "operatingSystem": "Web browser, Android",
+            "browserRequirements": "Requires JavaScript and IndexedDB",
+            "inLanguage": "en",
+            "image": "https://meliusme.lovable.app/og-image.png",
+            "description": "Privacy-first, local-first meal and nutrition tracker. Log meals by photo and track calories, macros, water and streaks, with data stored encrypted on the user's own device.",
+            "featureList": [
+              "Photo-based meal logging",
+              "Calorie and macro tracking",
+              "Water tracking",
+              "Streaks, levels and daily challenges",
+              "CSV export of your own data",
+              "Offline, local-first storage"
+            ],
+            "publisher": { "@id": "https://meliusme.lovable.app/#organization" }
+          }
+        ]
+      }
+    </script>
   </head>
 
   <body>
