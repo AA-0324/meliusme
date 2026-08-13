@@ -19,11 +19,14 @@
     <meta name="application-name" content="MeliusMe" />
     <meta name="apple-mobile-web-app-title" content="MeliusMe" />
 
-    <!-- TODO (external step): add the Google Search Console verification tag here
-         once Google generates it, e.g.
-         <meta name="google-site-verification" content="YOUR_TOKEN_FROM_SEARCH_CONSOLE" /> -->
+    <!-- TODO (external step): Google Search Console verification.
+         Add a meta tag named "google-site-verification" here with the token
+         Google generates for this property, or verify via DNS. No placeholder
+         tag is shipped, because an invalid token would fail verification. -->
 
-    <link rel="canonical" href="https://meliusme.lovable.app/" />
+    <!-- Canonical is set per route at runtime by src/components/RouteHead.tsx:
+         the public landing page gets a self-referencing canonical, private app
+         routes get noindex, nofollow and no canonical. -->
 
     <meta property="og:site_name" content="MeliusMe" />
     <meta property="og:title" content="MeliusMe — Private, Local-First Meal &amp; Nutrition Tracker" />
