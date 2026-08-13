@@ -1,7 +1,11 @@
 {
-  "name": "MeliusMe",
+  "id": "/",
+  "name": "MeliusMe — Private Meal & Nutrition Tracker",
   "short_name": "MeliusMe",
-  "description": "Photo-based meal logging with goals, streaks, and insights.",
+  "description": "Log meals by photo and track calories, macros, water and streaks. Your data stays encrypted on your own device.",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["health", "lifestyle", "food"],
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
