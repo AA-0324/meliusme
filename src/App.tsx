@@ -9,6 +9,7 @@ import { AppProvider, useApp } from "@/contexts/AppContext";
 import { BottomNav } from "@/components/BottomNav";
 import { ProfileButton } from "@/components/ProfileButton";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { RouteHead } from "@/components/RouteHead";
 import { SplashScreen } from "@/components/SplashScreen";
 import { Onboarding } from "@/components/Onboarding";
 import { MealLoggedToast } from "@/components/MealLoggedToast";
@@ -100,6 +101,7 @@ const App = () => {
               <BrowserRouter>
                 <ForceHomeOnLoad />
                 <ScrollToTop />
+                <RouteHead />
                 <div className="min-h-screen bg-background overflow-x-hidden">
                   <div className="fixed top-4 right-4 z-40 safe-top" data-nav-profile>
                     <ProfileButton />
