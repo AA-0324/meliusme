@@ -32,7 +32,24 @@ export interface EntitlementCache {
   checkedAt: number;
 }
 
-export type EntitlementSource = 'verified' | 'cached' | 'none';
+/**
+ * Where the current answer came from. These four states are exhaustive and
+ * deliberately distinct — "we don't know" is never collapsed into "free".
+ *
+ * - `verified`   — the store answered during this session. Authoritative.
+ * - `cached`     — the store could not be reached; using the last verified
+ *                  answer. Honoured for `CACHE_GRACE_MS` (see freshness policy
+ *                  below), after which it is marked `stale` and stops granting.
+ * - `unavailable`— the store could not be reached and there is no cached
+ *                  answer. Entitlement is unknown; the locally persisted flag
+ *                  is used so an existing install is not downgraded offline.
+ * - `none`       — nothing has been asked yet this session (initial state).
+ *
+ * Freshness policy: only a `verified` answer may change the persisted
+ * `proStatus` flag. A cached answer may keep access alive but can never grant
+ * it on its own, and an `unavailable` answer changes nothing at all.
+ */
+export type EntitlementSource = 'verified' | 'cached' | 'unavailable' | 'none';
 
 export interface EntitlementState {
   active: boolean;
@@ -42,7 +59,12 @@ export interface EntitlementState {
   stale?: boolean;
 }
 
+/** Initial state: nothing has been asked yet. */
 export const EMPTY_ENTITLEMENT: EntitlementState = { active: false, source: 'none', checkedAt: null };
+
+/** The store could not be reached and there is no cached answer. */
+export const UNAVAILABLE_ENTITLEMENT: EntitlementState = { active: false, source: 'unavailable', checkedAt: null };
+
 
 export async function readEntitlementCache(): Promise<EntitlementCache | null> {
   const cache = await getEncryptedJSON<EntitlementCache | null>(CACHE_KEY, null);
