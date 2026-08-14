@@ -228,7 +228,17 @@ export async function presentPaywall(containerElement: HTMLElement): Promise<Pay
 
 // ─── Restore Purchases ────────────────────────────────────────────
 
+/**
+ * "Restore" on the web SDK is *not* cross-device restore.
+ *
+ * There is no account system: the app user id is anonymous and stored on this
+ * device only, so RevenueCat can only re-report what this identity owns. A
+ * purchase made on another device cannot be recovered here. Callers must not
+ * advertise this as cross-device restore — see `canRestoreAcrossDevices` in
+ * `src/lib/billing.ts`.
+ */
 export async function restorePurchases(): Promise<PurchaseResult> {
+
   try {
     // On the web SDK, "restoring" means re-reading customer info for the same
     // anonymous app user id, which picks up any purchase tied to that user.
