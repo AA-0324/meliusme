@@ -80,7 +80,7 @@ export async function writeEntitlementCache(active: boolean, checkedAt = Date.no
 
 /**
  * Resolve entitlement state from a verification attempt plus the local cache.
- * `verified` is null when RevenueCat could not be reached.
+ * `verified` is null when the store could not be reached.
  */
 export function resolveEntitlement(
   verified: boolean | null,
@@ -95,7 +95,7 @@ export function resolveEntitlement(
     // A stale positive cache stops granting access; a negative one stays negative.
     return { active: cache.active && !stale, source: 'cached', checkedAt: cache.checkedAt, stale };
   }
-  return EMPTY_ENTITLEMENT;
+  return UNAVAILABLE_ENTITLEMENT;
 }
 
 /**
@@ -112,11 +112,13 @@ export function nextPersistedProStatus(
 }
 
 /**
- * Effective Pro access for the UI. A verified or cached RevenueCat answer wins;
- * when RevenueCat has never answered on this device we fall back to the locally
- * persisted flag so an existing install is not downgraded by a missing network.
+ * Effective Pro access for the UI. A verified or cached store answer wins; when
+ * the store has never answered on this device (`none` / `unavailable`) we fall
+ * back to the locally persisted flag so an existing install is not downgraded
+ * by a missing network.
  */
 export function resolveEffectivePro(state: EntitlementState, persisted: boolean): boolean {
-  if (state.source === 'none') return persisted;
+  if (state.source === 'none' || state.source === 'unavailable') return persisted;
   return state.active;
 }
+
