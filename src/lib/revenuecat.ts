@@ -15,12 +15,12 @@ import {
   type EntitlementState,
 } from './entitlement';
 
-// Sandbox/test key kept as the development fallback so the paywall keeps
-// working in preview builds. Production builds must set
-// VITE_REVENUECAT_PUBLIC_KEY to the live *public* key.
-const RC_FALLBACK_TEST_KEY = 'test_bfVjcQrjQkSYSlezfcbSEpCZRaE';
-const RC_API_KEY =
-  ((import.meta.env?.VITE_REVENUECAT_PUBLIC_KEY as string | undefined)?.trim() || RC_FALLBACK_TEST_KEY).trim();
+// No fallback key. A build without VITE_REVENUECAT_PUBLIC_KEY simply cannot
+// sell or verify Pro — the free, local app keeps working untouched. Shipping a
+// hard-coded sandbox key to production would silently talk to the wrong
+// environment, which is worse than failing safely.
+const RC_API_KEY = ((import.meta.env?.VITE_REVENUECAT_PUBLIC_KEY as string | undefined) ?? '').trim();
+
 const ENTITLEMENT_ID = PRO_ENTITLEMENT_ID;
 const RC_USER_ID_KEY = 'melius-rc-user-id';
 
@@ -228,7 +228,17 @@ export async function presentPaywall(containerElement: HTMLElement): Promise<Pay
 
 // ─── Restore Purchases ────────────────────────────────────────────
 
+/**
+ * "Restore" on the web SDK is *not* cross-device restore.
+ *
+ * There is no account system: the app user id is anonymous and stored on this
+ * device only, so RevenueCat can only re-report what this identity owns. A
+ * purchase made on another device cannot be recovered here. Callers must not
+ * advertise this as cross-device restore — see `canRestoreAcrossDevices` in
+ * `src/lib/billing.ts`.
+ */
 export async function restorePurchases(): Promise<PurchaseResult> {
+
   try {
     // On the web SDK, "restoring" means re-reading customer info for the same
     // anonymous app user id, which picks up any purchase tied to that user.

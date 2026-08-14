@@ -32,7 +32,24 @@ export interface EntitlementCache {
   checkedAt: number;
 }
 
-export type EntitlementSource = 'verified' | 'cached' | 'none';
+/**
+ * Where the current answer came from. These four states are exhaustive and
+ * deliberately distinct — "we don't know" is never collapsed into "free".
+ *
+ * - `verified`   — the store answered during this session. Authoritative.
+ * - `cached`     — the store could not be reached; using the last verified
+ *                  answer. Honoured for `CACHE_GRACE_MS` (see freshness policy
+ *                  below), after which it is marked `stale` and stops granting.
+ * - `unavailable`— the store could not be reached and there is no cached
+ *                  answer. Entitlement is unknown; the locally persisted flag
+ *                  is used so an existing install is not downgraded offline.
+ * - `none`       — nothing has been asked yet this session (initial state).
+ *
+ * Freshness policy: only a `verified` answer may change the persisted
+ * `proStatus` flag. A cached answer may keep access alive but can never grant
+ * it on its own, and an `unavailable` answer changes nothing at all.
+ */
+export type EntitlementSource = 'verified' | 'cached' | 'unavailable' | 'none';
 
 export interface EntitlementState {
   active: boolean;
@@ -42,7 +59,12 @@ export interface EntitlementState {
   stale?: boolean;
 }
 
+/** Initial state: nothing has been asked yet. */
 export const EMPTY_ENTITLEMENT: EntitlementState = { active: false, source: 'none', checkedAt: null };
+
+/** The store could not be reached and there is no cached answer. */
+export const UNAVAILABLE_ENTITLEMENT: EntitlementState = { active: false, source: 'unavailable', checkedAt: null };
+
 
 export async function readEntitlementCache(): Promise<EntitlementCache | null> {
   const cache = await getEncryptedJSON<EntitlementCache | null>(CACHE_KEY, null);
@@ -58,7 +80,7 @@ export async function writeEntitlementCache(active: boolean, checkedAt = Date.no
 
 /**
  * Resolve entitlement state from a verification attempt plus the local cache.
- * `verified` is null when RevenueCat could not be reached.
+ * `verified` is null when the store could not be reached.
  */
 export function resolveEntitlement(
   verified: boolean | null,
@@ -73,7 +95,7 @@ export function resolveEntitlement(
     // A stale positive cache stops granting access; a negative one stays negative.
     return { active: cache.active && !stale, source: 'cached', checkedAt: cache.checkedAt, stale };
   }
-  return EMPTY_ENTITLEMENT;
+  return UNAVAILABLE_ENTITLEMENT;
 }
 
 /**
@@ -90,11 +112,13 @@ export function nextPersistedProStatus(
 }
 
 /**
- * Effective Pro access for the UI. A verified or cached RevenueCat answer wins;
- * when RevenueCat has never answered on this device we fall back to the locally
- * persisted flag so an existing install is not downgraded by a missing network.
+ * Effective Pro access for the UI. A verified or cached store answer wins; when
+ * the store has never answered on this device (`none` / `unavailable`) we fall
+ * back to the locally persisted flag so an existing install is not downgraded
+ * by a missing network.
  */
 export function resolveEffectivePro(state: EntitlementState, persisted: boolean): boolean {
-  if (state.source === 'none') return persisted;
+  if (state.source === 'none' || state.source === 'unavailable') return persisted;
   return state.active;
 }
+
