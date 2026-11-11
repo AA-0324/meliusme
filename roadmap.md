@@ -1,0 +1,4 @@
+- [x] Verify local dates and rollover across midnight and timezone boundaries.
+- [x] Await daily reset persistence and verify failure handling.
+- [x] Stop active and pending camera streams on close, switch and unmount.
+- [x] Run regression tests and verify the real reset and camera flow.

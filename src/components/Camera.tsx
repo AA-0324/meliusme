@@ -24,8 +24,10 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
   // stay identity-stable so unmount cleanup can never miss a running track
   // (a leaked track keeps the camera LED on and drains the device).
   const streamRef = useRef<MediaStream | null>(null);
+  const requestRef = useRef(0);
 
   const stopCamera = useCallback(() => {
+    requestRef.current += 1;
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
     if (videoRef.current) videoRef.current.srcObject = null;
@@ -33,6 +35,8 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
   }, []);
 
   const startCamera = useCallback(async () => {
+    stopCamera();
+    const request = requestRef.current;
     setError(null);
     if (!navigator.mediaDevices?.getUserMedia) {
       setError('Camera is not available on this device. You can upload a photo instead.');
@@ -47,6 +51,10 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
         },
         audio: false,
       });
+      if (request !== requestRef.current) {
+        mediaStream.getTracks().forEach(track => track.stop());
+        return;
+      }
       streamRef.current = mediaStream;
       setStream(mediaStream);
       if (videoRef.current) {
@@ -56,6 +64,7 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
         };
       }
     } catch (err) {
+      if (request !== requestRef.current) return;
       // Denied, dismissed, in use by another app, or no camera at all: all of
       // these are expected outcomes, so fall back to the gallery instead of
       // leaving a dead screen.
@@ -70,7 +79,7 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
               : 'Camera unavailable. You can upload a photo instead.',
       );
     }
-  }, [facingMode]);
+  }, [facingMode, stopCamera]);
 
   // Always release the camera if the component goes away mid-session.
   useEffect(() => stopCamera, [stopCamera]);
@@ -107,8 +116,7 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
   const retakePhoto = useCallback(() => {
     setCapturedPhoto(null);
     setMode('camera');
-    startCamera();
-  }, [startCamera]);
+  }, []);
 
   const confirmPhoto = useCallback(() => {
     if (capturedPhoto) {
@@ -177,12 +185,11 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
     fileInputRef.current?.click();
   }, []);
 
-  // Start camera when facingMode changes
+  // One owner for opening, switching, retaking and releasing the stream.
   useEffect(() => {
-    if (open && mode === 'camera' && !stream && !capturedPhoto) {
-      startCamera();
-    }
-  }, [facingMode]);
+    if (open && mode === 'camera' && !capturedPhoto) void startCamera();
+    return stopCamera;
+  }, [open, mode, capturedPhoto, startCamera, stopCamera]);
 
   // Reset when opened - go directly to camera
   useEffect(() => {
@@ -190,11 +197,10 @@ export function Camera({ open, onClose, onCapture }: CameraProps) {
       setCapturedPhoto(null);
       setError(null);
       setMode('camera');
-      startCamera();
     } else {
       stopCamera();
     }
-  }, [open]);
+  }, [open, stopCamera]);
 
   return (
     <AnimatePresence>

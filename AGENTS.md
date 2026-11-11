@@ -1,0 +1,3 @@
+- All calendar-day keys must use local date helpers; UTC timestamps are reserved for exact instants, because users track nutrition by their local day.
+- Camera acquisition has one effect owner and invalidates pending requests on cleanup, because permission prompts can resolve after navigation.
+- Daily reset returns a promise that rejects on persistence failure; success UI awaits it, because uncommitted deletion must not appear successful.

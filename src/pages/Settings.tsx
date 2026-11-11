@@ -48,6 +48,7 @@ export default function Settings() {
   const [showFinalConfirm, setShowFinalConfirm] = useState(false);
   const [templates, setTemplates] = useState<MealTemplate[]>([]);
   const [restoring, setRestoring] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   useEffect(() => {
     if (isPro) {
@@ -61,10 +62,20 @@ export default function Settings() {
     toast.success('Template deleted');
   };
 
-  const handleResetDaily = () => {
-    resetDailyData();
-    setShowFinalConfirm(false);
-    toast.success("Today's nutrition reset");
+  const handleResetDaily = async (event: React.MouseEvent) => {
+    event.preventDefault();
+    if (resetting) return;
+    setResetting(true);
+    try {
+      await resetDailyData();
+      setShowFinalConfirm(false);
+      toast.success("Today's nutrition reset");
+    } catch (error) {
+      console.error('Daily reset failed:', error);
+      toast.error('Could not complete the reset. Please try again.');
+    } finally {
+      setResetting(false);
+    }
   };
 
 
@@ -238,7 +249,7 @@ export default function Settings() {
             </AlertDialogContent>
           </AlertDialog>
 
-          <AlertDialog open={showFinalConfirm} onOpenChange={setShowFinalConfirm}>
+          <AlertDialog open={showFinalConfirm} onOpenChange={(open) => { if (!resetting) setShowFinalConfirm(open); }}>
             <AlertDialogContent className="border-border bg-card">
               <AlertDialogHeader>
                 <AlertDialogTitle className="flex items-center gap-2">
@@ -250,9 +261,9 @@ export default function Settings() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleResetDaily} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                  Yes, Reset Everything
+                <AlertDialogCancel disabled={resetting}>Cancel</AlertDialogCancel>
+                <AlertDialogAction disabled={resetting} onClick={handleResetDaily} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  {resetting ? 'Resetting…' : 'Yes, Reset Everything'}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

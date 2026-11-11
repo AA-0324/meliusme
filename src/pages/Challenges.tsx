@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { REFLECTION_QUESTIONS, saveLastReflection, getDailyChallenges, getLastWeekNumber, getLastWeekStart, ReflectionData } from '@/lib/streaks';
 import { useApp } from '@/contexts/AppContext';
 import { staggerContainer, fadeUpBounce } from '@/lib/motion';
-import { todayKey } from '@/lib/date';
+import { todayKey, fromDateKey } from '@/lib/date';
 
 export default function Challenges() {
   const { currentChallenge, meals, todayWater, settings, xpData, tempProUnlocks, animationsEnabled } = useApp();
@@ -19,7 +19,7 @@ export default function Challenges() {
 
   const hasReflectedLastWeek = lastReflection && lastReflection.weekNumber === lastWeekNumber;
 
-  const lastWeekStartDate = new Date(lastWeekStart);
+  const lastWeekStartDate = fromDateKey(lastWeekStart);
   // Calculate this week's Monday to exclude today's meals from last week's reflection
   const thisWeekStartDate = new Date();
   const day = thisWeekStartDate.getDay();
@@ -28,7 +28,7 @@ export default function Challenges() {
   thisWeekMonday.setHours(0, 0, 0, 0);
 
   const lastWeekMeals = meals.filter((m) => {
-    const mealDate = new Date(m.date);
+    const mealDate = fromDateKey(m.date);
     return mealDate >= lastWeekStartDate && mealDate < thisWeekMonday;
   });
 
