@@ -35,6 +35,7 @@ export default function Dashboard() {
   const [dashboardLayout, setDashboardLayout] = useState<DashboardWidget[]>([]);
   const [streaksData, setStreaksData] = useState<StreaksData>({ loggingStreak: 0, calorieTargetStreak: 0, proteinGoalStreak: 0, lastLoggingDate: null, lastCalorieDate: null, lastProteinDate: null });
   const noMotion = !animationsEnabled;
+  const localDay = todayKey();
 
   useEffect(() => {
     getDashboardLayout().then(setDashboardLayout);
@@ -56,7 +57,7 @@ export default function Dashboard() {
     const metCalorie = calGoal ? (totals.calories <= calGoal * 1.1 && totals.calories >= calGoal * 0.8) : false;
     const metProtein = protGoal ? totals.protein >= protGoal : false;
     updateStreaksData(today, true, metCalorie, metProtein).then(setStreaksData);
-  }, [mealsByDate, settings.goals]);
+  }, [mealsByDate, settings.goals, localDay]);
 
   const canCustomizeLayout = hasProFeature('custom_layouts');
   const isWidgetVisible = (id: string) => {
@@ -96,7 +97,7 @@ export default function Dashboard() {
       });
     }
     return days;
-  }, [mealsByDate, filterDays]);
+  }, [mealsByDate, filterDays, localDay]);
 
   // Meals inside the active range, derived from the day buckets above.
   const filteredMeals = useMemo(() => rangeData.flatMap(d => d.meals), [rangeData]);
@@ -112,9 +113,9 @@ export default function Dashboard() {
     return { totalCalories, totalMeals, avgCalories, daysWithMeals };
   }, [rangeData]);
 
-  const todayTotals = useMemo(() => getDailyTotals(mealsByDate, todayKey()), [mealsByDate]);
+  const todayTotals = useMemo(() => getDailyTotals(mealsByDate, localDay), [mealsByDate, localDay]);
 
-  const hasMealsToday = useMemo(() => (mealsByDate.get(todayKey())?.length ?? 0) > 0, [mealsByDate]);
+  const hasMealsToday = useMemo(() => (mealsByDate.get(localDay)?.length ?? 0) > 0, [mealsByDate, localDay]);
 
   const nutritionScore = useMemo(() => {
     return calculateNutritionScore(

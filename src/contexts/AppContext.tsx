@@ -107,7 +107,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [bottomToast, setBottomToast] = useState<AppContextType['bottomToast']>({ open: false, message: '', variant: 'primary' });
   const toastQueueRef = useRef<Array<{ message: string; variant: ToastVariant }>>([]);
 
-  const today = todayKey();
+  const [today, setToday] = useState(todayKey);
   const [todayWater, setTodayWater] = useState(0);
 
   // Single entitlement abstraction. RevenueCat is authoritative when it can be
@@ -132,6 +132,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Periodically prune expired temp Pro unlocks so the UI stays accurate.
   useEffect(() => {
     const refresh = async () => {
+      setToday(todayKey());
       setTempProUnlocks(await getTempProUnlocks());
       setStreak(await validateStreakFreshness());
     };
@@ -140,6 +141,30 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     document.addEventListener('visibilitychange', onVisible);
     return () => { clearInterval(interval); document.removeEventListener('visibilitychange', onVisible); };
   }, []);
+
+  // Re-read daily state on local midnight or foreground return, not just launch.
+  useEffect(() => {
+    const updateDay = () => setToday(todayKey());
+    const nextMidnight = new Date();
+    nextMidnight.setHours(24, 0, 0, 0);
+    const timeout = window.setTimeout(updateDay, nextMidnight.getTime() - Date.now());
+    document.addEventListener('visibilitychange', updateDay);
+    return () => {
+      clearTimeout(timeout);
+      document.removeEventListener('visibilitychange', updateDay);
+    };
+  }, [today]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    let cancelled = false;
+    Promise.all([getWaterIntake(today), getCurrentChallenge(meals)]).then(([water, challenge]) => {
+      if (cancelled) return;
+      setTodayWater(water);
+      setCurrentChallenge(challenge);
+    }).catch(error => console.error('Failed to refresh daily data:', error));
+    return () => { cancelled = true; };
+  }, [today, isLoading]);
 
   // Sync animations preference to window for motion.ts + CSS
   useEffect(() => {
@@ -562,7 +587,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     settings, meals, isLoading, isPro, entitlement, refreshEntitlement, hasProFeature,
     animationsEnabled, motionEnabled, animationLevel,
     userProfile, bodyProfile, streak, currentChallenge, badges,
-    todayWater, bottomToast,
+    today, todayWater, bottomToast,
     xpData, tempProUnlocks, levelUpPending,
     setUserName, setUserAvatar, updateBodyProfileCb, refreshStreak,
     incrementWater,

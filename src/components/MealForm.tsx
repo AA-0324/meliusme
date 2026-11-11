@@ -96,10 +96,10 @@ export function MealForm({ open, photo, onClose, onSuccess }: MealFormProps) {
     }
   }, [open]);
 
+  const today = todayKey();
   const todayMealTypes = useMemo(() => {
-    const today = todayKey();
     return meals.filter(m => m.date === today).map(m => m.mealType);
-  }, [meals]);
+  }, [meals, today]);
 
   useEffect(() => {
     if (open) {

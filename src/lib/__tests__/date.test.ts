@@ -1,7 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { toDateKey, todayKey, shiftDateKey, fromDateKey, daysBetween } from '@/lib/date';
 
 describe('date keys', () => {
+  afterEach(() => vi.useRealTimers());
+  it.skipIf(Intl.DateTimeFormat().resolvedOptions().timeZone !== 'America/New_York')('keeps November 10 at 7 PM in New York even when UTC is November 11', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-11T00:00:00Z'));
+    expect(todayKey()).toBe('2026-11-10');
+    expect(fromDateKey('2026-11-09').getDay()).toBe(1);
+  });
   it('formats a local date, not a UTC one', () => {
     // 1 Jan 2025 00:30 local — UTC-based formatting would report 31 Dec for
     // anyone east of UTC and is exactly the bug these helpers replace.
