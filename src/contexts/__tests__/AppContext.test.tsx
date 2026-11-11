@@ -2,7 +2,7 @@ import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AppProvider, useApp } from '../AppContext';
 import * as db from '@/lib/db';
-vi.mock('@/lib/revenuecat', () => ({ initRevenueCat: vi.fn(), getProEntitlementState: vi.fn().mockResolvedValue({ active: false, source: 'none', checkedAt: null, stale: false }) }));
+vi.mock('@/lib/revenuecat', () => ({ initRevenueCat: async () => {}, getProEntitlementState: async () => ({ active: false, source: 'none', checkedAt: null, stale: false }) }));
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 describe('daily reset persistence', () => {
   it('waits for meal deletion to commit before reporting completion', async () => {

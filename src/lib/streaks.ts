@@ -1,7 +1,7 @@
 // Streak and Gamification System for MeliusMe — encrypted storage
 
 import { getEncrypted, getEncryptedJSON, setEncrypted, setEncryptedJSON } from './encryptedStorage';
-import { todayKey, toDateKey, daysBetween } from './date';
+import { todayKey, toDateKey, daysBetween, fromDateKey } from './date';
 
 const STREAK_KEY = 'melius-streak';
 const CHALLENGES_KEY = 'melius-challenges';
@@ -633,7 +633,7 @@ export function generateInsight(meals: any[]): string | null {
   const proteinByDay = [0, 0, 0, 0, 0, 0, 0];
 
   meals.forEach(meal => {
-    const d = new Date(meal.date).getDay();
+    const d = fromDateKey(meal.date).getDay();
     caloriesByDay[d] += meal.calories; proteinByDay[d] += meal.protein || 0; countByDay[d]++;
   });
 

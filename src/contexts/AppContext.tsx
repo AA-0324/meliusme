@@ -71,7 +71,7 @@ interface AppContextType {
   setPersonalizedGoals: (enabled: boolean) => Promise<void>;
   updateUserGoals: (goals: Partial<Goals>) => void;
   setWaterGoal: (glasses: number) => void;
-  resetDailyData: () => void;
+  resetDailyData: () => Promise<void>;
   refreshMeals: () => Promise<void>;
   logMeal: (meal: Omit<Meal, 'id' | 'createdAt'>) => Promise<Meal>;
   removeMeal: (id: string) => Promise<void>;
@@ -384,8 +384,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const resetDailyData = useCallback(async () => {
     const todayStr = todayKey();
-    setTodayWater(0);
+    // Do not clear visible state or reset rewards before deletion commits.
+    await deleteMealsByDate(todayStr);
     await setWaterIntake(todayStr, 0);
+    setTodayWater(0);
     const rolledBackXP = await rollbackDailyXP(todayStr, isPro);
     setXpData(rolledBackXP);
 
@@ -394,7 +396,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     inMemoryGoalToastFlags.delete(todayStr);
 
     setMeals((prev) => prev.filter((m) => m.date !== todayStr));
-    void deleteMealsByDate(todayStr);
 
     const remainingMeals = meals.filter(m => m.date !== todayStr);
     const updatedChallenge = await getCurrentChallenge(remainingMeals);
