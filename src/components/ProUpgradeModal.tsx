@@ -3,6 +3,7 @@ import { useApp } from '@/contexts/AppContext';
 import { getRevenueCatInstance, validateOffering } from '@/lib/revenuecat';
 import { PRO_ENTITLEMENT_ID as ENTITLEMENT_ID } from '@/lib/entitlement';
 import { toast } from 'sonner';
+import { getPlayBillingService, purchaseProWithPlay, restorePlayPurchase } from '@/lib/playBilling';
 
 interface ProUpgradeModalProps {
   open: boolean;
@@ -47,6 +48,26 @@ export function ProUpgradeModal({ open, onClose }: ProUpgradeModalProps) {
     paywallActiveRef.current = true;
 
     try {
+      // Android app from Google Play: must use Play Billing.
+      const playService = await getPlayBillingService();
+      if (playService) {
+        if (await restorePlayPurchase().catch(() => false)) {
+          setPro(true);
+          toast.success('Pro restored.');
+          onClose();
+          return;
+        }
+        const outcome = await purchaseProWithPlay();
+        if (outcome === 'purchased') {
+          setPro(true);
+          toast.success('Welcome to MeliusMe Pro!');
+        } else if (outcome === 'not_granted') {
+          toast.error('Purchase could not be verified. Please try again.');
+        }
+        onClose();
+        return;
+      }
+
       const validationError = await validateOffering();
       if (validationError) {
         setError(validationError);
