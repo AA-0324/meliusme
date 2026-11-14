@@ -34,7 +34,7 @@ export function isRevenueCatConfigured(): boolean {
 
 // ─── Initialization ────────────────────────────────────────────────
 
-async function getOrCreateUserId(): Promise<string> {
+export async function getOrCreateUserId(): Promise<string> {
   let userId = await getEncrypted(RC_USER_ID_KEY);
   if (!userId) {
     userId = Purchases.generateRevenueCatAnonymousAppUserId();
